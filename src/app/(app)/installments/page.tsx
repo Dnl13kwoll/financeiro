@@ -10,7 +10,7 @@ export default async function InstallmentsPage() {
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string } | null }
 
   const { data: installments } = member
     ? await supabase
@@ -18,7 +18,7 @@ export default async function InstallmentsPage() {
         .select('*, installment_items(*)')
         .eq('couple_id', member.couple_id)
         .order('start_date', { ascending: false })
-    : { data: [] }
+    : { data: [] as any[] }
 
   return (
     <div className="flex flex-col flex-1">

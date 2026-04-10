@@ -11,7 +11,7 @@ export default async function RecurringPage() {
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string } | null }
 
   const now = new Date()
   const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -25,7 +25,7 @@ export default async function RecurringPage() {
         .eq('couple_id', member.couple_id)
         .eq('active', true)
         .order('day_due')
-    : { data: [] }
+    : { data: [] as any[] }
 
   return (
     <div className="flex flex-col flex-1">

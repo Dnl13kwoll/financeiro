@@ -38,7 +38,7 @@ export default async function TransactionsPage({
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string } | null }
 
   const now = new Date()
   const monthParam = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -55,7 +55,7 @@ export default async function TransactionsPage({
         .lte('competence_date', monthEnd)
         .is('deleted_at', null)
         .order('date', { ascending: false })
-    : { data: [] }
+    : { data: [] as any[] }
 
   return (
     <div className="flex flex-col flex-1">

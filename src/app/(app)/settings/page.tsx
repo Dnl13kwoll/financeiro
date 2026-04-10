@@ -9,14 +9,14 @@ export default async function SettingsPage() {
     .from('couple_members')
     .select('couple_id, role, couples(currency)')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string; role: string; couples: { currency?: string } | null } | null }
 
   const { data: members } = member
     ? await supabase
         .from('couple_members')
         .select('role, profiles(name, email)')
         .eq('couple_id', member.couple_id)
-    : { data: [] }
+    : { data: [] as any[] }
 
   const { data: invitations } = member
     ? await supabase
@@ -24,7 +24,7 @@ export default async function SettingsPage() {
         .select('email, status, expires_at')
         .eq('couple_id', member.couple_id)
         .order('created_at', { ascending: false })
-    : { data: [] }
+    : { data: [] as any[] }
 
   return (
     <div className="flex flex-col flex-1">

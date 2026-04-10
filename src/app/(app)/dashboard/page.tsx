@@ -12,14 +12,14 @@ export default async function DashboardPage() {
     .from('couple_members')
     .select('couple_id, couples(currency)')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string; couples: { currency?: string } | null } | null }
 
   // Saldos das contas
   const { data: balances } = member
     ? await supabase
         .from('account_balances')
         .select('*')
-    : { data: [] }
+    : { data: [] as any[] }
 
   const totalBalance = (balances ?? []).reduce((acc, b) => acc + b.balance, 0)
 
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
         .eq('type', 'expense')
         .gte('competence_date', monthStart)
         .is('deleted_at', null)
-    : { data: [] }
+    : { data: [] as any[] }
 
   const totalExpenses = (monthlyExpenses ?? []).reduce(
     (acc, t) => acc + t.amount,
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
         .select('amount')
         .eq('couple_id', member.couple_id)
         .eq('month', monthStart)
-    : { data: [] }
+    : { data: [] as any[] }
 
   const totalBudget = (monthlyBudgets ?? []).reduce(
     (acc, b) => acc + b.amount,

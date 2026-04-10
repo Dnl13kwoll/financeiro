@@ -10,7 +10,7 @@ export default async function BudgetsPage() {
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string } | null }
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -27,7 +27,7 @@ export default async function BudgetsPage() {
         .eq('couple_id', member.couple_id)
         .eq('month', monthStart)
         .order('amount', { ascending: false })
-    : { data: [] }
+    : { data: [] as any[] }
 
   // Gastos por categoria no mês
   const { data: expenses } = member
@@ -39,7 +39,7 @@ export default async function BudgetsPage() {
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)
         .is('deleted_at', null)
-    : { data: [] }
+    : { data: [] as any[] }
 
   const expenseMap = new Map<string, number>()
   for (const e of expenses ?? []) {

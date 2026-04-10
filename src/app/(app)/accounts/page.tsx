@@ -24,7 +24,7 @@ export default async function AccountsPage() {
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .single() as { data: { couple_id: string } | null }
 
   const { data: accounts } = member
     ? await supabase
@@ -33,11 +33,11 @@ export default async function AccountsPage() {
         .eq('couple_id', member.couple_id)
         .is('deleted_at', null)
         .order('created_at')
-    : { data: [] }
+    : { data: [] as any[] }
 
   const { data: balances } = member
     ? await supabase.from('account_balances').select('*')
-    : { data: [] }
+    : { data: [] as any[] }
 
   const balanceMap = new Map(
     (balances ?? []).map((b) => [b.id, b.balance])

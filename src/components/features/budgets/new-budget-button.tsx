@@ -22,12 +22,13 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
     const data = new FormData(form)
 
     const supabase = createClient()
-    await supabase.from('budgets').upsert({
+    const payload: any = {
       category_id: data.get('category_id') as string,
       couple_id: coupleId,
       amount: parseFloat(data.get('amount') as string),
-      month: data.get('month') as string,
-    }, { onConflict: 'couple_id,category_id,month' })
+      month: data.get('month') + '-01',
+    }
+    await (supabase.from('budgets') as any).upsert(payload, { onConflict: 'couple_id,category_id,month' })
 
     setLoading(false)
     setOpen(false)

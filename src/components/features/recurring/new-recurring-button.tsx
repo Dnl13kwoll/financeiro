@@ -17,12 +17,13 @@ export function NewRecurringButton({ coupleId, userId }: { coupleId: string; use
     const data = new FormData(form)
 
     const supabase = createClient()
-    await supabase.from('recurring_accounts').insert({
+    const payload: any = {
       name: data.get('name') as string,
       day_due: parseInt(data.get('day_due') as string),
       user_id: userId,
       couple_id: coupleId,
-    })
+    }
+    await supabase.from('recurring_accounts').insert(payload)
 
     setLoading(false)
     setOpen(false)

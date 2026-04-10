@@ -24,26 +24,27 @@ export function NewInstallmentButton({ coupleId, userId }: { coupleId: string; u
     const partAmount = parseFloat(((totalAmount * (1 + interestRate)) / totalParts).toFixed(2))
 
     const supabase = createClient()
+    const installmentPayload: any = {
+      description: data.get('description') as string,
+      total_amount: totalAmount,
+      total_parts: totalParts,
+      interest_rate: interestRate,
+      start_date: (data.get('start_date') as string),
+      user_id: userId,
+      couple_id: coupleId,
+    }
     const { data: installment } = await supabase
       .from('installments')
-      .insert({
-        description: data.get('description') as string,
-        total_amount: totalAmount,
-        total_parts: totalParts,
-        interest_rate: interestRate,
-        start_date: (data.get('start_date') as string),
-        user_id: userId,
-        couple_id: coupleId,
-      })
+      .insert(installmentPayload)
       .select()
       .single()
 
     if (installment) {
-      const items = Array.from({ length: totalParts }, (_, i) => {
+      const items: any[] = Array.from({ length: totalParts }, (_, i) => {
         const dueDate = new Date(startDate)
         dueDate.setMonth(dueDate.getMonth() + i)
         return {
-          installment_id: installment.id,
+          installment_id: (installment as any).id,
           part_number: i + 1,
           amount: partAmount,
           due_date: dueDate.toISOString().slice(0, 10),

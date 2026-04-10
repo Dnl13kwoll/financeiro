@@ -12,18 +12,18 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
   async function handleCreate() {
     setLoading(true)
     const supabase = createClient()
-    const { data: couple } = await supabase
-      .from('couples')
+    const { data: couple } = await (supabase.from('couples') as any)
       .insert({ currency: 'BRL' })
       .select()
       .single()
 
     if (couple) {
-      await supabase.from('couple_members').insert({
+      const memberPayload: any = {
         user_id: userId,
         couple_id: couple.id,
         role: 'owner',
-      })
+      }
+      await supabase.from('couple_members').insert(memberPayload)
       router.refresh()
     }
     setLoading(false)
@@ -54,10 +54,8 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error: err } = await supabase.from('invitations').insert({
-      couple_id: coupleId,
-      email,
-    })
+    const invitePayload: any = { couple_id: coupleId, email }
+    const { error: err } = await supabase.from('invitations').insert(invitePayload)
     if (err) {
       setError(err.message)
     } else {

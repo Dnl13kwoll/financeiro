@@ -18,7 +18,7 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
     const data = new FormData(form)
 
     const supabase = createClient()
-    await supabase.from('accounts').insert({
+    const payload: any = {
       name: data.get('name') as string,
       type,
       initial_balance: parseFloat(data.get('initial_balance') as string) || 0,
@@ -27,7 +27,8 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
       due_day: type === 'credit_card' ? parseInt(data.get('due_day') as string) || null : null,
       user_id: userId,
       couple_id: coupleId,
-    })
+    }
+    await supabase.from('accounts').insert(payload)
 
     setLoading(false)
     setOpen(false)

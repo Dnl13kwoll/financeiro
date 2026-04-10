@@ -35,7 +35,7 @@ export function NewTransactionButton({
     const data = new FormData(form)
 
     const supabase = createClient()
-    await supabase.from('transactions').insert({
+    const payload: any = {
       type,
       amount: parseFloat(data.get('amount') as string),
       description: (data.get('description') as string) || null,
@@ -47,7 +47,8 @@ export function NewTransactionButton({
       is_private: data.get('is_private') === 'on',
       user_id: userId,
       couple_id: coupleId,
-    })
+    }
+    await supabase.from('transactions').insert(payload)
 
     setLoading(false)
     setOpen(false)

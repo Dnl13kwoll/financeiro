@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
+import { NewBudgetButton } from '@/components/features/budgets/new-budget-button'
 
 export default async function BudgetsPage() {
   const supabase = await createClient()
@@ -15,12 +16,8 @@ export default async function BudgetsPage() {
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .slice(0, 10)
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    .toISOString()
-    .slice(0, 10)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
 
   const budgetsRes = coupleId
     ? await supabase
@@ -42,8 +39,15 @@ export default async function BudgetsPage() {
         .is('deleted_at', null)
     : null
 
+  const categoriesRes = await supabase
+    .from('categories')
+    .select('id, name')
+    .eq('type', 'expense')
+    .order('name')
+
   const budgets: any[] = budgetsRes?.data ?? []
   const expenses: any[] = expensesRes?.data ?? []
+  const categories: { id: string; name: string }[] = (categoriesRes?.data ?? []) as any[]
 
   const expenseMap = new Map<string, number>()
   for (const e of expenses) {
@@ -57,6 +61,10 @@ export default async function BudgetsPage() {
       <Header title="Orçamentos" />
 
       <div className="p-6 space-y-4">
+        <div className="flex justify-end">
+          {coupleId && <NewBudgetButton coupleId={coupleId} categories={categories} />}
+        </div>
+
         {budgets.map((budget) => {
           const spent = expenseMap.get(budget.category_id) ?? 0
           const percent = Math.min(Math.round((spent / budget.amount) * 100), 100)
@@ -94,7 +102,7 @@ export default async function BudgetsPage() {
 
         {budgets.length === 0 && (
           <div className="text-center py-16 text-gray-400">
-            Nenhum orçamento para este mês.
+            {coupleId ? 'Nenhum orçamento para este mês.' : 'Crie um casal em Configurações para começar.'}
           </div>
         )}
       </div>

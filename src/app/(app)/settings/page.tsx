@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
+import { CreateCoupleButton, InvitePartnerButton } from '@/components/features/settings/couple-actions'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -13,6 +14,7 @@ export default async function SettingsPage() {
 
   const memberData = memberRes.data as any
   const coupleId: string | null = memberData?.couple_id ?? null
+  const role: string = memberData?.role ?? ''
   const currency: string = memberData?.couples?.currency ?? 'BRL'
 
   const membersRes = coupleId
@@ -56,7 +58,10 @@ export default async function SettingsPage() {
         {/* Casal */}
         {coupleId ? (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">Casal</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Casal</h3>
+              {role === 'owner' && <InvitePartnerButton coupleId={coupleId} />}
+            </div>
             <p className="text-sm text-gray-500 mb-3">
               Moeda:{' '}
               <span className="font-medium text-gray-900">{currency}</span>
@@ -65,10 +70,7 @@ export default async function SettingsPage() {
               {members.map((m, i) => {
                 const profile = m.profiles as { name?: string; email?: string } | null
                 return (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between text-sm"
-                  >
+                  <div key={i} className="flex items-center justify-between text-sm">
                     <span className="text-gray-700">
                       {profile?.name ?? profile?.email ?? '—'}
                     </span>
@@ -82,43 +84,36 @@ export default async function SettingsPage() {
           </section>
         ) : (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-2">Casal</h3>
-            <p className="text-sm text-gray-500">
-              Você não está vinculado a nenhum casal ainda.
+            <h3 className="font-semibold text-gray-900 mb-3">Casal</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Você não está vinculado a nenhum casal ainda. Crie um para começar a usar o app.
             </p>
+            <CreateCoupleButton userId={user!.id} />
           </section>
         )}
 
         {/* Convites */}
-        {coupleId && (
+        {coupleId && invitations.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">Convites</h3>
-            {invitations.length === 0 ? (
-              <p className="text-sm text-gray-400">Nenhum convite enviado.</p>
-            ) : (
-              <div className="space-y-2">
-                {invitations.map((inv, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700">{inv.email}</span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        inv.status === 'accepted'
-                          ? 'bg-green-100 text-green-700'
-                          : inv.status === 'expired'
-                          ? 'bg-gray-100 text-gray-500'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
-                      {inv.status === 'accepted'
-                        ? 'Aceito'
+            <h3 className="font-semibold text-gray-900 mb-4">Convites enviados</h3>
+            <div className="space-y-2">
+              {invitations.map((inv, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">{inv.email}</span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      inv.status === 'accepted'
+                        ? 'bg-green-100 text-green-700'
                         : inv.status === 'expired'
-                        ? 'Expirado'
-                        : 'Pendente'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+                        ? 'bg-gray-100 text-gray-500'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}
+                  >
+                    {inv.status === 'accepted' ? 'Aceito' : inv.status === 'expired' ? 'Expirado' : 'Pendente'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </section>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { NewInstallmentButton } from '@/components/features/installments/new-installment-button'
 
 export default async function InstallmentsPage() {
   const supabase = await createClient()
@@ -29,6 +30,10 @@ export default async function InstallmentsPage() {
       <Header title="Parcelamentos" />
 
       <div className="p-6 space-y-4">
+        <div className="flex justify-end">
+          {coupleId && <NewInstallmentButton coupleId={coupleId} userId={user!.id} />}
+        </div>
+
         {installments.map((inst) => {
           const items = (inst.installment_items ?? []) as {
             part_number: number
@@ -63,11 +68,7 @@ export default async function InstallmentsPage() {
                       : 'bg-blue-100 text-blue-700'
                   }`}
                 >
-                  {inst.status === 'paid'
-                    ? 'Pago'
-                    : inst.status === 'canceled'
-                    ? 'Cancelado'
-                    : 'Ativo'}
+                  {inst.status === 'paid' ? 'Pago' : inst.status === 'canceled' ? 'Cancelado' : 'Ativo'}
                 </span>
               </div>
 
@@ -76,9 +77,7 @@ export default async function InstallmentsPage() {
                   <span>{progress}% pago</span>
                   <span>
                     {formatCurrency(
-                      items
-                        .filter((i) => !i.paid && !i.canceled)
-                        .reduce((a, i) => a + i.amount, 0)
+                      items.filter((i) => !i.paid && !i.canceled).reduce((a, i) => a + i.amount, 0)
                     )}{' '}
                     restantes
                   </span>
@@ -96,7 +95,7 @@ export default async function InstallmentsPage() {
 
         {installments.length === 0 && (
           <div className="text-center py-16 text-gray-400">
-            Nenhum parcelamento cadastrado.
+            {coupleId ? 'Nenhum parcelamento cadastrado.' : 'Crie um casal em Configurações para começar.'}
           </div>
         )}
       </div>

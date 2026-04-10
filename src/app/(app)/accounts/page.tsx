@@ -1,10 +1,9 @@
-'use server'
-
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { CreditCard, Banknote, Building2 } from 'lucide-react'
 import type { Account } from '@/types/database'
+import { NewAccountButton } from '@/components/features/accounts/new-account-button'
 
 const typeLabel: Record<Account['type'], string> = {
   cash: 'Dinheiro',
@@ -46,15 +45,17 @@ export default async function AccountsPage() {
   const accounts: Account[] = (accountsRes?.data ?? []) as Account[]
   const balances: any[] = balancesRes?.data ?? []
 
-  const balanceMap = new Map(
-    balances.map((b) => [b.id, b.balance])
-  )
+  const balanceMap = new Map(balances.map((b) => [b.id, b.balance]))
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Contas" />
 
       <div className="p-6">
+        <div className="flex justify-end mb-5">
+          {coupleId && <NewAccountButton coupleId={coupleId} userId={user!.id} />}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {accounts.map((account) => (
             <div
@@ -86,7 +87,7 @@ export default async function AccountsPage() {
 
           {accounts.length === 0 && (
             <div className="col-span-full text-center py-16 text-gray-400">
-              Nenhuma conta cadastrada ainda.
+              {coupleId ? 'Nenhuma conta cadastrada ainda.' : 'Crie um casal em Configurações para começar.'}
             </div>
           )}
         </div>

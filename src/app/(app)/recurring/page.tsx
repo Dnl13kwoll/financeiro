@@ -2,6 +2,7 @@ import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { CheckCircle2, Circle } from 'lucide-react'
+import { NewRecurringButton } from '@/components/features/recurring/new-recurring-button'
 
 export default async function RecurringPage() {
   const supabase = await createClient()
@@ -36,15 +37,17 @@ export default async function RecurringPage() {
       <Header title="Recorrentes" />
 
       <div className="p-6 space-y-3">
+        <div className="flex justify-end">
+          {coupleId && <NewRecurringButton coupleId={coupleId} userId={user!.id} />}
+        </div>
+
         {recurring.map((rec) => {
           const records = (rec.recurring_records ?? []) as {
             reference_month: string
             amount: number
             paid: boolean
           }[]
-          const currentRecord = records.find(
-            (r) => r.reference_month === currentMonth
-          )
+          const currentRecord = records.find((r) => r.reference_month === currentMonth)
 
           return (
             <div
@@ -64,9 +67,7 @@ export default async function RecurringPage() {
               </div>
               <div className="text-right">
                 <p className="font-semibold text-gray-900">
-                  {currentRecord
-                    ? formatCurrency(currentRecord.amount)
-                    : '—'}
+                  {currentRecord ? formatCurrency(currentRecord.amount) : '—'}
                 </p>
                 <p className="text-xs text-gray-400">
                   {currentRecord?.paid ? 'Pago' : 'Pendente'}
@@ -78,7 +79,7 @@ export default async function RecurringPage() {
 
         {recurring.length === 0 && (
           <div className="text-center py-16 text-gray-400">
-            Nenhuma conta recorrente cadastrada.
+            {coupleId ? 'Nenhuma conta recorrente cadastrada.' : 'Crie um casal em Configurações para começar.'}
           </div>
         )}
       </div>

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Transaction } from '@/types/database'
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from 'lucide-react'
+import { NewTransactionButton } from '@/components/features/transactions/new-transaction-button'
 
 const typeConfig: Record<
   Transaction['type'],
@@ -59,13 +60,40 @@ export default async function TransactionsPage({
         .order('date', { ascending: false })
     : null
 
+  const accountsRes = coupleId
+    ? await supabase
+        .from('accounts')
+        .select('id, name')
+        .eq('couple_id', coupleId)
+        .is('deleted_at', null)
+    : null
+
+  const categoriesRes = await supabase
+    .from('categories')
+    .select('id, name, type')
+    .order('name')
+
   const transactions: any[] = transactionsRes?.data ?? []
+  const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
+  const categories: { id: string; name: string; type: 'income' | 'expense' }[] =
+    (categoriesRes?.data ?? []) as any[]
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Transações" />
 
       <div className="p-6 space-y-4">
+        <div className="flex justify-end">
+          {coupleId && (
+            <NewTransactionButton
+              coupleId={coupleId}
+              userId={user!.id}
+              accounts={accounts}
+              categories={categories}
+            />
+          )}
+        </div>
+
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -117,7 +145,7 @@ export default async function TransactionsPage({
               {transactions.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-gray-400">
-                    Nenhuma transação neste mês.
+                    {coupleId ? 'Nenhuma transação neste mês.' : 'Crie um casal em Configurações para começar.'}
                   </td>
                 </tr>
               )}

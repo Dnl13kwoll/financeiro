@@ -34,11 +34,13 @@ export default async function TransactionsPage({
   const { data: { user } } = await supabase.auth.getUser()
   const params = await searchParams
 
-  const { data: member } = await supabase
+  const memberRes = await supabase
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single() as { data: { couple_id: string } | null }
+    .single()
+
+  const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const now = new Date()
   const monthParam = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -46,16 +48,18 @@ export default async function TransactionsPage({
   const monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
   const monthEnd = new Date(year, month, 0).toISOString().slice(0, 10)
 
-  const { data: transactions } = member
+  const transactionsRes = coupleId
     ? await supabase
         .from('transactions')
         .select('*, categories(name), accounts(name)')
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)
         .is('deleted_at', null)
         .order('date', { ascending: false })
-    : { data: [] as any[] }
+    : null
+
+  const transactions: any[] = transactionsRes?.data ?? []
 
   return (
     <div className="flex flex-col flex-1">
@@ -75,7 +79,7 @@ export default async function TransactionsPage({
               </tr>
             </thead>
             <tbody>
-              {(transactions ?? []).map((t) => {
+              {transactions.map((t) => {
                 const config = typeConfig[t.type as Transaction['type']]
                 return (
                   <tr
@@ -110,7 +114,7 @@ export default async function TransactionsPage({
                   </tr>
                 )
               })}
-              {(!transactions || transactions.length === 0) && (
+              {transactions.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-gray-400">
                     Nenhuma transação neste mês.

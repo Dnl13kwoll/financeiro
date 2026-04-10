@@ -6,11 +6,13 @@ export default async function BudgetsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: member } = await supabase
+  const memberRes = await supabase
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single() as { data: { couple_id: string } | null }
+    .single()
+
+  const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -20,29 +22,31 @@ export default async function BudgetsPage() {
     .toISOString()
     .slice(0, 10)
 
-  const { data: budgets } = member
+  const budgetsRes = coupleId
     ? await supabase
         .from('budgets')
         .select('*, categories(name)')
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .eq('month', monthStart)
         .order('amount', { ascending: false })
-    : { data: [] as any[] }
+    : null
 
-  // Gastos por categoria no mês
-  const { data: expenses } = member
+  const expensesRes = coupleId
     ? await supabase
         .from('transactions')
         .select('category_id, amount')
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .eq('type', 'expense')
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)
         .is('deleted_at', null)
-    : { data: [] as any[] }
+    : null
+
+  const budgets: any[] = budgetsRes?.data ?? []
+  const expenses: any[] = expensesRes?.data ?? []
 
   const expenseMap = new Map<string, number>()
-  for (const e of expenses ?? []) {
+  for (const e of expenses) {
     if (e.category_id) {
       expenseMap.set(e.category_id, (expenseMap.get(e.category_id) ?? 0) + e.amount)
     }
@@ -53,7 +57,7 @@ export default async function BudgetsPage() {
       <Header title="Orçamentos" />
 
       <div className="p-6 space-y-4">
-        {(budgets ?? []).map((budget) => {
+        {budgets.map((budget) => {
           const spent = expenseMap.get(budget.category_id) ?? 0
           const percent = Math.min(Math.round((spent / budget.amount) * 100), 100)
           const over = spent > budget.amount
@@ -88,7 +92,7 @@ export default async function BudgetsPage() {
           )
         })}
 
-        {(!budgets || budgets.length === 0) && (
+        {budgets.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             Nenhum orçamento para este mês.
           </div>

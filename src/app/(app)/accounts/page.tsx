@@ -1,3 +1,5 @@
+'use server'
+
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
@@ -20,27 +22,32 @@ export default async function AccountsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: member } = await supabase
+  const memberRes = await supabase
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single() as { data: { couple_id: string } | null }
+    .single()
 
-  const { data: accounts } = member
+  const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
+
+  const accountsRes = coupleId
     ? await supabase
         .from('accounts')
         .select('*')
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .is('deleted_at', null)
         .order('created_at')
-    : { data: [] as any[] }
+    : null
 
-  const { data: balances } = member
+  const balancesRes = coupleId
     ? await supabase.from('account_balances').select('*')
-    : { data: [] as any[] }
+    : null
+
+  const accounts: Account[] = (accountsRes?.data ?? []) as Account[]
+  const balances: any[] = balancesRes?.data ?? []
 
   const balanceMap = new Map(
-    (balances ?? []).map((b) => [b.id, b.balance])
+    balances.map((b) => [b.id, b.balance])
   )
 
   return (
@@ -49,7 +56,7 @@ export default async function AccountsPage() {
 
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(accounts ?? []).map((account) => (
+          {accounts.map((account) => (
             <div
               key={account.id}
               className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
@@ -77,7 +84,7 @@ export default async function AccountsPage() {
             </div>
           ))}
 
-          {(!accounts || accounts.length === 0) && (
+          {accounts.length === 0 && (
             <div className="col-span-full text-center py-16 text-gray-400">
               Nenhuma conta cadastrada ainda.
             </div>

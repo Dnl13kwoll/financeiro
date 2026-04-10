@@ -5,26 +5,33 @@ export default async function SettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: member } = await supabase
+  const memberRes = await supabase
     .from('couple_members')
     .select('couple_id, role, couples(currency)')
     .eq('user_id', user!.id)
-    .single() as { data: { couple_id: string; role: string; couples: { currency?: string } | null } | null }
+    .single()
 
-  const { data: members } = member
+  const memberData = memberRes.data as any
+  const coupleId: string | null = memberData?.couple_id ?? null
+  const currency: string = memberData?.couples?.currency ?? 'BRL'
+
+  const membersRes = coupleId
     ? await supabase
         .from('couple_members')
         .select('role, profiles(name, email)')
-        .eq('couple_id', member.couple_id)
-    : { data: [] as any[] }
+        .eq('couple_id', coupleId)
+    : null
 
-  const { data: invitations } = member
+  const invitationsRes = coupleId
     ? await supabase
         .from('invitations')
         .select('email, status, expires_at')
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .order('created_at', { ascending: false })
-    : { data: [] as any[] }
+    : null
+
+  const members: any[] = membersRes?.data ?? []
+  const invitations: any[] = invitationsRes?.data ?? []
 
   return (
     <div className="flex flex-col flex-1">
@@ -47,17 +54,15 @@ export default async function SettingsPage() {
         </section>
 
         {/* Casal */}
-        {member ? (
+        {coupleId ? (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">Casal</h3>
             <p className="text-sm text-gray-500 mb-3">
               Moeda:{' '}
-              <span className="font-medium text-gray-900">
-                {(member.couples as { currency?: string } | null)?.currency ?? 'BRL'}
-              </span>
+              <span className="font-medium text-gray-900">{currency}</span>
             </p>
             <div className="space-y-2">
-              {(members ?? []).map((m, i) => {
+              {members.map((m, i) => {
                 const profile = m.profiles as { name?: string; email?: string } | null
                 return (
                   <div
@@ -85,14 +90,14 @@ export default async function SettingsPage() {
         )}
 
         {/* Convites */}
-        {member && (
+        {coupleId && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">Convites</h3>
-            {(invitations ?? []).length === 0 ? (
+            {invitations.length === 0 ? (
               <p className="text-sm text-gray-400">Nenhum convite enviado.</p>
             ) : (
               <div className="space-y-2">
-                {(invitations ?? []).map((inv, i) => (
+                {invitations.map((inv, i) => (
                   <div key={i} className="flex items-center justify-between text-sm">
                     <span className="text-gray-700">{inv.email}</span>
                     <span

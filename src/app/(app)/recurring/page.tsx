@@ -7,32 +7,36 @@ export default async function RecurringPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: member } = await supabase
+  const memberRes = await supabase
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single() as { data: { couple_id: string } | null }
+    .single()
+
+  const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const now = new Date()
   const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     .toISOString()
     .slice(0, 10)
 
-  const { data: recurring } = member
+  const recurringRes = coupleId
     ? await supabase
         .from('recurring_accounts')
         .select(`*, recurring_records(*)`)
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .eq('active', true)
         .order('day_due')
-    : { data: [] as any[] }
+    : null
+
+  const recurring: any[] = recurringRes?.data ?? []
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Recorrentes" />
 
       <div className="p-6 space-y-3">
-        {(recurring ?? []).map((rec) => {
+        {recurring.map((rec) => {
           const records = (rec.recurring_records ?? []) as {
             reference_month: string
             amount: number
@@ -72,7 +76,7 @@ export default async function RecurringPage() {
           )
         })}
 
-        {(!recurring || recurring.length === 0) && (
+        {recurring.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             Nenhuma conta recorrente cadastrada.
           </div>

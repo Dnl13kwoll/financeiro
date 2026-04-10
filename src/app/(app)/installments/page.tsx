@@ -6,26 +6,30 @@ export default async function InstallmentsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: member } = await supabase
+  const memberRes = await supabase
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single() as { data: { couple_id: string } | null }
+    .single()
 
-  const { data: installments } = member
+  const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
+
+  const installmentsRes = coupleId
     ? await supabase
         .from('installments')
         .select('*, installment_items(*)')
-        .eq('couple_id', member.couple_id)
+        .eq('couple_id', coupleId)
         .order('start_date', { ascending: false })
-    : { data: [] as any[] }
+    : null
+
+  const installments: any[] = installmentsRes?.data ?? []
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Parcelamentos" />
 
       <div className="p-6 space-y-4">
-        {(installments ?? []).map((inst) => {
+        {installments.map((inst) => {
           const items = (inst.installment_items ?? []) as {
             part_number: number
             amount: number
@@ -90,7 +94,7 @@ export default async function InstallmentsPage() {
           )
         })}
 
-        {(!installments || installments.length === 0) && (
+        {installments.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             Nenhum parcelamento cadastrado.
           </div>

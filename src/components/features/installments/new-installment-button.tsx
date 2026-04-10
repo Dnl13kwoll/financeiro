@@ -50,7 +50,7 @@ export function NewInstallmentButton({ coupleId, userId }: { coupleId: string; u
           due_date: dueDate.toISOString().slice(0, 10),
         }
       })
-      await supabase.from('installment_items').insert(items)
+      await (supabase.from('installment_items') as any).insert(items)
     }
 
     setLoading(false)

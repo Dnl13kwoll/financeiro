@@ -72,9 +72,10 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, coupleId }),
     })
-    const json = await res.json()
+    let json: any = {}
+    try { json = await res.json() } catch {}
     if (!res.ok) {
-      setError(json.error ?? 'Erro ao enviar convite')
+      setError(json.error ?? `Erro ao enviar convite (${res.status})`)
     } else {
       setSuccess(true)
       setEmail('')

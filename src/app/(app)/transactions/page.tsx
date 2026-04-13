@@ -7,6 +7,7 @@ import { NewTransactionButton } from '@/components/features/transactions/new-tra
 import { TransactionActions } from '@/components/features/transactions/transaction-actions'
 import { TransactionFilters } from '@/components/features/transactions/transaction-filters'
 import { CategoryManager } from '@/components/features/categories/category-manager'
+import { ImportCSVButton } from '@/components/features/transactions/import-csv-button'
 import { Suspense } from 'react'
 
 const typeConfig: Record<
@@ -97,7 +98,8 @@ export default async function TransactionsPage({
           <Suspense>
             <TransactionFilters accounts={accounts} categories={categories} />
           </Suspense>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {coupleId && <ImportCSVButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
             {coupleId && <CategoryManager categories={categories} coupleId={coupleId} />}
             {coupleId && (
               <NewTransactionButton

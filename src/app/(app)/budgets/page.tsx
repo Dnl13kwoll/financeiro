@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { NewBudgetButton } from '@/components/features/budgets/new-budget-button'
 import { BudgetDeleteButton } from '@/components/features/budgets/budget-actions'
+import { CopyBudgetsButton } from '@/components/features/budgets/copy-budgets-button'
 
 export default async function BudgetsPage() {
   const supabase = await createClient()
@@ -65,7 +66,8 @@ export default async function BudgetsPage() {
       <Header title="Orçamentos" />
 
       <div className="p-4 md:p-6 space-y-4">
-        <div className="flex justify-end">
+        <div className="flex gap-2 justify-end flex-wrap">
+          {coupleId && <CopyBudgetsButton coupleId={coupleId} currentMonth={monthStart} />}
           {coupleId && <NewBudgetButton coupleId={coupleId} categories={categories} />}
         </div>
 

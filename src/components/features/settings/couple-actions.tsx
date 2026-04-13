@@ -40,7 +40,7 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
     }
 
     setLoading(false)
-    window.location.reload()
+    window.location.href = '/settings'
   }
 
   return (

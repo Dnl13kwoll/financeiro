@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { CreateCoupleButton, InvitePartnerButton } from '@/components/features/settings/couple-actions'

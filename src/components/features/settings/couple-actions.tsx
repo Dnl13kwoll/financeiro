@@ -1,12 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Plus, UserPlus } from 'lucide-react'
 
 export function CreateCoupleButton({ userId }: { userId: string }) {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -64,17 +62,19 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
-    const invitePayload: any = { couple_id: coupleId, email }
-    const { error: err } = await supabase.from('invitations').insert(invitePayload)
-    if (err) {
-      setError(err.message)
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, coupleId }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setError(json.error ?? 'Erro ao enviar convite')
     } else {
       setSuccess(true)
       setEmail('')

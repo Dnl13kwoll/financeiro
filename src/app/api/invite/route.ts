@@ -21,13 +21,13 @@ export async function POST(req: NextRequest) {
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const { error: dbError } = await (supabase.from('invitations') as any).insert({
+    const { error: dbError } = await (supabase.from('invitations') as any).upsert({
       couple_id: coupleId,
       email,
       token,
       expires_at: expiresAt,
       status: 'pending',
-    })
+    }, { onConflict: 'couple_id,email' })
 
     if (dbError) {
       return NextResponse.json({ error: dbError.message }, { status: 500 })

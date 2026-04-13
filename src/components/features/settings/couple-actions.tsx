@@ -8,36 +8,53 @@ import { Plus, UserPlus } from 'lucide-react'
 export function CreateCoupleButton({ userId }: { userId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleCreate() {
     setLoading(true)
+    setError('')
     const supabase = createClient()
-    const { data: couple } = await (supabase.from('couples') as any)
+
+    const { data: couple, error: coupleErr } = await (supabase.from('couples') as any)
       .insert({ currency: 'BRL' })
       .select()
       .single()
 
-    if (couple) {
-      const memberPayload: any = {
-        user_id: userId,
-        couple_id: couple.id,
-        role: 'owner',
-      }
-      await supabase.from('couple_members').insert(memberPayload)
-      router.refresh()
+    if (coupleErr) {
+      setError('Erro ao criar casal: ' + coupleErr.message)
+      setLoading(false)
+      return
     }
+
+    const memberPayload: any = {
+      user_id: userId,
+      couple_id: couple.id,
+      role: 'owner',
+    }
+    const { error: memberErr } = await supabase.from('couple_members').insert(memberPayload)
+
+    if (memberErr) {
+      setError('Erro ao criar membro: ' + memberErr.message)
+      setLoading(false)
+      return
+    }
+
     setLoading(false)
+    router.refresh()
   }
 
   return (
-    <button
-      onClick={handleCreate}
-      disabled={loading}
-      className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
-    >
-      <Plus className="w-4 h-4" />
-      {loading ? 'Criando...' : 'Criar Casal'}
-    </button>
+    <div className="space-y-2">
+      <button
+        onClick={handleCreate}
+        disabled={loading}
+        className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
+      >
+        <Plus className="w-4 h-4" />
+        {loading ? 'Criando...' : 'Criar Casal'}
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
   )
 }
 

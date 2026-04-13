@@ -40,7 +40,7 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
     }
 
     setLoading(false)
-    router.refresh()
+    window.location.reload()
   }
 
   return (
@@ -78,7 +78,6 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
     } else {
       setSuccess(true)
       setEmail('')
-      router.refresh()
     }
     setLoading(false)
   }

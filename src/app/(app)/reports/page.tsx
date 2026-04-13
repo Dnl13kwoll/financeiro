@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { ExportButtons } from '@/components/features/reports/export-buttons'
+import { MonthFilter } from '@/components/features/reports/month-filter'
 
 export default async function ReportsPage({
   searchParams,
@@ -71,20 +72,10 @@ export default async function ReportsPage({
       <div className="p-6 space-y-6 max-w-3xl">
         {/* Filtro de mês */}
         <div className="flex items-center justify-between">
-          <form className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">Mês:</label>
-            <input
-              name="month"
-              type="month"
-              defaultValue={monthParam}
-              onChange={e => {
-                const url = new URL(window.location.href)
-                url.searchParams.set('month', e.target.value)
-                window.location.href = url.toString()
-              }}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </form>
+            <MonthFilter value={monthParam} />
+          </div>
 
           {coupleId && (
             <ExportButtons

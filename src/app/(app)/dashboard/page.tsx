@@ -2,6 +2,7 @@ import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { AlertTriangle } from 'lucide-react'
+import { PieChart } from '@/components/features/dashboard/pie-chart'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -71,6 +72,7 @@ export default async function DashboardPage() {
 
   // Alertas vencimento
   const today = now.toISOString().slice(0, 10)
+  const next30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const next7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const dueSoonRes = coupleId
     ? await (supabase.from('installment_items') as any).select('id, due_date, amount, installments(description)').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next7)
@@ -82,6 +84,24 @@ export default async function DashboardPage() {
   const dueSoon: any[] = dueSoonRes?.data ?? []
   const recurringDue: any[] = recurringDueRes?.data ?? []
   const hasAlerts = dueSoon.length > 0 || recurringDue.length > 0
+
+  // Previsão de saldo (30 dias)
+  const pendingInstallmentsRes = coupleId
+    ? await (supabase.from('installment_items') as any).select('amount').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next30)
+    : null
+  const pendingInstallmentsTotal: number = (pendingInstallmentsRes?.data ?? []).reduce((s: number, i: any) => s + i.amount, 0)
+
+  const pendingRecurringRes = coupleId
+    ? await supabase.from('recurring_accounts').select('id, day_due').eq('couple_id', coupleId).eq('active', true)
+    : null
+  const pendingRecurringTotal: number = (pendingRecurringRes?.data ?? []).reduce((s: number, r: any) => {
+    const dueDay = r.day_due
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay)
+    if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1)
+    return dueDate <= new Date(next30) ? s + 0 : s // will be filled when records have amounts
+  }, 0)
+
+  const forecastBalance = totalBalance - pendingInstallmentsTotal - pendingRecurringTotal
 
   const maxBar = Math.max(...history.map(h => Math.max(h.income, h.expense)), 1)
 
@@ -159,23 +179,36 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Gastos por categoria */}
+        {/* Previsão de saldo 30 dias */}
+        {coupleId && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-3">Previsão de saldo — 30 dias</h3>
+            <div className="flex items-end gap-6">
+              <div>
+                <p className="text-xs text-gray-500">Saldo atual</p>
+                <p className="text-xl font-bold text-gray-900 financial-value">{formatCurrency(totalBalance, currency)}</p>
+              </div>
+              <div className="text-gray-400 text-lg pb-1">→</div>
+              <div>
+                <p className="text-xs text-gray-500">Estimado (descontando parcelas)</p>
+                <p className={`text-xl font-bold financial-value ${forecastBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(forecastBalance, currency)}
+                </p>
+              </div>
+            </div>
+            {pendingInstallmentsTotal > 0 && (
+              <p className="text-xs text-gray-400 mt-2">
+                Parcelas pendentes nos próximos 30 dias: <span className="text-red-500 font-medium financial-value">{formatCurrency(pendingInstallmentsTotal, currency)}</span>
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Gastos por categoria — pizza */}
         {catData.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">Gastos por categoria</h3>
-            <div className="space-y-3">
-              {catData.map(c => (
-                <div key={c.name}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-700">{c.name}</span>
-                    <span className="font-medium text-gray-900 financial-value">{formatCurrency(c.total)}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-primary-500 h-2 rounded-full" style={{ width: `${Math.min(100, (c.total / totalExpenses) * 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <PieChart data={catData} />
           </section>
         )}
       </div>

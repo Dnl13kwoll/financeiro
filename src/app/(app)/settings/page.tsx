@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { CreateCoupleButton, InvitePartnerButton } from '@/components/features/settings/couple-actions'
 import { LeaveCoupleButton } from '@/components/features/settings/leave-couple'
+import { CurrencySelector } from '@/components/features/settings/currency-selector'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -62,9 +63,13 @@ export default async function SettingsPage() {
                 <LeaveCoupleButton userId={user!.id} coupleId={coupleId} />
               </div>
             </div>
-            <p className="text-sm text-gray-500 mb-3">
-              Moeda: <span className="font-medium text-gray-900">{currency}</span>
-            </p>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-sm text-gray-500">Moeda:</span>
+              {role === 'owner'
+                ? <CurrencySelector coupleId={coupleId} current={currency} />
+                : <span className="text-sm font-medium text-gray-900">{currency}</span>
+              }
+            </div>
             <div className="space-y-2">
               {members.map((m, i) => {
                 const profile = m.profiles as { name?: string; email?: string } | null

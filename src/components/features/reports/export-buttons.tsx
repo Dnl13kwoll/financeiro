@@ -70,45 +70,50 @@ export function ExportButtons({
   <h2>Por Categoria</h2>
   <table>
     <thead><tr><th>Categoria</th><th>Total</th></tr></thead>
-    <tbody>
-      ${categorySummary.map(c => `<tr><td>${c.name}</td><td>R$ ${c.total.toFixed(2).replace('.', ',')}</td></tr>`).join('')}
-    </tbody>
+    <tbody>${categorySummary.map(c => `<tr><td>${c.name}</td><td>R$ ${c.total.toFixed(2).replace('.', ',')}</td></tr>`).join('')}</tbody>
   </table>
   <h2>Transações</h2>
   <table>
     <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th>Valor</th></tr></thead>
-    <tbody>
-      ${transactions.map(t => `<tr>
-        <td>${t.date}</td>
-        <td>${t.type}</td>
-        <td>${t.description}</td>
-        <td>${t.category}</td>
-        <td>${t.account}</td>
-        <td>R$ ${t.amount.toFixed(2).replace('.', ',')}</td>
-      </tr>`).join('')}
-    </tbody>
+    <tbody>${transactions.map(t => `<tr><td>${t.date}</td><td>${t.type}</td><td>${t.description}</td><td>${t.category}</td><td>${t.account}</td><td>R$ ${t.amount.toFixed(2).replace('.', ',')}</td></tr>`).join('')}</tbody>
   </table>
   <script>window.onload = () => window.print()</script>
 </body>
 </html>`
-
     const w = window.open('', '_blank')
     if (w) { w.document.write(html); w.document.close() }
   }
 
+  function exportSheets() {
+    // Build CSV and open Google Sheets import URL
+    const header = 'Data\tTipo\tDescrição\tCategoria\tConta\tValor\n'
+    const rows = transactions.map(t =>
+      [t.date, t.type, t.description, t.category, t.account, t.amount.toFixed(2)].join('\t')
+    ).join('\n')
+    const tsv = header + rows
+    const encoded = encodeURIComponent(tsv)
+    // Opens a new Google Sheet with data pre-pasted via the URL paste trick
+    const blob = new Blob(['\uFEFF' + tsv], { type: 'text/tab-separated-values;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `financeiro-${month}.tsv`
+    a.click()
+    URL.revokeObjectURL(url)
+    // Open Google Sheets after short delay
+    setTimeout(() => window.open('https://sheets.new', '_blank'), 500)
+  }
+
   return (
-    <div className="flex gap-2">
-      <button
-        onClick={downloadCSV}
-        className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-      >
+    <div className="flex gap-2 flex-wrap">
+      <button onClick={downloadCSV} className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
         Exportar CSV
       </button>
-      <button
-        onClick={printPDF}
-        className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-      >
+      <button onClick={printPDF} className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
         Exportar PDF
+      </button>
+      <button onClick={exportSheets} className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+        Google Sheets
       </button>
     </div>
   )

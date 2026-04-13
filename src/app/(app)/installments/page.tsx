@@ -2,6 +2,7 @@ import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { NewInstallmentButton } from '@/components/features/installments/new-installment-button'
+import { InstallmentActions } from '@/components/features/installments/installment-actions'
 
 export default async function InstallmentsPage() {
   const supabase = await createClient()
@@ -59,7 +60,9 @@ export default async function InstallmentsPage() {
                     início {formatDate(inst.start_date)}
                   </p>
                 </div>
-                <span
+                <div className="flex items-center gap-2">
+                  <InstallmentActions id={inst.id} status={inst.status} />
+                  <span
                   className={`text-xs px-2 py-1 rounded-full font-medium ${
                     inst.status === 'paid'
                       ? 'bg-green-100 text-green-700'
@@ -70,6 +73,7 @@ export default async function InstallmentsPage() {
                 >
                   {inst.status === 'paid' ? 'Pago' : inst.status === 'canceled' ? 'Cancelado' : 'Ativo'}
                 </span>
+                </div>
               </div>
 
               <div className="mt-4">

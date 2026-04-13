@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { NewRecurringButton } from '@/components/features/recurring/new-recurring-button'
+import { RecurringActions } from '@/components/features/recurring/recurring-actions'
 
 export default async function RecurringPage() {
   const supabase = await createClient()
@@ -65,13 +66,16 @@ export default async function RecurringPage() {
                   <p className="text-xs text-gray-400">Vence dia {rec.day_due}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-semibold text-gray-900">
-                  {currentRecord ? formatCurrency(currentRecord.amount) : '—'}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {currentRecord?.paid ? 'Pago' : 'Pendente'}
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {currentRecord ? formatCurrency(currentRecord.amount) : '—'}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {currentRecord?.paid ? 'Pago' : 'Pendente'}
+                  </p>
+                </div>
+                <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due }} />
               </div>
             </div>
           )

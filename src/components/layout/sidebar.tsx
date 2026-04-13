@@ -11,6 +11,8 @@ import {
   PieChart,
   Settings,
   LogOut,
+  BarChart2,
+  Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -23,6 +25,8 @@ const navItems = [
   { href: '/installments', label: 'Parcelamentos', icon: Layers },
   { href: '/recurring', label: 'Recorrentes', icon: RefreshCw },
   { href: '/budgets', label: 'Orçamentos', icon: PieChart },
+  { href: '/goals', label: 'Metas', icon: Target },
+  { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/settings', label: 'Configurações', icon: Settings },
 ]
 

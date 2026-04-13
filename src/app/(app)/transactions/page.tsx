@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Transaction } from '@/types/database'
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from 'lucide-react'
 import { NewTransactionButton } from '@/components/features/transactions/new-transaction-button'
+import { TransactionActions } from '@/components/features/transactions/transaction-actions'
 
 const typeConfig: Record<
   Transaction['type'],
@@ -104,6 +105,7 @@ export default async function TransactionsPage({
                 <th className="px-4 py-3 font-medium">Conta</th>
                 <th className="px-4 py-3 font-medium">Data</th>
                 <th className="px-4 py-3 font-medium text-right">Valor</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -139,12 +141,19 @@ export default async function TransactionsPage({
                       {t.type === 'expense' ? '-' : ''}
                       {formatCurrency(t.amount)}
                     </td>
+                    <td className="px-4 py-3">
+                      <TransactionActions
+                        transaction={{ id: t.id, type: t.type, amount: t.amount, description: t.description, category_id: t.category_id, account_id: t.account_id, date: t.date, is_private: t.is_private }}
+                        accounts={accounts}
+                        categories={categories}
+                      />
+                    </td>
                   </tr>
                 )
               })}
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-16 text-center text-gray-400">
                     {coupleId ? 'Nenhuma transação neste mês.' : 'Crie um casal em Configurações para começar.'}
                   </td>
                 </tr>

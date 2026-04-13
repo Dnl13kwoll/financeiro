@@ -4,6 +4,7 @@ import { formatCurrency } from '@/lib/utils'
 import { CreditCard, Banknote, Building2 } from 'lucide-react'
 import type { Account } from '@/types/database'
 import { NewAccountButton } from '@/components/features/accounts/new-account-button'
+import { AccountActions } from '@/components/features/accounts/account-actions'
 
 const typeLabel: Record<Account['type'], string> = {
   cash: 'Dinheiro',
@@ -67,11 +68,14 @@ export default async function AccountsPage() {
                   {typeIcon[account.type]}
                   <span className="text-xs">{typeLabel[account.type]}</span>
                 </div>
-                {account.type === 'credit_card' && account.limit_amount && (
-                  <span className="text-xs text-gray-400">
-                    Limite: {formatCurrency(account.limit_amount)}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {account.type === 'credit_card' && account.limit_amount && (
+                    <span className="text-xs text-gray-400">
+                      Limite: {formatCurrency(account.limit_amount)}
+                    </span>
+                  )}
+                  <AccountActions account={account} />
+                </div>
               </div>
               <p className="font-semibold text-gray-900">{account.name}</p>
               <p className="text-2xl font-bold mt-2 text-primary-600">

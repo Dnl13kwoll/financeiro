@@ -5,6 +5,9 @@ import type { Transaction } from '@/types/database'
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from 'lucide-react'
 import { NewTransactionButton } from '@/components/features/transactions/new-transaction-button'
 import { TransactionActions } from '@/components/features/transactions/transaction-actions'
+import { TransactionFilters } from '@/components/features/transactions/transaction-filters'
+import { CategoryManager } from '@/components/features/categories/category-manager'
+import { Suspense } from 'react'
 
 const typeConfig: Record<
   Transaction['type'],
@@ -30,7 +33,7 @@ const typeConfig: Record<
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>
+  searchParams: Promise<{ month?: string; type?: string; category_id?: string; account_id?: string; q?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -50,8 +53,8 @@ export default async function TransactionsPage({
   const monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
   const monthEnd = new Date(year, month, 0).toISOString().slice(0, 10)
 
-  const transactionsRes = coupleId
-    ? await supabase
+  let query = coupleId
+    ? supabase
         .from('transactions')
         .select('*, categories(name), accounts(name)')
         .eq('couple_id', coupleId)
@@ -61,49 +64,61 @@ export default async function TransactionsPage({
         .order('date', { ascending: false })
     : null
 
+  if (query && params.type) query = (query as any).eq('type', params.type)
+  if (query && params.category_id) query = (query as any).eq('category_id', params.category_id)
+  if (query && params.account_id) query = (query as any).eq('account_id', params.account_id)
+
+  const transactionsRes = query ? await query : null
+
   const accountsRes = coupleId
-    ? await supabase
-        .from('accounts')
-        .select('id, name')
-        .eq('couple_id', coupleId)
-        .is('deleted_at', null)
+    ? await supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)
     : null
 
-  const categoriesRes = await supabase
-    .from('categories')
-    .select('id, name, type')
-    .order('name')
+  const categoriesRes = await supabase.from('categories').select('id, name, type, couple_id').order('name')
 
-  const transactions: any[] = transactionsRes?.data ?? []
+  let transactions: any[] = transactionsRes?.data ?? []
   const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
-  const categories: { id: string; name: string; type: 'income' | 'expense' }[] =
-    (categoriesRes?.data ?? []) as any[]
+  const categories: { id: string; name: string; type: 'income' | 'expense'; couple_id?: string }[] = (categoriesRes?.data ?? []) as any[]
+
+  if (params.q) {
+    const q = params.q.toLowerCase()
+    transactions = transactions.filter(t =>
+      (t.description ?? '').toLowerCase().includes(q) ||
+      (t.categories?.name ?? '').toLowerCase().includes(q)
+    )
+  }
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Transações" />
 
-      <div className="p-6 space-y-4">
-        <div className="flex justify-end">
-          {coupleId && (
-            <NewTransactionButton
-              coupleId={coupleId}
-              userId={user!.id}
-              accounts={accounts}
-              categories={categories}
-            />
-          )}
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="flex flex-wrap gap-2 justify-between">
+          <Suspense>
+            <TransactionFilters accounts={accounts} categories={categories} />
+          </Suspense>
+          <div className="flex gap-2">
+            {coupleId && <CategoryManager categories={categories} coupleId={coupleId} />}
+            {coupleId && (
+              <NewTransactionButton
+                coupleId={coupleId}
+                userId={user!.id}
+                accounts={accounts}
+                categories={categories}
+              />
+            )}
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-gray-500 text-left">
                 <th className="px-4 py-3 font-medium">Tipo</th>
                 <th className="px-4 py-3 font-medium">Descrição</th>
-                <th className="px-4 py-3 font-medium">Categoria</th>
-                <th className="px-4 py-3 font-medium">Conta</th>
-                <th className="px-4 py-3 font-medium">Data</th>
+                <th className="px-4 py-3 font-medium hidden md:table-cell">Categoria</th>
+                <th className="px-4 py-3 font-medium hidden md:table-cell">Conta</th>
+                <th className="px-4 py-3 font-medium hidden sm:table-cell">Data</th>
                 <th className="px-4 py-3 font-medium text-right">Valor</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
@@ -112,31 +127,26 @@ export default async function TransactionsPage({
               {transactions.map((t) => {
                 const config = typeConfig[t.type as Transaction['type']]
                 return (
-                  <tr
-                    key={t.id}
-                    className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                  >
+                  <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         {config.icon}
-                        <span className="text-xs text-gray-500">{config.label}</span>
+                        <span className="text-xs text-gray-500 hidden sm:inline">{config.label}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-900">
                       {t.description ?? '—'}
                       {t.is_private && (
-                        <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
-                          privado
-                        </span>
+                        <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">privado</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
                       {(t.categories as { name?: string } | null)?.name ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
                       {(t.accounts as { name?: string } | null)?.name ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(t.date)}</td>
+                    <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{formatDate(t.date)}</td>
                     <td className={`px-4 py-3 text-right font-semibold ${config.color}`}>
                       {t.type === 'expense' ? '-' : ''}
                       {formatCurrency(t.amount)}
@@ -154,7 +164,7 @@ export default async function TransactionsPage({
               {transactions.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-16 text-center text-gray-400">
-                    {coupleId ? 'Nenhuma transação neste mês.' : 'Crie um casal em Configurações para começar.'}
+                    {coupleId ? 'Nenhuma transação encontrada.' : 'Crie um casal em Configurações para começar.'}
                   </td>
                 </tr>
               )}

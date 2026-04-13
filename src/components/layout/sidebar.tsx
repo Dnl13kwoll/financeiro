@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import {
   LayoutDashboard,
   CreditCard,
@@ -13,6 +14,8 @@ import {
   LogOut,
   BarChart2,
   Target,
+  Menu,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -30,50 +33,111 @@ const navItems = [
   { href: '/settings', label: 'Configurações', icon: Settings },
 ]
 
+function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  return (
+    <>
+      {navItems.map(({ href, label, icon: Icon }) => (
+        <Link
+          key={href}
+          href={href}
+          onClick={onNavigate}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+            pathname === href
+              ? 'bg-primary-50 text-primary-700'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          )}
+        >
+          <Icon className="w-4 h-4 shrink-0" />
+          {label}
+        </Link>
+      ))}
+    </>
+  )
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
+  const Logo = () => (
+    <div className="p-6 border-b border-gray-100">
+      <h1 className="text-xl font-bold text-primary-600">Financeiro</h1>
+      <p className="text-xs text-gray-400 mt-0.5">para casais</p>
+    </div>
+  )
+
+  const LogoutButton = () => (
+    <div className="p-4 border-t border-gray-100">
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+      >
+        <LogOut className="w-4 h-4" />
+        Sair
+      </button>
+    </div>
+  )
+
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-gray-100 flex flex-col">
-      <div className="p-6 border-b border-gray-100">
-        <h1 className="text-xl font-bold text-primary-600">Financeiro</h1>
-        <p className="text-xs text-gray-400 mt-0.5">para casais</p>
-      </div>
-
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-              pathname === href
-                ? 'bg-primary-50 text-primary-700'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            )}
-          >
-            <Icon className="w-4 h-4 shrink-0" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="p-4 border-t border-gray-100">
+    <>
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 h-14 flex items-center px-4 justify-between">
+        <div>
+          <span className="text-lg font-bold text-primary-600">Financeiro</span>
+          <span className="text-xs text-gray-400 ml-2">para casais</span>
+        </div>
         <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          onClick={() => setMobileOpen(true)}
+          className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
         >
-          <LogOut className="w-4 h-4" />
-          Sair
+          <Menu className="w-5 h-5" />
         </button>
       </div>
-    </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div className={cn(
+        'lg:hidden fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-xl flex flex-col transition-transform duration-300',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div>
+            <h1 className="text-xl font-bold text-primary-600">Financeiro</h1>
+            <p className="text-xs text-gray-400">para casais</p>
+          </div>
+          <button onClick={() => setMobileOpen(false)} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+        </nav>
+        <LogoutButton />
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-60 min-h-screen bg-white border-r border-gray-100 flex-col">
+        <Logo />
+        <nav className="flex-1 p-4 space-y-1">
+          <NavLinks pathname={pathname} />
+        </nav>
+        <LogoutButton />
+      </aside>
+    </>
   )
 }

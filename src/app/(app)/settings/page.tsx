@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { CreateCoupleButton, InvitePartnerButton } from '@/components/features/settings/couple-actions'
+import { LeaveCoupleButton } from '@/components/features/settings/leave-couple'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -41,19 +42,13 @@ export default async function SettingsPage() {
     <div className="flex flex-col flex-1">
       <Header title="Configurações" />
 
-      <div className="p-6 max-w-2xl space-y-6">
+      <div className="p-4 md:p-6 max-w-2xl space-y-6">
         {/* Perfil */}
         <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
           <h3 className="font-semibold text-gray-900 mb-4">Meu Perfil</h3>
           <div className="space-y-2 text-sm text-gray-600">
-            <p>
-              <span className="font-medium text-gray-900">Nome:</span>{' '}
-              {user?.user_metadata?.full_name ?? '—'}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">Email:</span>{' '}
-              {user?.email}
-            </p>
+            <p><span className="font-medium text-gray-900">Nome:</span>{' '}{user?.user_metadata?.full_name ?? '—'}</p>
+            <p><span className="font-medium text-gray-900">Email:</span>{' '}{user?.email}</p>
           </div>
         </section>
 
@@ -62,20 +57,20 @@ export default async function SettingsPage() {
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Casal</h3>
-              {role === 'owner' && <InvitePartnerButton coupleId={coupleId} />}
+              <div className="flex gap-2">
+                {role === 'owner' && <InvitePartnerButton coupleId={coupleId} />}
+                <LeaveCoupleButton userId={user!.id} coupleId={coupleId} />
+              </div>
             </div>
             <p className="text-sm text-gray-500 mb-3">
-              Moeda:{' '}
-              <span className="font-medium text-gray-900">{currency}</span>
+              Moeda: <span className="font-medium text-gray-900">{currency}</span>
             </p>
             <div className="space-y-2">
               {members.map((m, i) => {
                 const profile = m.profiles as { name?: string; email?: string } | null
                 return (
                   <div key={i} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700">
-                      {profile?.name ?? profile?.email ?? '—'}
-                    </span>
+                    <span className="text-gray-700">{profile?.name ?? profile?.email ?? '—'}</span>
                     <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
                       {m.role === 'owner' ? 'Dono' : 'Membro'}
                     </span>
@@ -102,15 +97,11 @@ export default async function SettingsPage() {
               {invitations.map((inv, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
                   <span className="text-gray-700">{inv.email}</span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      inv.status === 'accepted'
-                        ? 'bg-green-100 text-green-700'
-                        : inv.status === 'expired'
-                        ? 'bg-gray-100 text-gray-500'
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}
-                  >
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    inv.status === 'accepted' ? 'bg-green-100 text-green-700'
+                    : inv.status === 'expired' ? 'bg-gray-100 text-gray-500'
+                    : 'bg-yellow-100 text-yellow-700'
+                  }`}>
                     {inv.status === 'accepted' ? 'Aceito' : inv.status === 'expired' ? 'Expirado' : 'Pendente'}
                   </span>
                 </div>

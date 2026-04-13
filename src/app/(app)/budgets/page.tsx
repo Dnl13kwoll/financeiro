@@ -2,6 +2,7 @@ import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { NewBudgetButton } from '@/components/features/budgets/new-budget-button'
+import { BudgetDeleteButton } from '@/components/features/budgets/budget-actions'
 
 export default async function BudgetsPage() {
   const supabase = await createClient()
@@ -56,32 +57,49 @@ export default async function BudgetsPage() {
     }
   }
 
+  const totalBudget = budgets.reduce((s, b) => s + b.amount, 0)
+  const totalSpent = budgets.reduce((s, b) => s + (expenseMap.get(b.category_id) ?? 0), 0)
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Orçamentos" />
 
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         <div className="flex justify-end">
           {coupleId && <NewBudgetButton coupleId={coupleId} categories={categories} />}
         </div>
+
+        {budgets.length > 0 && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Total orçado</p>
+              <p className="text-xl font-bold text-blue-600 mt-1">{formatCurrency(totalBudget)}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Total gasto</p>
+              <p className={`text-xl font-bold mt-1 ${totalSpent > totalBudget ? 'text-red-600' : 'text-gray-900'}`}>
+                {formatCurrency(totalSpent)}
+              </p>
+            </div>
+          </div>
+        )}
 
         {budgets.map((budget) => {
           const spent = expenseMap.get(budget.category_id) ?? 0
           const percent = Math.min(Math.round((spent / budget.amount) * 100), 100)
           const over = spent > budget.amount
-          const categoryName =
-            (budget.categories as { name?: string } | null)?.name ?? 'Sem categoria'
+          const categoryName = (budget.categories as { name?: string } | null)?.name ?? 'Sem categoria'
 
           return (
-            <div
-              key={budget.id}
-              className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
-            >
+            <div key={budget.id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
               <div className="flex justify-between mb-2">
                 <p className="font-medium text-gray-900">{categoryName}</p>
-                <p className={`text-sm font-semibold ${over ? 'text-red-600' : 'text-gray-700'}`}>
-                  {formatCurrency(spent)} / {formatCurrency(budget.amount)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className={`text-sm font-semibold ${over ? 'text-red-600' : 'text-gray-700'}`}>
+                    {formatCurrency(spent)} / {formatCurrency(budget.amount)}
+                  </p>
+                  <BudgetDeleteButton id={budget.id} />
+                </div>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2.5">
                 <div

@@ -4,12 +4,6 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-webpush.setVapidDetails(
-  'mailto:' + (process.env.VAPID_EMAIL ?? 'admin@example.com'),
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '',
-  process.env.VAPID_PRIVATE_KEY ?? ''
-)
-
 export async function GET(req: Request) {
   // Verify cron secret to prevent unauthorized calls
   const authHeader = req.headers.get('authorization')
@@ -20,6 +14,12 @@ export async function GET(req: Request) {
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     return NextResponse.json({ error: 'VAPID keys not configured' }, { status: 500 })
   }
+
+  webpush.setVapidDetails(
+    'mailto:' + (process.env.VAPID_EMAIL ?? 'admin@example.com'),
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  )
 
   const supabase = await createClient()
 

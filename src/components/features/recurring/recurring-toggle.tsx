@@ -66,7 +66,7 @@ export function RecurringToggle({
     }
 
     if (createTx && accountId && realAmount > 0 && userId && coupleId) {
-      await supabase.from('transactions').insert({
+      await (supabase.from('transactions') as any).insert({
         type: 'expense',
         amount: realAmount,
         description: name ?? 'Conta recorrente',

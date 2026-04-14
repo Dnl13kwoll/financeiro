@@ -48,7 +48,7 @@ export function InstallmentItemToggle({
     await (supabase.from('installment_items') as any).update({ paid: true }).eq('id', itemId)
 
     if (createTx && accountId) {
-      await supabase.from('transactions').insert({
+      await (supabase.from('transactions') as any).insert({
         type: 'expense',
         amount,
         description: description ? `Parcela: ${description}` : 'Parcela',

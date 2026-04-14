@@ -64,7 +64,7 @@ export function QuickAddFab() {
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
 
     const supabase = createClient()
-    await supabase.from('transactions').insert({
+    await (supabase.from('transactions') as any).insert({
       type,
       amount: parseFloat(data.get('amount') as string),
       description: (data.get('description') as string) || null,

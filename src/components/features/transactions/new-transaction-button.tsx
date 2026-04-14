@@ -54,7 +54,7 @@ export function NewTransactionButton({
       user_id: userId,
       couple_id: coupleId,
     }
-    await supabase.from('transactions').insert(payload)
+    await (supabase.from('transactions') as any).insert(payload)
 
     setLoading(false)
     setOpen(false)

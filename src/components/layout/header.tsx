@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { ThemeSwitcher } from './theme-switcher'
+import { GlobalSearch } from './global-search'
 
 export async function Header({ title }: { title: string }) {
   const supabase = await createClient()
@@ -9,6 +10,7 @@ export async function Header({ title }: { title: string }) {
     <header className="h-16 bg-white border-b border-gray-100 px-4 md:px-6 flex items-center justify-between shrink-0">
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       <div className="flex items-center gap-2 md:gap-3">
+        <GlobalSearch />
         <ThemeSwitcher />
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-gray-900">

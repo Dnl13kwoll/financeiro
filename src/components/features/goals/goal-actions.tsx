@@ -114,10 +114,12 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const form = e.currentTarget
     const data = new FormData(form)
     const value = parseFloat(data.get('value') as string)
+    const note = (data.get('note') as string) || null
     const supabase = createClient()
-    await (supabase.from('goals') as any)
-      .update({ current_amount: goal.current_amount + value })
-      .eq('id', goal.id)
+    await Promise.all([
+      (supabase.from('goals') as any).update({ current_amount: goal.current_amount + value }).eq('id', goal.id),
+      (supabase.from('goal_history') as any).insert({ goal_id: goal.id, amount: value, note }),
+    ])
     setLoading(false)
     setAddOpen(false)
     form.reset()
@@ -185,6 +187,14 @@ export function GoalActions({ goal }: { goal: Goal }) {
               min="0.01"
               required
               placeholder="0,00"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Observação (opcional)</label>
+            <input
+              name="note"
+              placeholder="Ex: Salário de março..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

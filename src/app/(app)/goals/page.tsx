@@ -19,7 +19,7 @@ export default async function GoalsPage() {
 
   const goalsRes = coupleId
     ? await (supabase.from('goals') as any)
-        .select('*')
+        .select('*, goal_history(*)')
         .eq('couple_id', coupleId)
         .order('created_at', { ascending: false })
     : null
@@ -75,6 +75,21 @@ export default async function GoalsPage() {
                 <span>{progress}% concluído</span>
                 {!done && <span>Faltam {formatCurrency(remaining)}</span>}
               </div>
+
+              {/* Histórico de aportes */}
+              {(goal.goal_history ?? []).length > 0 && (
+                <div className="mt-4 border-t border-gray-50 pt-3">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Histórico de aportes</p>
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                    {[...(goal.goal_history as any[])].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((h: any) => (
+                      <div key={h.id} className="flex justify-between text-xs">
+                        <span className="text-gray-500">{new Date(h.created_at).toLocaleDateString('pt-BR')}{h.note ? ` · ${h.note}` : ''}</span>
+                        <span className="font-medium text-green-600">+{formatCurrency(h.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}

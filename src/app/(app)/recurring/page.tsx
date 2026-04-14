@@ -20,16 +20,17 @@ export default async function RecurringPage() {
   const now = new Date()
   const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
 
-  const recurringRes = coupleId
-    ? await supabase
-        .from('recurring_accounts')
-        .select(`*, recurring_records(*)`)
-        .eq('couple_id', coupleId)
-        .eq('active', true)
-        .order('day_due')
-    : null
+  const [recurringRes, accountsRes] = await Promise.all([
+    coupleId
+      ? supabase.from('recurring_accounts').select('*, recurring_records(*)').eq('couple_id', coupleId).eq('active', true).order('day_due')
+      : Promise.resolve(null),
+    coupleId
+      ? supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)
+      : Promise.resolve(null),
+  ])
 
   const recurring: any[] = recurringRes?.data ?? []
+  const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
 
   const totalMonth = recurring.reduce((sum, rec) => {
     const records = (rec.recurring_records ?? []) as any[]
@@ -78,10 +79,18 @@ export default async function RecurringPage() {
                   recordId={currentRecord?.id}
                   paid={currentRecord?.paid ?? false}
                   amount={currentRecord?.amount}
+                  defaultAmount={rec.amount}
+                  accounts={accounts}
+                  userId={user!.id}
+                  coupleId={coupleId!}
+                  name={rec.name}
                 />
                 <div>
                   <p className="font-medium text-gray-900">{rec.name}</p>
-                  <p className="text-xs text-gray-400">Vence dia {rec.day_due}</p>
+                  <p className="text-xs text-gray-400">
+                    Vence dia {rec.day_due}
+                    {rec.amount ? ` · ${formatCurrency(rec.amount)}` : ''}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -93,7 +102,7 @@ export default async function RecurringPage() {
                     {currentRecord?.paid ? 'Pago' : 'Pendente'}
                   </p>
                 </div>
-                <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due }} />
+                <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due, amount: rec.amount }} />
               </div>
             </div>
           )

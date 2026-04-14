@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Plus } from 'lucide-react'
+import { DescriptionWithSuggest } from './category-suggest'
 
 type Account = { id: string; name: string }
 type Category = { id: string; name: string; type: 'income' | 'expense' }
@@ -22,6 +23,7 @@ export function NewTransactionButton({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState<'income' | 'expense' | 'transfer'>('expense')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const router = useRouter()
 
   const filteredCategories = categories.filter(c =>
@@ -35,6 +37,9 @@ export function NewTransactionButton({
     const data = new FormData(form)
 
     const supabase = createClient()
+    const rawTags = (data.get('tags') as string) ?? ''
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
+
     const payload: any = {
       type,
       amount: parseFloat(data.get('amount') as string),
@@ -45,6 +50,7 @@ export function NewTransactionButton({
       date: data.get('date') as string,
       competence_date: data.get('date') as string,
       is_private: data.get('is_private') === 'on',
+      tags: tags.length > 0 ? tags : [],
       user_id: userId,
       couple_id: coupleId,
     }
@@ -54,6 +60,7 @@ export function NewTransactionButton({
     setOpen(false)
     form.reset()
     setType('expense')
+    setSelectedCategoryId('')
     router.refresh()
   }
 
@@ -104,14 +111,12 @@ export function NewTransactionButton({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-            <input
-              name="description"
-              placeholder="Opcional"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
+          <DescriptionWithSuggest
+            coupleId={coupleId}
+            categories={filteredCategories}
+            type={type}
+            onCategoryChange={(id) => setSelectedCategoryId(id)}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -150,6 +155,8 @@ export function NewTransactionButton({
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
               <select
                 name="category_id"
+                value={selectedCategoryId}
+                onChange={e => setSelectedCategoryId(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Sem categoria</option>
@@ -167,6 +174,15 @@ export function NewTransactionButton({
               type="date"
               required
               defaultValue={today}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <input
+              name="tags"
+              placeholder="viagem, casa, pet (separadas por vírgula)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

@@ -9,6 +9,7 @@ import { TransactionFilters } from '@/components/features/transactions/transacti
 import { CategoryManager } from '@/components/features/categories/category-manager'
 import { ImportCSVButton } from '@/components/features/transactions/import-csv-button'
 import { Suspense } from 'react'
+import { SortHeader } from '@/components/features/transactions/sort-header'
 
 const typeConfig: Record<
   Transaction['type'],
@@ -34,7 +35,7 @@ const typeConfig: Record<
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; type?: string; category_id?: string; account_id?: string; q?: string }>
+  searchParams: Promise<{ month?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -54,6 +55,9 @@ export default async function TransactionsPage({
   const monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
   const monthEnd = new Date(year, month, 0).toISOString().slice(0, 10)
 
+  const sortCol = params.sort && ['date', 'amount', 'description'].includes(params.sort) ? params.sort : 'date'
+  const sortAsc = params.dir === 'asc'
+
   let query = coupleId
     ? supabase
         .from('transactions')
@@ -62,7 +66,7 @@ export default async function TransactionsPage({
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)
         .is('deleted_at', null)
-        .order('date', { ascending: false })
+        .order(sortCol, { ascending: sortAsc })
     : null
 
   if (query && params.type) query = (query as any).eq('type', params.type)
@@ -86,6 +90,12 @@ export default async function TransactionsPage({
     transactions = transactions.filter(t =>
       (t.description ?? '').toLowerCase().includes(q) ||
       (t.categories?.name ?? '').toLowerCase().includes(q)
+    )
+  }
+  if (params.tag) {
+    const tag = params.tag.toLowerCase()
+    transactions = transactions.filter(t =>
+      (t.tags ?? []).some((tg: string) => tg.toLowerCase().includes(tag))
     )
   }
 
@@ -115,14 +125,20 @@ export default async function TransactionsPage({
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 text-gray-500 text-left">
-                <th className="px-4 py-3 font-medium">Tipo</th>
-                <th className="px-4 py-3 font-medium">Descrição</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">Categoria</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">Conta</th>
-                <th className="px-4 py-3 font-medium hidden sm:table-cell">Data</th>
-                <th className="px-4 py-3 font-medium text-right">Valor</th>
-                <th className="px-4 py-3 font-medium"></th>
+              <tr className="border-b border-gray-100 text-gray-500 text-left text-xs">
+                <th className="px-4 py-3">Tipo</th>
+                <th className="px-4 py-3">
+                  <Suspense><SortHeader label="Descrição" column="description" /></Suspense>
+                </th>
+                <th className="px-4 py-3 hidden md:table-cell">Categoria</th>
+                <th className="px-4 py-3 hidden md:table-cell">Conta</th>
+                <th className="px-4 py-3 hidden sm:table-cell">
+                  <Suspense><SortHeader label="Data" column="date" /></Suspense>
+                </th>
+                <th className="px-4 py-3 text-right">
+                  <Suspense><SortHeader label="Valor" column="amount" className="ml-auto" /></Suspense>
+                </th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -137,10 +153,23 @@ export default async function TransactionsPage({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-900">
-                      {t.description ?? '—'}
-                      {t.is_private && (
-                        <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">privado</span>
-                      )}
+                      <div className="flex flex-col gap-0.5">
+                        <span>
+                          {t.description ?? '—'}
+                          {t.is_private && (
+                            <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">privado</span>
+                          )}
+                        </span>
+                        {(t.tags ?? []).length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {(t.tags as string[]).map((tag) => (
+                              <span key={tag} className="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
                       {(t.categories as { name?: string } | null)?.name ?? '—'}
@@ -155,7 +184,7 @@ export default async function TransactionsPage({
                     </td>
                     <td className="px-4 py-3">
                       <TransactionActions
-                        transaction={{ id: t.id, type: t.type, amount: t.amount, description: t.description, category_id: t.category_id, account_id: t.account_id, date: t.date, is_private: t.is_private }}
+                        transaction={{ id: t.id, type: t.type, amount: t.amount, description: t.description, category_id: t.category_id, account_id: t.account_id, date: t.date, is_private: t.is_private, tags: t.tags ?? [] }}
                         accounts={accounts}
                         categories={categories}
                       />

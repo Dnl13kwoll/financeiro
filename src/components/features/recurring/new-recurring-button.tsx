@@ -17,9 +17,11 @@ export function NewRecurringButton({ coupleId, userId }: { coupleId: string; use
     const data = new FormData(form)
 
     const supabase = createClient()
+    const amountRaw = data.get('amount') as string
     const payload: any = {
       name: data.get('name') as string,
       day_due: parseInt(data.get('day_due') as string),
+      amount: amountRaw ? parseFloat(amountRaw) : null,
       user_id: userId,
       couple_id: coupleId,
     }
@@ -62,6 +64,18 @@ export function NewRecurringButton({ coupleId, userId }: { coupleId: string; use
               max="31"
               required
               placeholder="Ex: 10"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Valor mensal padrão (opcional)</label>
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

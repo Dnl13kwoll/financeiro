@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Plus } from 'lucide-react'
 
-export function NewInstallmentButton({ coupleId, userId }: { coupleId: string; userId: string }) {
+type Account = { id: string; name: string }
+
+export function NewInstallmentButton({ coupleId, userId, accounts = [] }: { coupleId: string; userId: string; accounts?: Account[] }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -24,12 +26,14 @@ export function NewInstallmentButton({ coupleId, userId }: { coupleId: string; u
     const partAmount = parseFloat(((totalAmount * (1 + interestRate)) / totalParts).toFixed(2))
 
     const supabase = createClient()
+    const accountId = (data.get('account_id') as string) || null
     const installmentPayload: any = {
       description: data.get('description') as string,
       total_amount: totalAmount,
       total_parts: totalParts,
       interest_rate: interestRate,
       start_date: (data.get('start_date') as string),
+      account_id: accountId,
       user_id: userId,
       couple_id: coupleId,
     }
@@ -121,6 +125,21 @@ export function NewInstallmentButton({ coupleId, userId }: { coupleId: string; u
               />
             </div>
           </div>
+
+          {accounts.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Conta vinculada (para débito automático)</label>
+              <select
+                name="account_id"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Sem conta vinculada</option>
+                {accounts.map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Data da 1ª parcela</label>

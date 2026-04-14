@@ -17,15 +17,17 @@ export default async function InstallmentsPage() {
 
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const installmentsRes = coupleId
-    ? await supabase
-        .from('installments')
-        .select('*, installment_items(*)')
-        .eq('couple_id', coupleId)
-        .order('start_date', { ascending: false })
-    : null
+  const [installmentsRes, accountsRes] = await Promise.all([
+    coupleId
+      ? supabase.from('installments').select('*, installment_items(*)').eq('couple_id', coupleId).order('start_date', { ascending: false })
+      : Promise.resolve(null),
+    coupleId
+      ? supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)
+      : Promise.resolve(null),
+  ])
 
   const installments: any[] = installmentsRes?.data ?? []
+  const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
 
   return (
     <div className="flex flex-col flex-1">
@@ -33,7 +35,7 @@ export default async function InstallmentsPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex justify-end">
-          {coupleId && <NewInstallmentButton coupleId={coupleId} userId={user!.id} />}
+          {coupleId && <NewInstallmentButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
         </div>
 
         {installments.map((inst) => {
@@ -86,7 +88,16 @@ export default async function InstallmentsPage() {
                 {items.sort((a, b) => a.part_number - b.part_number).map(item => (
                   <div key={item.id} className={`flex items-center justify-between text-sm ${item.canceled ? 'opacity-40' : ''}`}>
                     <div className="flex items-center gap-2">
-                      <InstallmentItemToggle itemId={item.id} paid={item.paid} />
+                      <InstallmentItemToggle
+                        itemId={item.id}
+                        paid={item.paid}
+                        amount={item.amount}
+                        description={inst.description}
+                        accounts={accounts}
+                        defaultAccountId={inst.account_id}
+                        userId={user!.id}
+                        coupleId={coupleId!}
+                      />
                       <span className="text-gray-500">
                         Parcela {item.part_number} · {formatDate(item.due_date)}
                       </span>

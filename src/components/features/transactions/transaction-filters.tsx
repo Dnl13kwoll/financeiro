@@ -67,6 +67,13 @@ export function TransactionFilters({
         onChange={e => update('q', e.target.value)}
         className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-36"
       />
+      <input
+        type="text"
+        placeholder="Tag..."
+        defaultValue={searchParams.get('tag') ?? ''}
+        onChange={e => update('tag', e.target.value)}
+        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-28"
+      />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Pencil, Trash2 } from 'lucide-react'
 
-type Recurring = { id: string; name: string; day_due: number }
+type Recurring = { id: string; name: string; day_due: number; amount?: number | null }
 
 export function RecurringActions({ recurring }: { recurring: Recurring }) {
   const [editOpen, setEditOpen] = useState(false)
@@ -18,9 +18,11 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
+    const amountRaw = data.get('amount') as string
     await (supabase.from('recurring_accounts') as any).update({
       name: data.get('name') as string,
       day_due: parseInt(data.get('day_due') as string),
+      amount: amountRaw ? parseFloat(amountRaw) : null,
     }).eq('id', recurring.id)
     setLoading(false)
     setEditOpen(false)
@@ -75,6 +77,18 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
               max="31"
               required
               defaultValue={recurring.day_due}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Valor mensal padrão (opcional)</label>
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+              defaultValue={recurring.amount ?? ''}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

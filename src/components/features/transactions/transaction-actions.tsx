@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Copy, Pencil, Trash2 } from 'lucide-react'
 
 type Account = { id: string; name: string }
 type Category = { id: string; name: string; type: 'income' | 'expense' }
@@ -17,6 +17,7 @@ type Transaction = {
   account_id: string
   date: string
   is_private: boolean
+  tags?: string[]
 }
 
 export function TransactionActions({
@@ -29,6 +30,7 @@ export function TransactionActions({
   categories: Category[]
 }) {
   const [editOpen, setEditOpen] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -42,6 +44,8 @@ export function TransactionActions({
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
+    const rawTags = (data.get('tags') as string) ?? ''
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
     await (supabase.from('transactions') as any).update({
       amount: parseFloat(data.get('amount') as string),
       description: (data.get('description') as string) || null,
@@ -50,9 +54,31 @@ export function TransactionActions({
       date: data.get('date') as string,
       competence_date: data.get('date') as string,
       is_private: data.get('is_private') === 'on',
+      tags: tags,
     }).eq('id', transaction.id)
     setLoading(false)
     setEditOpen(false)
+    router.refresh()
+  }
+
+  async function handleDuplicate() {
+    setDuplicating(true)
+    const supabase = createClient()
+    const today = new Date().toISOString().slice(0, 10)
+    // Fetch full transaction to get couple_id, user_id
+    const { data: original } = await (supabase.from('transactions') as any)
+      .select('*')
+      .eq('id', transaction.id)
+      .single()
+    if (original) {
+      const { id: _id, created_at: _c, updated_at: _u, deleted_at: _d, ...rest } = original
+      await (supabase.from('transactions') as any).insert({
+        ...rest,
+        date: today,
+        competence_date: today,
+      })
+    }
+    setDuplicating(false)
     router.refresh()
   }
 
@@ -74,6 +100,14 @@ export function TransactionActions({
           title="Editar"
         >
           <Pencil className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={handleDuplicate}
+          disabled={duplicating}
+          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-40"
+          title="Duplicar"
+        >
+          <Copy className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={handleDelete}
@@ -146,6 +180,16 @@ export function TransactionActions({
               type="date"
               required
               defaultValue={transaction.date}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <input
+              name="tags"
+              defaultValue={(transaction.tags ?? []).join(', ')}
+              placeholder="viagem, casa, pet (separadas por vírgula)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

@@ -5,21 +5,33 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { CheckCircle2, Circle } from 'lucide-react'
 
+type Account = { id: string; name: string }
+
 export function RecurringToggle({
   recurringId,
   referenceMonth,
   recordId,
   paid,
   amount,
+  defaultAmount,
+  accounts = [],
+  userId,
+  coupleId,
+  name,
 }: {
   recurringId: string
   referenceMonth: string
   recordId?: string
   paid: boolean
   amount?: number
+  defaultAmount?: number | null
+  accounts?: Account[]
+  userId?: string
+  coupleId?: string
+  name?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(amount ? String(amount) : '')
+  const [value, setValue] = useState(amount ? String(amount) : (defaultAmount ? String(defaultAmount) : ''))
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -30,10 +42,16 @@ export function RecurringToggle({
     router.refresh()
   }
 
-  async function handlePay() {
+  async function handlePay(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setLoading(true)
+    const form = e.currentTarget
+    const data = new FormData(form)
     const supabase = createClient()
     const realAmount = parseFloat(value) || 0
+    const accountId = data.get('account_id') as string
+    const createTx = data.get('create_transaction') === 'on'
+
     if (recordId) {
       await (supabase.from('recurring_records') as any)
         .update({ paid: true, amount: realAmount })
@@ -46,6 +64,20 @@ export function RecurringToggle({
         paid: true,
       })
     }
+
+    if (createTx && accountId && realAmount > 0 && userId && coupleId) {
+      await supabase.from('transactions').insert({
+        type: 'expense',
+        amount: realAmount,
+        description: name ?? 'Conta recorrente',
+        account_id: accountId,
+        date: new Date().toISOString().slice(0, 10),
+        competence_date: new Date().toISOString().slice(0, 10),
+        user_id: userId,
+        couple_id: coupleId,
+      })
+    }
+
     setLoading(false)
     setOpen(false)
     router.refresh()
@@ -66,7 +98,7 @@ export function RecurringToggle({
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Registrar Pagamento">
-        <div className="space-y-4">
+        <form onSubmit={handlePay} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Valor pago</label>
             <input
@@ -80,17 +112,37 @@ export function RecurringToggle({
               autoFocus
             />
           </div>
+          {accounts.length > 0 && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Conta debitada</label>
+                <select
+                  name="account_id"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Sem débito automático</option>
+                  {accounts.map(a => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input name="create_transaction" type="checkbox" defaultChecked className="rounded" />
+                Lançar transação de saída automaticamente
+              </label>
+            </>
+          )}
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancelar</button>
             <button
-              onClick={handlePay}
+              type="submit"
               disabled={loading}
               className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               {loading ? 'Salvando...' : 'Confirmar Pagamento'}
             </button>
           </div>
-        </div>
+        </form>
       </Modal>
     </>
   )

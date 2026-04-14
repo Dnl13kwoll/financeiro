@@ -32,3 +32,32 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request).then((r) => r ?? caches.match(OFFLINE_URL)))
   )
 })
+
+// ── Push Notifications ──
+self.addEventListener('push', (event) => {
+  let data = { title: 'Financeiro', body: 'Você tem vencimentos próximos.', url: '/dashboard' }
+  try { data = { ...data, ...event.data.json() } } catch {}
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icon.svg',
+      badge: '/icon.svg',
+      tag: 'financeiro-notification',
+      renotify: true,
+      data: { url: data.url },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/dashboard'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const existing = clientList.find((c) => c.url.includes(self.location.origin))
+      if (existing) { existing.focus(); existing.navigate(url) }
+      else clients.openWindow(url)
+    })
+  )
+})

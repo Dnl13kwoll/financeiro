@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   const coupleId: string | null = memberData?.couple_id ?? null
   const currency: string = memberData?.couples?.currency ?? 'BRL'
 
-  const balancesRes = coupleId ? await supabase.from('account_balances').select('*') : null
+  const balancesRes = coupleId ? await supabase.from('account_balances').select('*').eq('couple_id', coupleId) : null
   const balances: any[] = balancesRes?.data ?? []
   const totalBalance = balances.reduce((acc, b) => acc + b.balance, 0)
 
@@ -53,10 +53,12 @@ export default async function DashboardPage() {
   const totalExpenses = currentMonth?.expense ?? 0
   const totalIncome = currentMonth?.income ?? 0
 
-  const budgetsRes = coupleId
-    ? await supabase.from('budgets').select('amount').eq('couple_id', coupleId).eq('month', monthStart)
+  const budgetSummaryRes = coupleId
+    ? await supabase.from('budget_summary' as any).select('*').eq('couple_id', coupleId).eq('month', monthStart)
     : null
-  const totalBudget = (budgetsRes?.data ?? []).reduce((acc: number, b: any) => acc + b.amount, 0)
+  const budgetSummary: any[] = budgetSummaryRes?.data ?? []
+  const totalBudget = budgetSummary.reduce((acc: number, b: any) => acc + b.budgeted, 0)
+  const budgetAlerts = budgetSummary.filter(b => b.budgeted > 0 && b.spent / b.budgeted >= 0.8)
   const available = totalBudget - totalExpenses
 
   // Gastos por categoria
@@ -103,6 +105,21 @@ export default async function DashboardPage() {
 
   const forecastBalance = totalBalance - pendingInstallmentsTotal - pendingRecurringTotal
 
+  // Metas ativas
+  const goalsRes = coupleId
+    ? await (supabase.from('goals') as any).select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+    : null
+  const goals: any[] = (goalsRes?.data ?? []).filter((g: any) => g.current_amount < g.target_amount).slice(0, 3)
+
+  // Evolução do saldo (back-calculated from current balance)
+  const balanceHistory: number[] = []
+  let runningBalance = totalBalance
+  for (let i = history.length - 1; i >= 0; i--) {
+    balanceHistory.unshift(runningBalance)
+    runningBalance = runningBalance - history[i].income + history[i].expense
+  }
+  const maxBalanceAbs = Math.max(...balanceHistory.map(Math.abs), 1)
+
   const maxBar = Math.max(...history.map(h => Math.max(h.income, h.expense)), 1)
 
   return (
@@ -123,6 +140,90 @@ export default async function DashboardPage() {
             <p className="text-yellow-800 font-medium">Você ainda não está vinculado a um casal.</p>
             <p className="text-yellow-600 text-sm mt-1">Acesse Configurações para criar ou aceitar um convite.</p>
           </div>
+        )}
+
+        {/* Alertas de orçamento por categoria */}
+        {budgetAlerts.length > 0 && (
+          <section className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <h3 className="font-semibold text-amber-800 text-sm">Orçamento — atenção</h3>
+            </div>
+            <div className="space-y-2">
+              {budgetAlerts.map((b: any) => {
+                const pct = Math.round((b.spent / b.budgeted) * 100)
+                const over = b.spent > b.budgeted
+                return (
+                  <div key={b.category_id}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-amber-700">{b.category_name}</span>
+                      <span className={`font-medium ${over ? 'text-red-600' : 'text-amber-700'}`}>
+                        {pct}% {over ? '— excedido' : 'usado'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-amber-100 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full ${over ? 'bg-red-500' : 'bg-amber-400'}`}
+                        style={{ width: `${Math.min(100, pct)}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Saldo por conta */}
+        {balances.length > 0 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4">Saldo por conta</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {balances.map((b: any) => (
+                <div key={b.id} className="border border-gray-100 rounded-lg p-3">
+                  <p className="text-xs text-gray-400 truncate">{b.name}</p>
+                  <p className={`text-base font-bold mt-0.5 financial-value ${b.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                    {formatCurrency(b.balance, currency)}
+                  </p>
+                  <p className="text-xs text-gray-400 capitalize mt-0.5">
+                    {b.type === 'checking' ? 'Corrente' : b.type === 'savings' ? 'Poupança' : b.type === 'investment' ? 'Investimento' : b.type}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Metas ativas */}
+        {goals.length > 0 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Metas em andamento</h3>
+              <a href="/goals" className="text-xs text-primary-600 hover:underline">Ver todas</a>
+            </div>
+            <div className="space-y-4">
+              {goals.map((goal: any) => {
+                const progress = Math.min(100, Math.round((goal.current_amount / goal.target_amount) * 100))
+                return (
+                  <div key={goal.id}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-700 font-medium">{goal.name}</span>
+                      <span className="text-gray-400 financial-value">
+                        {formatCurrency(goal.current_amount, currency)} / {formatCurrency(goal.target_amount, currency)}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div
+                        className="bg-primary-500 h-2 rounded-full transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">{progress}% concluído</p>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
         )}
 
         {/* Alertas */}
@@ -175,6 +276,43 @@ export default async function DashboardPage() {
             <div className="flex gap-4 mt-3">
               <span className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-2.5 h-2.5 rounded-sm bg-green-400 inline-block" />Receitas</span>
               <span className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-2.5 h-2.5 rounded-sm bg-red-400 inline-block" />Despesas</span>
+            </div>
+          </section>
+        )}
+
+        {/* Evolução do saldo */}
+        {coupleId && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-5">Evolução do saldo</h3>
+            <div className="relative" style={{ height: '80px' }}>
+              <svg viewBox={`0 0 ${(history.length - 1) * 60} 80`} preserveAspectRatio="none" className="w-full h-full">
+                <polyline
+                  points={balanceHistory.map((b, i) => {
+                    const x = i * 60
+                    const y = 80 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 76 + 2
+                    return `${x},${y}`
+                  }).join(' ')}
+                  fill="none"
+                  stroke="var(--color-primary-600)"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+                {balanceHistory.map((b, i) => {
+                  const x = i * 60
+                  const y = 80 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 76 + 2
+                  return <circle key={i} cx={x} cy={y} r="3" fill="var(--color-primary-600)" />
+                })}
+              </svg>
+            </div>
+            <div className="flex justify-between mt-2">
+              {history.map((m, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <span className="text-xs text-gray-400 capitalize">{m.label}</span>
+                  <span className={`text-xs font-medium financial-value ${balanceHistory[i] >= 0 ? 'text-gray-600' : 'text-red-500'}`}>
+                    {formatCurrency(balanceHistory[i], currency)}
+                  </span>
+                </div>
+              ))}
             </div>
           </section>
         )}

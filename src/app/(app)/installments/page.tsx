@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { NewInstallmentButton } from '@/components/features/installments/new-installment-button'
 import { InstallmentActions } from '@/components/features/installments/installment-actions'
 import { InstallmentItemToggle } from '@/components/features/installments/installment-item-toggle'
+import { InstallmentItemEdit } from '@/components/features/installments/installment-item-edit'
 
 export default async function InstallmentsPage() {
   const supabase = await createClient()
@@ -88,7 +89,7 @@ export default async function InstallmentsPage() {
               {/* Lista de parcelas */}
               <div className="mt-4 border-t border-gray-50 pt-3 space-y-1.5">
                 {items.sort((a, b) => a.part_number - b.part_number).map(item => (
-                  <div key={item.id} className={`flex items-center justify-between text-sm ${item.canceled ? 'opacity-40' : ''}`}>
+                  <div key={item.id} className={`group flex items-center justify-between text-sm ${item.canceled ? 'opacity-40' : ''}`}>
                     <div className="flex items-center gap-2">
                       <InstallmentItemToggle
                         itemId={item.id}
@@ -104,9 +105,18 @@ export default async function InstallmentsPage() {
                         Parcela {item.part_number} · {formatDate(item.due_date)}
                       </span>
                     </div>
-                    <span className={`font-medium ${item.paid ? 'text-green-600 line-through' : 'text-gray-700'}`}>
-                      {formatCurrency(item.amount)}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className={`font-medium ${item.paid ? 'text-green-600 line-through' : 'text-gray-700'}`}>
+                        {formatCurrency(item.amount)}
+                      </span>
+                      {!item.paid && !item.canceled && (
+                        <InstallmentItemEdit
+                          itemId={item.id}
+                          amount={item.amount}
+                          partNumber={item.part_number}
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

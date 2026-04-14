@@ -1,6 +1,7 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useState } from 'react'
+import { X } from 'lucide-react'
 
 type Account = { id: string; name: string }
 type Category = { id: string; name: string; type: string }
@@ -17,6 +18,14 @@ export function TransactionFilters({
   const [mode, setMode] = useState<'month' | 'range'>(
     searchParams.get('date_from') ? 'range' : 'month'
   )
+
+  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag']
+  const hasActiveFilters = FILTER_KEYS.some(k => !!searchParams.get(k))
+
+  function clearFilters() {
+    setMode('month')
+    router.push('/transactions')
+  }
 
   const update = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -124,6 +133,16 @@ export function TransactionFilters({
         onChange={e => update('tag', e.target.value)}
         className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-24"
       />
+      {hasActiveFilters && (
+        <button
+          onClick={clearFilters}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
+          title="Limpar todos os filtros"
+        >
+          <X className="w-3.5 h-3.5" />
+          Limpar
+        </button>
+      )}
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { CategoryManager } from '@/components/features/categories/category-manag
 import { ImportCSVButton } from '@/components/features/transactions/import-csv-button'
 import { Suspense } from 'react'
 import { SortHeader } from '@/components/features/transactions/sort-header'
+import Link from 'next/link'
 
 const typeConfig: Record<
   Transaction['type'],
@@ -173,9 +174,13 @@ export default async function TransactionsPage({
                         {(t.tags ?? []).length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {(t.tags as string[]).map((tag) => (
-                              <span key={tag} className="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded-full">
+                              <Link
+                                key={tag}
+                                href={`/transactions?tag=${encodeURIComponent(tag)}`}
+                                className="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded-full hover:bg-primary-100 transition-colors"
+                              >
                                 {tag}
-                              </span>
+                              </Link>
                             ))}
                           </div>
                         )}

@@ -78,12 +78,38 @@ export default async function AccountsPage() {
                 </div>
               </div>
               <p className="font-semibold text-gray-900">{account.name}</p>
-              <p className="text-2xl font-bold mt-2 text-primary-600">
-                {formatCurrency(balanceMap.get(account.id) ?? 0)}
-              </p>
-              {account.type === 'credit_card' && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Fechamento dia {account.closing_day} · Vence dia {account.due_day}
+              {account.type === 'credit_card' ? (() => {
+                const used = Math.max(0, -(balanceMap.get(account.id) ?? 0))
+                const limit = account.limit_amount ?? 0
+                const available = limit - used
+                const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0
+                return (
+                  <>
+                    <div className="mt-2 space-y-0.5">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Usado</span>
+                        <span className="font-semibold text-red-600">{formatCurrency(used)}</span>
+                      </div>
+                      {limit > 0 && (
+                        <>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div className={`h-1.5 rounded-full ${pct > 80 ? 'bg-red-500' : 'bg-primary-500'}`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>Disponível: <span className="text-green-600 font-medium">{formatCurrency(available)}</span></span>
+                            <span>Limite: {formatCurrency(limit)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Fecha dia {account.closing_day} · Vence dia {account.due_day}
+                    </p>
+                  </>
+                )
+              })() : (
+                <p className="text-2xl font-bold mt-2 text-primary-600">
+                  {formatCurrency(balanceMap.get(account.id) ?? 0)}
                 </p>
               )}
             </div>

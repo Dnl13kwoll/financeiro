@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
+import { showToast } from '@/components/ui/toast'
 import { Plus } from 'lucide-react'
 import { DescriptionWithSuggest } from '@/components/features/transactions/category-suggest'
 
@@ -83,6 +84,7 @@ export function QuickAddFab() {
     form.reset()
     setType('expense')
     setSelectedCategoryId('')
+    showToast('Transação salva!')
     router.refresh()
   }
 

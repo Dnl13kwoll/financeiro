@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
+import { showToast } from '@/components/ui/toast'
 import { Copy, Pencil, Trash2 } from 'lucide-react'
 
 type Account = { id: string; name: string }
@@ -18,6 +19,7 @@ type Transaction = {
   date: string
   is_private: boolean
   tags?: string[]
+  comment?: string | null
 }
 
 export function TransactionActions({
@@ -47,6 +49,7 @@ export function TransactionActions({
     const rawTags = (data.get('tags') as string) ?? ''
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
     await (supabase.from('transactions') as any).update({
+      comment: (data.get('comment') as string) || null,
       amount: parseFloat(data.get('amount') as string),
       description: (data.get('description') as string) || null,
       category_id: (data.get('category_id') as string) || null,
@@ -58,6 +61,7 @@ export function TransactionActions({
     }).eq('id', transaction.id)
     setLoading(false)
     setEditOpen(false)
+    showToast('Transação atualizada!')
     router.refresh()
   }
 
@@ -79,6 +83,7 @@ export function TransactionActions({
       })
     }
     setDuplicating(false)
+    showToast('Transação duplicada!')
     router.refresh()
   }
 
@@ -88,6 +93,7 @@ export function TransactionActions({
     await (supabase.from('transactions') as any)
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', transaction.id)
+    showToast('Transação excluída.', 'error')
     router.refresh()
   }
 
@@ -190,6 +196,16 @@ export function TransactionActions({
               name="tags"
               defaultValue={(transaction.tags ?? []).join(', ')}
               placeholder="viagem, casa, pet (separadas por vírgula)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Comentário (visível para o casal)</label>
+            <input
+              name="comment"
+              defaultValue={transaction.comment ?? ''}
+              placeholder="Ex: era presente, dividido com amigos..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

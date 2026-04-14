@@ -16,6 +16,8 @@ import {
   Target,
   Menu,
   X,
+  CalendarClock,
+  TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -29,6 +31,8 @@ const navItems = [
   { href: '/recurring', label: 'Recorrentes', icon: RefreshCw },
   { href: '/budgets', label: 'Orçamentos', icon: PieChart },
   { href: '/goals', label: 'Metas', icon: Target },
+  { href: '/timeline', label: 'Linha do Tempo', icon: CalendarClock },
+  { href: '/projection', label: 'Projeção', icon: TrendingUp },
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/settings', label: 'Configurações', icon: Settings },
 ]

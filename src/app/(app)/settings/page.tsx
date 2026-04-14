@@ -7,6 +7,7 @@ import { LeaveCoupleButton } from '@/components/features/settings/leave-couple'
 import { CurrencySelector } from '@/components/features/settings/currency-selector'
 import { PushSubscribeButton } from '@/components/features/notifications/push-subscribe'
 import { BackupButton } from '@/components/features/settings/backup-button'
+import { BackupImport } from '@/components/features/settings/backup-import'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -133,6 +134,15 @@ export default async function SettingsPage() {
             Exporte todos os seus dados em JSON para backup ou migração.
           </p>
           <BackupButton />
+        </section>
+
+        {/* Importar backup */}
+        <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-900 mb-3">Importar backup</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Restaure dados a partir de um arquivo de backup exportado anteriormente.
+          </p>
+          <BackupImport />
         </section>
       </div>
     </div>

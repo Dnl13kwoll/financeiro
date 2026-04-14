@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
+import { showToast } from '@/components/ui/toast'
 import { Plus, Pencil, Trash2, PlusCircle } from 'lucide-react'
 
 type Goal = {

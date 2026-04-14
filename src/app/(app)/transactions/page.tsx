@@ -35,7 +35,7 @@ const typeConfig: Record<
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string }>
+  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -50,10 +50,17 @@ export default async function TransactionsPage({
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const now = new Date()
-  const monthParam = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const [year, month] = monthParam.split('-').map(Number)
-  const monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
-  const monthEnd = new Date(year, month, 0).toISOString().slice(0, 10)
+  let monthStart: string
+  let monthEnd: string
+  if (params.date_from && params.date_to) {
+    monthStart = params.date_from
+    monthEnd = params.date_to
+  } else {
+    const monthParam = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const [year, month] = monthParam.split('-').map(Number)
+    monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
+    monthEnd = new Date(year, month, 0).toISOString().slice(0, 10)
+  }
 
   const sortCol = params.sort && ['date', 'amount', 'description'].includes(params.sort) ? params.sort : 'date'
   const sortAsc = params.dir === 'asc'
@@ -160,6 +167,9 @@ export default async function TransactionsPage({
                             <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">privado</span>
                           )}
                         </span>
+                        {t.comment && (
+                          <span className="text-xs text-gray-400 italic">💬 {t.comment}</span>
+                        )}
                         {(t.tags ?? []).length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {(t.tags as string[]).map((tag) => (
@@ -184,7 +194,7 @@ export default async function TransactionsPage({
                     </td>
                     <td className="px-4 py-3">
                       <TransactionActions
-                        transaction={{ id: t.id, type: t.type, amount: t.amount, description: t.description, category_id: t.category_id, account_id: t.account_id, date: t.date, is_private: t.is_private, tags: t.tags ?? [] }}
+                        transaction={{ id: t.id, type: t.type, amount: t.amount, description: t.description, category_id: t.category_id, account_id: t.account_id, date: t.date, is_private: t.is_private, tags: t.tags ?? [], comment: t.comment }}
                         accounts={accounts}
                         categories={categories}
                       />

@@ -17,17 +17,19 @@ export default async function InstallmentsPage() {
 
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const [installmentsRes, accountsRes] = await Promise.all([
+  const [installmentsRes, accountsRes, categoriesRes] = await Promise.all([
     coupleId
       ? supabase.from('installments').select('*, installment_items(*)').eq('couple_id', coupleId).order('start_date', { ascending: false })
       : Promise.resolve(null),
     coupleId
       ? supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)
       : Promise.resolve(null),
+    supabase.from('categories').select('id, name').eq('type', 'expense').order('name'),
   ])
 
   const installments: any[] = installmentsRes?.data ?? []
   const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
+  const categories: { id: string; name: string }[] = (categoriesRes?.data ?? []) as any[]
 
   return (
     <div className="flex flex-col flex-1">
@@ -35,7 +37,7 @@ export default async function InstallmentsPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex justify-end">
-          {coupleId && <NewInstallmentButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
+          {coupleId && <NewInstallmentButton coupleId={coupleId} userId={user!.id} accounts={accounts} categories={categories} />}
         </div>
 
         {installments.map((inst) => {

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
+import { showToast } from '@/components/ui/toast'
 import { CheckCircle2, Circle } from 'lucide-react'
 
 type Account = { id: string; name: string }
@@ -62,6 +63,7 @@ export function InstallmentItemToggle({
 
     setLoading(false)
     setOpen(false)
+    showToast('Parcela marcada como paga!')
     router.refresh()
   }
 

@@ -17,27 +17,6 @@ import { SortHeader } from '@/components/features/transactions/sort-header'
 import Link from 'next/link'
 // SortHeader/Link kept for pagination below
 
-const typeConfig: Record<
-  Transaction['type'],
-  { label: string; color: string; icon: React.ReactNode }
-> = {
-  income: {
-    label: 'Entrada',
-    color: 'text-green-600',
-    icon: <ArrowUpCircle className="w-4 h-4 text-green-500" />,
-  },
-  expense: {
-    label: 'Saída',
-    color: 'text-red-600',
-    icon: <ArrowDownCircle className="w-4 h-4 text-red-500" />,
-  },
-  transfer: {
-    label: 'Transferência',
-    color: 'text-blue-600',
-    icon: <ArrowLeftRight className="w-4 h-4 text-blue-500" />,
-  },
-}
-
 const PAGE_SIZE = 50
 
 export default async function TransactionsPage({

@@ -21,8 +21,8 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     const supabase = createClient()
 
     // Create couple
-    const { data: couple, error: coupleErr } = await supabase
-      .from('couples')
+    const { data: couple, error: coupleErr } = await (supabase
+      .from('couples') as any)
       .insert({ name: data.get('couple_name') as string, currency: 'BRL' })
       .select('id')
       .single()
@@ -34,7 +34,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     }
 
     // Join as member
-    await supabase.from('couple_members').insert({ couple_id: couple.id, user_id: userId, role: 'owner' })
+    await (supabase.from('couple_members') as any).insert({ couple_id: couple.id, user_id: userId, role: 'owner' })
 
     setCoupleId(couple.id)
     setLoading(false)
@@ -49,7 +49,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     const data = new FormData(form)
     const supabase = createClient()
 
-    await supabase.from('accounts').insert({
+    await (supabase.from('accounts') as any).insert({
       name: data.get('account_name') as string,
       type: data.get('type') as string,
       initial_balance: parseFloat(data.get('initial_balance') as string) || 0,

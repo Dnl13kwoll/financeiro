@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
     .eq('user_id', user!.id)
     .maybeSingle()
 
-  if (memberRes.data?.couple_id) {
+  if ((memberRes.data as any)?.couple_id) {
     redirect('/dashboard')
   }
 

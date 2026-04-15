@@ -29,7 +29,7 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
       couple_id: couple.id,
       role: 'owner',
     }
-    const { error: memberErr } = await supabase.from('couple_members').insert(memberPayload)
+    const { error: memberErr } = await (supabase.from('couple_members') as any).insert(memberPayload)
 
     if (memberErr) {
       setError('Erro ao criar membro: ' + memberErr.message)

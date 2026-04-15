@@ -39,7 +39,7 @@ export function NewRecurringButton({
       user_id: userId,
       couple_id: coupleId,
     }
-    await supabase.from('recurring_accounts').insert(payload)
+    await (supabase.from('recurring_accounts') as any).insert(payload)
 
     setLoading(false)
     setOpen(false)

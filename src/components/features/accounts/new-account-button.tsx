@@ -28,7 +28,7 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
       user_id: userId,
       couple_id: coupleId,
     }
-    await supabase.from('accounts').insert(payload)
+    await (supabase.from('accounts') as any).insert(payload)
 
     setLoading(false)
     setOpen(false)

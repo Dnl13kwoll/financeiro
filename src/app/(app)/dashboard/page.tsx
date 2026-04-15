@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = { title: 'Dashboard' }
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { AlertTriangle } from 'lucide-react'
 import { PieChart } from '@/components/features/dashboard/pie-chart'
@@ -18,9 +21,16 @@ export default async function DashboardPage() {
   const coupleId: string | null = memberData?.couple_id ?? null
   const currency: string = memberData?.couples?.currency ?? 'BRL'
 
-  const balancesRes = coupleId ? await supabase.from('account_balances').select('*').eq('couple_id', coupleId) : null
+  const [balancesRes, alertAccountsRes] = await Promise.all([
+    coupleId ? supabase.from('account_balances').select('*').eq('couple_id', coupleId) : Promise.resolve(null),
+    coupleId ? supabase.from('accounts').select('id, name, min_balance_alert').eq('couple_id', coupleId).is('deleted_at', null).not('min_balance_alert', 'is', null) : Promise.resolve(null),
+  ])
   const balances: any[] = balancesRes?.data ?? []
   const totalBalance = balances.reduce((acc, b) => acc + b.balance, 0)
+  const balanceMap2 = new Map(balances.map((b) => [b.id, b.balance]))
+  const lowBalanceAlerts: { name: string; balance: number; threshold: number }[] = (alertAccountsRes?.data ?? [])
+    .filter((a: any) => (balanceMap2.get(a.id) ?? 0) < a.min_balance_alert)
+    .map((a: any) => ({ name: a.name, balance: balanceMap2.get(a.id) ?? 0, threshold: a.min_balance_alert }))
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
@@ -105,6 +115,12 @@ export default async function DashboardPage() {
 
   const forecastBalance = totalBalance - pendingInstallmentsTotal - pendingRecurringTotal
 
+  // Últimas transações
+  const recentTxRes = coupleId
+    ? await supabase.from('transactions').select('id, description, amount, type, date, categories(name)').eq('couple_id', coupleId).is('deleted_at', null).order('date', { ascending: false }).limit(5)
+    : null
+  const recentTx: any[] = recentTxRes?.data ?? []
+
   // Metas ativas
   const goalsRes = coupleId
     ? await (supabase.from('goals') as any).select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
@@ -138,7 +154,13 @@ export default async function DashboardPage() {
         {!coupleId && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
             <p className="text-yellow-800 font-medium">Você ainda não está vinculado a um casal.</p>
-            <p className="text-yellow-600 text-sm mt-1">Acesse Configurações para criar ou aceitar um convite.</p>
+            <p className="text-yellow-600 text-sm mt-1 mb-4">Configure tudo em poucos passos.</p>
+            <a
+              href="/onboarding"
+              className="inline-flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+            >
+              Começar configuração
+            </a>
           </div>
         )}
 
@@ -170,6 +192,26 @@ export default async function DashboardPage() {
                   </div>
                 )
               })}
+            </div>
+          </section>
+        )}
+
+        {/* Alertas de saldo baixo */}
+        {lowBalanceAlerts.length > 0 && (
+          <section className="bg-red-50 border border-red-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <h3 className="font-semibold text-red-800 text-sm">Saldo baixo</h3>
+            </div>
+            <div className="space-y-1.5">
+              {lowBalanceAlerts.map((a) => (
+                <div key={a.name} className="flex justify-between text-sm">
+                  <span className="text-red-700">{a.name}</span>
+                  <span className="font-medium text-red-800">
+                    {formatCurrency(a.balance)} <span className="text-red-400 font-normal">(mín. {formatCurrency(a.threshold)})</span>
+                  </span>
+                </div>
+              ))}
             </div>
           </section>
         )}
@@ -339,6 +381,31 @@ export default async function DashboardPage() {
                 Parcelas pendentes nos próximos 30 dias: <span className="text-red-500 font-medium financial-value">{formatCurrency(pendingInstallmentsTotal, currency)}</span>
               </p>
             )}
+          </section>
+        )}
+
+        {/* Últimas transações */}
+        {recentTx.length > 0 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Últimas transações</h3>
+              <a href="/transactions" className="text-xs text-primary-600 hover:underline">Ver todas</a>
+            </div>
+            <div className="space-y-2">
+              {recentTx.map((t: any) => (
+                <div key={t.id} className="flex items-center justify-between text-sm">
+                  <div>
+                    <p className="text-gray-800 font-medium">{t.description ?? '—'}</p>
+                    <p className="text-xs text-gray-400">
+                      {(t.categories as any)?.name ?? 'Sem categoria'} · {formatDate(t.date)}
+                    </p>
+                  </div>
+                  <span className={`font-semibold financial-value ${t.type === 'income' ? 'text-green-600' : t.type === 'expense' ? 'text-red-600' : 'text-blue-600'}`}>
+                    {t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}{formatCurrency(t.amount, currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </section>
         )}
 

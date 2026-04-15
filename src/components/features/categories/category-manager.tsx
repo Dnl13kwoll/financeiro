@@ -3,9 +3,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 
-type Category = { id: string; name: string; type: 'income' | 'expense' }
+type Category = { id: string; name: string; type: 'income' | 'expense'; sort_order?: number }
 
 export function CategoryManager({ categories, coupleId }: { categories: Category[]; coupleId: string }) {
   const [open, setOpen] = useState(false)
@@ -35,7 +35,23 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
     router.refresh()
   }
 
-  const custom = categories.filter(c => (c as any).couple_id)
+  async function handleReorder(id: string, direction: 'up' | 'down') {
+    const custom = categories.filter(c => (c as any).couple_id).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    const idx = custom.findIndex(c => c.id === id)
+    if (direction === 'up' && idx === 0) return
+    if (direction === 'down' && idx === custom.length - 1) return
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    const supabase = createClient()
+    const aOrder = custom[idx].sort_order ?? idx
+    const bOrder = custom[swapIdx].sort_order ?? swapIdx
+    await Promise.all([
+      (supabase.from('categories') as any).update({ sort_order: bOrder }).eq('id', custom[idx].id),
+      (supabase.from('categories') as any).update({ sort_order: aOrder }).eq('id', custom[swapIdx].id),
+    ])
+    router.refresh()
+  }
+
+  const custom = categories.filter(c => (c as any).couple_id).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
   const defaults = categories.filter(c => !(c as any).couple_id)
 
   return (
@@ -80,7 +96,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
             <div>
               <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Personalizadas</p>
               <div className="space-y-1">
-                {custom.map(c => (
+                {custom.map((c, i) => (
                   <div key={c.id} className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded">
                     <div className="flex items-center gap-2">
                       <span className={`text-xs px-1.5 py-0.5 rounded ${c.type === 'expense' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
@@ -88,9 +104,17 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
                       </span>
                       <span className="text-sm text-gray-700">{c.name}</span>
                     </div>
-                    <button onClick={() => handleDelete(c.id, c.name)} className="p-1 text-gray-400 hover:text-red-600 rounded">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-0.5">
+                      <button onClick={() => handleReorder(c.id, 'up')} disabled={i === 0} className="p-1 text-gray-300 hover:text-gray-600 rounded disabled:opacity-20">
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleReorder(c.id, 'down')} disabled={i === custom.length - 1} className="p-1 text-gray-300 hover:text-gray-600 rounded disabled:opacity-20">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleDelete(c.id, c.name)} className="p-1 text-gray-400 hover:text-red-600 rounded">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

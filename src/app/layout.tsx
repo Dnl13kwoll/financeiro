@@ -6,13 +6,31 @@ import { ThemeScript } from '@/components/layout/theme-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Financeiro — Controle para Casais',
-  description: 'Controle financeiro compartilhado para casais',
+  title: {
+    default: 'Financeiro — Controle para Casais',
+    template: '%s · Financeiro',
+  },
+  description: 'Controle financeiro compartilhado para casais. Gerencie contas, transações, orçamentos e metas juntos.',
+  keywords: ['finanças', 'controle financeiro', 'casal', 'orçamento', 'metas'],
+  authors: [{ name: 'Financeiro' }],
   manifest: '/manifest.webmanifest',
+  robots: { index: false, follow: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Financeiro',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    title: 'Financeiro — Controle para Casais',
+    description: 'Controle financeiro compartilhado para casais.',
+    siteName: 'Financeiro',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Financeiro — Controle para Casais',
+    description: 'Controle financeiro compartilhado para casais.',
   },
 }
 

@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Contas' }
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
@@ -5,6 +7,9 @@ import { CreditCard, Banknote, Building2 } from 'lucide-react'
 import type { Account } from '@/types/database'
 import { NewAccountButton } from '@/components/features/accounts/new-account-button'
 import { AccountActions } from '@/components/features/accounts/account-actions'
+import Link from 'next/link'
+import { TransferButton } from '@/components/features/accounts/transfer-button'
+import { AccountSortButtons } from '@/components/features/accounts/account-sort-buttons'
 
 const typeLabel: Record<Account['type'], string> = {
   cash: 'Dinheiro',
@@ -36,6 +41,7 @@ export default async function AccountsPage() {
         .select('*')
         .eq('couple_id', coupleId)
         .is('deleted_at', null)
+        .order('sort_order')
         .order('created_at')
     : null
 
@@ -53,22 +59,33 @@ export default async function AccountsPage() {
       <Header title="Contas" />
 
       <div className="p-6">
-        <div className="flex justify-end mb-5">
+        <div className="flex justify-end gap-2 mb-5">
+          {coupleId && <TransferButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
           {coupleId && <NewAccountButton coupleId={coupleId} userId={user!.id} />}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {accounts.map((account) => (
+          {accounts.map((account, idx) => (
             <div
               key={account.id}
-              className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
+              className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative"
             >
+              <Link href={`/accounts/${account.id}`} className="absolute inset-0 rounded-xl" aria-label={`Ver extrato de ${account.name}`} />
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 text-gray-500">
+                  {(account as any).color && (
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (account as any).color }} />
+                  )}
                   {typeIcon[account.type]}
                   <span className="text-xs">{typeLabel[account.type]}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 relative z-10">
+                  <AccountSortButtons
+                    id={account.id}
+                    sortOrder={(account as any).sort_order ?? idx * 10}
+                    isFirst={idx === 0}
+                    isLast={idx === accounts.length - 1}
+                  />
                   {account.type === 'credit_card' && account.limit_amount && (
                     <span className="text-xs text-gray-400">
                       Limite: {formatCurrency(account.limit_amount)}

@@ -1,7 +1,7 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Lock } from 'lucide-react'
 
 type Account = { id: string; name: string }
 type Category = { id: string; name: string; type: string }
@@ -19,8 +19,9 @@ export function TransactionFilters({
     searchParams.get('date_from') ? 'range' : 'month'
   )
 
-  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag']
+  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag', 'private']
   const hasActiveFilters = FILTER_KEYS.some(k => !!searchParams.get(k))
+  const privateOnly = searchParams.get('private') === '1'
 
   function clearFilters() {
     setMode('month')
@@ -43,6 +44,32 @@ export function TransactionFilters({
     } else {
       params.delete('month')
     }
+    router.push(`/transactions?${params.toString()}`)
+  }
+
+  function applyQuickRange(type: 'week' | 'month' | 'last30') {
+    const now = new Date()
+    let from: string, to: string
+    if (type === 'week') {
+      const day = now.getDay()
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - ((day + 6) % 7))
+      from = monday.toISOString().slice(0, 10)
+      to = now.toISOString().slice(0, 10)
+    } else if (type === 'month') {
+      from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+    } else {
+      const past = new Date(now)
+      past.setDate(now.getDate() - 30)
+      from = past.toISOString().slice(0, 10)
+      to = now.toISOString().slice(0, 10)
+    }
+    setMode('range')
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('month')
+    params.set('date_from', from)
+    params.set('date_to', to)
     router.push(`/transactions?${params.toString()}`)
   }
 
@@ -89,6 +116,13 @@ export function TransactionFilters({
         </>
       )}
 
+      {/* Quick date buttons */}
+      <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+        <button onClick={() => applyQuickRange('week')} className="px-2.5 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors">Esta semana</button>
+        <button onClick={() => applyQuickRange('month')} className="px-2.5 py-1.5 text-gray-600 hover:bg-gray-50 border-l border-gray-200 transition-colors">Este mês</button>
+        <button onClick={() => applyQuickRange('last30')} className="px-2.5 py-1.5 text-gray-600 hover:bg-gray-50 border-l border-gray-200 transition-colors">Últimos 30d</button>
+      </div>
+
       <select
         defaultValue={searchParams.get('type') ?? ''}
         onChange={e => update('type', e.target.value)}
@@ -133,6 +167,21 @@ export function TransactionFilters({
         onChange={e => update('tag', e.target.value)}
         className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-24"
       />
+
+      {/* Private only toggle */}
+      <button
+        onClick={() => update('private', privateOnly ? '' : '1')}
+        title="Mostrar apenas transações privadas"
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
+          privateOnly
+            ? 'bg-gray-800 text-white border-gray-800'
+            : 'text-gray-500 border-gray-200 hover:bg-gray-50'
+        }`}
+      >
+        <Lock className="w-3.5 h-3.5" />
+        Privadas
+      </button>
+
       {hasActiveFilters && (
         <button
           onClick={clearFilters}

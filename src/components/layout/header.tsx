@@ -1,16 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { ThemeSwitcher } from './theme-switcher'
 import { GlobalSearch } from './global-search'
+import { NotificationBell } from './notification-bell'
 
 export async function Header({ title }: { title: string }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  const memberRes = await supabase.from('couple_members').select('couple_id').eq('user_id', user!.id).maybeSingle()
+  const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   return (
     <header className="h-16 bg-white border-b border-gray-100 px-4 md:px-6 flex items-center justify-between shrink-0">
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       <div className="flex items-center gap-2 md:gap-3">
         <GlobalSearch />
+        <NotificationBell coupleId={coupleId} />
         <ThemeSwitcher />
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-gray-900">

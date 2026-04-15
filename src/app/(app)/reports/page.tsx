@@ -8,6 +8,9 @@ import { MonthFilter } from '@/components/features/reports/month-filter'
 import { ReportViewToggle } from '@/components/features/reports/report-view-toggle'
 import { YearFilter } from '@/components/features/reports/year-filter'
 import { AnnualExportButtons } from '@/components/features/reports/annual-export-buttons'
+import { SvgPieChart } from '@/components/features/reports/svg-pie-chart'
+import { CompareMonthsPicker } from '@/components/features/reports/compare-months-picker'
+import { PrintReportButton } from '@/components/features/reports/print-report-button'
 import { Suspense } from 'react'
 
 const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -16,7 +19,7 @@ const MONTH_LABELS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Jul
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; view?: string; year?: string }>
+  searchParams: Promise<{ month?: string; view?: string; year?: string; monthA?: string; monthB?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,7 +32,7 @@ export default async function ReportsPage({
     .single()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const view = params.view === 'annual' ? 'annual' : 'monthly'
+  const view = params.view === 'annual' ? 'annual' : params.view === 'compare' ? 'compare' : 'monthly'
   const now = new Date()
 
   // ── ANNUAL VIEW ──────────────────────────────────────────────────────────────
@@ -89,13 +92,16 @@ export default async function ReportsPage({
               </div>
             </div>
             {coupleId && (
-              <AnnualExportButtons
-                year={year}
-                monthlyData={monthlyData}
-                categorySummary={catSummary}
-                totalIncome={totalAnnualIncome}
-                totalExpense={totalAnnualExpense}
-              />
+              <div className="flex gap-2">
+                <AnnualExportButtons
+                  year={year}
+                  monthlyData={monthlyData}
+                  categorySummary={catSummary}
+                  totalIncome={totalAnnualIncome}
+                  totalExpense={totalAnnualExpense}
+                />
+                <PrintReportButton label={`Anual ${year}`} />
+              </div>
             )}
           </div>
 
@@ -212,6 +218,141 @@ export default async function ReportsPage({
     )
   }
 
+  // ── COMPARE VIEW ─────────────────────────────────────────────────────────────
+  if (view === 'compare') {
+    const defaultMonthA = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const defaultMonthB = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+
+    const monthA = (params as any).monthA ?? defaultMonthA
+    const monthB = (params as any).monthB ?? defaultMonthB
+
+    const [yearA, mA] = monthA.split('-').map(Number)
+    const [yearB, mB] = monthB.split('-').map(Number)
+    const startA = new Date(yearA, mA - 1, 1).toISOString().slice(0, 10)
+    const endA = new Date(yearA, mA, 0).toISOString().slice(0, 10)
+    const startB = new Date(yearB, mB - 1, 1).toISOString().slice(0, 10)
+    const endB = new Date(yearB, mB, 0).toISOString().slice(0, 10)
+
+    const [resA, resB] = await Promise.all([
+      coupleId
+        ? supabase.from('transactions').select('type, amount, categories(name)').eq('couple_id', coupleId).gte('competence_date', startA).lte('competence_date', endA).is('deleted_at', null)
+        : Promise.resolve(null),
+      coupleId
+        ? supabase.from('transactions').select('type, amount, categories(name)').eq('couple_id', coupleId).gte('competence_date', startB).lte('competence_date', endB).is('deleted_at', null)
+        : Promise.resolve(null),
+    ])
+    const txA: any[] = resA?.data ?? []
+    const txB: any[] = resB?.data ?? []
+
+    const incomeA = txA.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const expenseA = txA.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    const incomeB = txB.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const expenseB = txB.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+    // Category breakdown for both months
+    const catA = new Map<string, number>()
+    txA.filter(t => t.type === 'expense').forEach(t => {
+      const n = (t.categories as any)?.name ?? 'Sem categoria'
+      catA.set(n, (catA.get(n) ?? 0) + t.amount)
+    })
+    const catB = new Map<string, number>()
+    txB.filter(t => t.type === 'expense').forEach(t => {
+      const n = (t.categories as any)?.name ?? 'Sem categoria'
+      catB.set(n, (catB.get(n) ?? 0) + t.amount)
+    })
+
+    // All category names from both months
+    const allCats = Array.from(new Set([...catA.keys(), ...catB.keys()])).sort()
+
+    const labelA = `${MONTH_LABELS[mA - 1]} ${yearA}`
+    const labelB = `${MONTH_LABELS[mB - 1]} ${yearB}`
+
+    return (
+      <div className="flex flex-col flex-1">
+        <Header title="Relatórios" />
+        <div className="p-4 md:p-6 space-y-6 max-w-3xl">
+          <div className="flex flex-wrap items-center gap-3">
+            <Suspense><ReportViewToggle view={view} /></Suspense>
+            <Suspense><CompareMonthsPicker monthA={monthA} monthB={monthB} /></Suspense>
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { label: labelA, income: incomeA, expense: expenseA },
+              { label: labelB, income: incomeB, expense: expenseB },
+            ].map((m) => (
+              <div key={m.label} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-3">
+                <p className="text-sm font-semibold text-gray-700">{m.label}</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Receitas</span>
+                  <span className="font-medium text-green-600 financial-value">{formatCurrency(m.income)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Despesas</span>
+                  <span className="font-medium text-red-600 financial-value">{formatCurrency(m.expense)}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-gray-50 pt-2">
+                  <span className="text-gray-700 font-medium">Saldo</span>
+                  <span className={`font-bold financial-value ${m.income - m.expense >= 0 ? 'text-primary-600' : 'text-red-600'}`}>
+                    {formatCurrency(m.income - m.expense)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Category comparison table */}
+          {allCats.length > 0 && (
+            <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4">Despesas por categoria</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-gray-500 text-left">
+                      <th className="pb-2 font-medium">Categoria</th>
+                      <th className="pb-2 font-medium text-right">{labelA}</th>
+                      <th className="pb-2 font-medium text-right">{labelB}</th>
+                      <th className="pb-2 font-medium text-right">Variação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allCats.map(cat => {
+                      const a = catA.get(cat) ?? 0
+                      const b = catB.get(cat) ?? 0
+                      const diff = a - b
+                      const pct = b > 0 ? Math.round(((a - b) / b) * 100) : null
+                      return (
+                        <tr key={cat} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="py-2 text-gray-700">{cat}</td>
+                          <td className="py-2 text-right financial-value">{a > 0 ? formatCurrency(a) : '—'}</td>
+                          <td className="py-2 text-right financial-value">{b > 0 ? formatCurrency(b) : '—'}</td>
+                          <td className={`py-2 text-right font-medium ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                            {diff !== 0 ? (
+                              <>
+                                {diff > 0 ? '+' : ''}{formatCurrency(diff)}
+                                {pct !== null && <span className="text-xs ml-1">({pct > 0 ? '+' : ''}{pct}%)</span>}
+                              </>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {!coupleId && (
+            <div className="text-center py-16 text-gray-400">Crie um casal em Configurações para começar.</div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   // ── MONTHLY VIEW ─────────────────────────────────────────────────────────────
   const monthParam = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const [year, month] = monthParam.split('-').map(Number)
@@ -223,16 +364,68 @@ export default async function ReportsPage({
   const prevMonthStart = prevDate.toISOString().slice(0, 10)
   const prevMonthEnd = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).toISOString().slice(0, 10)
 
-  const [transactionsRes, prevTransactionsRes] = await Promise.all([
+  // 6-month trend range (current month + 5 before)
+  const trendStart = new Date(year, month - 6, 1).toISOString().slice(0, 10)
+
+  const [transactionsRes, prevTransactionsRes, membersRes, trendRes] = await Promise.all([
     coupleId
       ? supabase.from('transactions').select('*, categories(name), accounts(name)').eq('couple_id', coupleId).gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null).order('date', { ascending: false })
       : Promise.resolve(null),
     coupleId
       ? supabase.from('transactions').select('type, amount').eq('couple_id', coupleId).gte('competence_date', prevMonthStart).lte('competence_date', prevMonthEnd).is('deleted_at', null)
       : Promise.resolve(null),
+    coupleId
+      ? supabase.from('couple_members').select('user_id, profiles(name, email)').eq('couple_id', coupleId)
+      : Promise.resolve(null),
+    coupleId
+      ? supabase.from('transactions').select('type, amount, competence_date, categories(name)').eq('couple_id', coupleId).gte('competence_date', trendStart).lte('competence_date', monthEnd).is('deleted_at', null)
+      : Promise.resolve(null),
   ])
   const transactions: any[] = transactionsRes?.data ?? []
   const prevTransactions: any[] = prevTransactionsRes?.data ?? []
+  const members: any[] = membersRes?.data ?? []
+  const trendTx: any[] = trendRes?.data ?? []
+
+  // Build 6-month trend labels (oldest → current)
+  const trendMonths = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(year, month - 6 + i, 1)
+    return {
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: MONTH_NAMES[d.getMonth()],
+    }
+  })
+
+  // Top categories in current month for trend
+  const catTotalsMap = new Map<string, number>()
+  transactions.filter((t: any) => t.type === 'expense').forEach((t: any) => {
+    const n: string = (t.categories as any)?.name ?? 'Sem categoria'
+    catTotalsMap.set(n, (catTotalsMap.get(n) ?? 0) + t.amount)
+  })
+  const topCats: string[] = Array.from(catTotalsMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([n]) => n)
+
+  // Per-category per-month totals (for trend chart)
+  const trendData = topCats.map(cat => ({
+    cat,
+    values: trendMonths.map(({ key }) => {
+      return trendTx
+        .filter(t => t.type === 'expense' && t.competence_date?.slice(0, 7) === key && ((t.categories as any)?.name ?? 'Sem categoria') === cat)
+        .reduce((s, t) => s + t.amount, 0)
+    }),
+  }))
+
+  // Per-person breakdown
+  const perPerson = members.map((m: any) => {
+    const name = (m.profiles as any)?.name ?? (m.profiles as any)?.email ?? 'Membro'
+    const myTx = transactions.filter((t: any) => t.user_id === m.user_id)
+    return {
+      name,
+      income: myTx.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + t.amount, 0),
+      expense: myTx.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + t.amount, 0),
+    }
+  })
 
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s: number, t: any) => s + t.amount, 0)
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s: number, t: any) => s + t.amount, 0)
@@ -290,11 +483,14 @@ export default async function ReportsPage({
             </div>
           </div>
           {coupleId && (
-            <ExportButtons
-              transactions={exportRows}
-              categorySummary={categorySummary}
-              month={monthLabel}
-            />
+            <div className="flex gap-2">
+              <ExportButtons
+                transactions={exportRows}
+                categorySummary={categorySummary}
+                month={monthLabel}
+              />
+              <PrintReportButton label={monthLabel} />
+            </div>
           )}
         </div>
 
@@ -335,6 +531,9 @@ export default async function ReportsPage({
         {categorySummary.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">Despesas por categoria</h3>
+            <div className="mb-5">
+              <SvgPieChart data={categorySummary} total={totalExpense} />
+            </div>
             <div className="space-y-3">
               {categorySummary.map((c) => (
                 <div key={c.name}>
@@ -350,6 +549,68 @@ export default async function ReportsPage({
                   </div>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Por pessoa */}
+        {perPerson.length > 1 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4">Breakdown por membro</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {perPerson.map((p) => (
+                <div key={p.name} className="border border-gray-100 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-gray-800 mb-3 truncate">{p.name}</p>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Receitas</span>
+                      <span className="font-medium text-green-600">{formatCurrency(p.income)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Despesas</span>
+                      <span className="font-medium text-red-500">{formatCurrency(p.expense)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-50 pt-1.5">
+                      <span className="text-gray-700 font-medium">Saldo</span>
+                      <span className={`font-bold ${p.income - p.expense >= 0 ? 'text-primary-600' : 'text-red-600'}`}>
+                        {formatCurrency(p.income - p.expense)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Tendência por categoria (6 meses) */}
+        {trendData.length > 0 && trendMonths.length > 1 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-5">Tendência de despesas — últimos 6 meses</h3>
+            <div className="space-y-4">
+              {trendData.map((row, ri) => {
+                const maxVal = Math.max(...row.values, 1)
+                const COLORS = ['bg-primary-500', 'bg-red-400', 'bg-amber-400', 'bg-blue-400']
+                return (
+                  <div key={row.cat}>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{row.cat}</p>
+                    <div className="flex items-end gap-1" style={{ height: '56px' }}>
+                      {row.values.map((v, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                          <div className="w-full flex items-end justify-center" style={{ height: '44px' }}>
+                            <div
+                              className={`w-full rounded-t-sm ${COLORS[ri % COLORS.length]}`}
+                              style={{ height: `${(v / maxVal) * 100}%`, minHeight: v > 0 ? '3px' : '0' }}
+                              title={`${row.cat}: ${formatCurrency(v)}`}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400">{trendMonths[i].label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}

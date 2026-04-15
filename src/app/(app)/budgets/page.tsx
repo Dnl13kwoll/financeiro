@@ -4,6 +4,8 @@ import { formatCurrency } from '@/lib/utils'
 import { NewBudgetButton } from '@/components/features/budgets/new-budget-button'
 import { BudgetDeleteButton } from '@/components/features/budgets/budget-actions'
 import { CopyBudgetsButton } from '@/components/features/budgets/copy-budgets-button'
+import { RolloverBudgetButton } from '@/components/features/budgets/rollover-budget-button'
+import { BudgetAlertNotifier } from '@/components/features/budgets/budget-alert-notifier'
 
 export default async function BudgetsPage() {
   const supabase = await createClient()
@@ -20,6 +22,7 @@ export default async function BudgetsPage() {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10)
 
   const budgetsRes = coupleId
     ? await supabase
@@ -61,12 +64,26 @@ export default async function BudgetsPage() {
   const totalBudget = budgets.reduce((s, b) => s + b.amount, 0)
   const totalSpent = budgets.reduce((s, b) => s + (expenseMap.get(b.category_id) ?? 0), 0)
 
+  // Build alerts for categories at/above threshold
+  const budgetAlerts = coupleId ? budgets
+    .map(b => {
+      const spent = expenseMap.get(b.category_id) ?? 0
+      const percent = b.amount > 0 ? Math.round((spent / b.amount) * 100) : 0
+      const threshold = b.alert_threshold ?? 80
+      return { category_id: b.category_id, category_name: (b.categories as any)?.name ?? '', percent, coupleId, threshold }
+    })
+    .filter(a => a.percent >= a.threshold) : []
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Orçamentos" />
 
+      {budgetAlerts.length > 0 && coupleId && (
+        <BudgetAlertNotifier alerts={budgetAlerts} />
+      )}
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex gap-2 justify-end flex-wrap">
+          {coupleId && <RolloverBudgetButton coupleId={coupleId} currentMonth={monthStart} prevMonth={prevMonthStart} />}
           {coupleId && <CopyBudgetsButton coupleId={coupleId} currentMonth={monthStart} />}
           {coupleId && <NewBudgetButton coupleId={coupleId} categories={categories} />}
         </div>

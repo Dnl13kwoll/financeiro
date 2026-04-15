@@ -11,14 +11,23 @@ export function DescriptionWithSuggest({
   type,
   onCategoryChange,
   defaultValue,
+  value: controlledValue,
+  onChange: controlledOnChange,
 }: {
   coupleId: string | null
   categories: Category[]
   type: 'income' | 'expense' | 'transfer'
   onCategoryChange: (id: string) => void
   defaultValue?: string
+  value?: string
+  onChange?: (v: string) => void
 }) {
-  const [value, setValue] = useState(defaultValue ?? '')
+  const [internalValue, setInternalValue] = useState(defaultValue ?? '')
+  const value = controlledValue !== undefined ? controlledValue : internalValue
+  function setValue(v: string) {
+    setInternalValue(v)
+    controlledOnChange?.(v)
+  }
   const [suggestion, setSuggestion] = useState<{ categoryId: string; categoryName: string } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 

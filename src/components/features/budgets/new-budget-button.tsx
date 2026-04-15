@@ -22,11 +22,13 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
     const data = new FormData(form)
 
     const supabase = createClient()
+    const threshold = data.get('alert_threshold') as string
     const payload: any = {
       category_id: data.get('category_id') as string,
       couple_id: coupleId,
       amount: parseFloat(data.get('amount') as string),
       month: data.get('month') + '-01',
+      alert_threshold: threshold ? parseInt(threshold) : 80,
     }
     await (supabase.from('budgets') as any).upsert(payload, { onConflict: 'couple_id,category_id,month' })
 
@@ -82,6 +84,18 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
               min="0"
               required
               placeholder="0,00"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Alertar a partir de (% do orçamento)</label>
+            <input
+              name="alert_threshold"
+              type="number"
+              min="1"
+              max="100"
+              defaultValue={80}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

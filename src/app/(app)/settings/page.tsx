@@ -8,6 +8,7 @@ import { CurrencySelector } from '@/components/features/settings/currency-select
 import { PushSubscribeButton } from '@/components/features/notifications/push-subscribe'
 import { BackupButton } from '@/components/features/settings/backup-button'
 import { BackupImport } from '@/components/features/settings/backup-import'
+import { DangerZone } from '@/components/features/settings/danger-zone'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -144,6 +145,11 @@ export default async function SettingsPage() {
           </p>
           <BackupImport />
         </section>
+
+        {/* Danger Zone — only for owners */}
+        {coupleId && role === 'owner' && (
+          <DangerZone coupleId={coupleId} />
+        )}
       </div>
     </div>
   )

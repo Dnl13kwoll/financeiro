@@ -12,9 +12,10 @@ type Goal = {
   target_amount: number
   current_amount: number
   deadline?: string | null
+  account_id?: string | null
 }
 
-export function NewGoalButton({ coupleId }: { coupleId: string }) {
+export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; accounts?: { id: string; name: string }[] }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -31,6 +32,7 @@ export function NewGoalButton({ coupleId }: { coupleId: string }) {
       target_amount: parseFloat(data.get('target_amount') as string),
       current_amount: parseFloat(data.get('current_amount') as string) || 0,
       deadline: (data.get('deadline') as string) || null,
+      account_id: (data.get('account_id') as string) || null,
     }
     await (supabase.from('goals') as any).insert(payload)
     setLoading(false)
@@ -91,6 +93,20 @@ export function NewGoalButton({ coupleId }: { coupleId: string }) {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
+          {accounts.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Conta vinculada (opcional)</label>
+              <select
+                name="account_id"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Sem conta</option>
+                {accounts.map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex gap-3 justify-end pt-2">
             <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancelar</button>
             <button type="submit" disabled={loading} className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50">

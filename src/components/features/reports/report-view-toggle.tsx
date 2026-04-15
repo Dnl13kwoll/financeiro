@@ -27,6 +27,12 @@ export function ReportViewToggle({ view }: { view: string }) {
       >
         Anual
       </button>
+      <button
+        onClick={() => setView('compare')}
+        className={`px-4 py-1.5 transition-colors ${view === 'compare' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+      >
+        Comparar
+      </button>
     </div>
   )
 }

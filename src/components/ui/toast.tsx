@@ -1,15 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle2, XCircle, X } from 'lucide-react'
+import { CheckCircle2, XCircle, X, RotateCcw } from 'lucide-react'
 
-type Toast = { id: number; message: string; type: 'success' | 'error' }
+type Toast = { id: number; message: string; type: 'success' | 'error'; onUndo?: () => void }
 
-// Call from any client component:
-// window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Salvo!', type: 'success' } }))
-export function showToast(message: string, type: 'success' | 'error' = 'success') {
+export function showToast(message: string, type: 'success' | 'error' = 'success', onUndo?: () => void) {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('toast', { detail: { message, type } }))
+  window.dispatchEvent(new CustomEvent('toast', { detail: { message, type, onUndo } }))
 }
 
 export function ToastContainer() {
@@ -18,10 +16,10 @@ export function ToastContainer() {
   useEffect(() => {
     let counter = 0
     function handler(e: Event) {
-      const { message, type } = (e as CustomEvent).detail
+      const { message, type, onUndo } = (e as CustomEvent).detail
       const id = ++counter
-      setToasts(prev => [...prev, { id, message, type }])
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
+      setToasts(prev => [...prev, { id, message, type, onUndo }])
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), onUndo ? 4500 : 3500)
     }
     window.addEventListener('toast', handler)
     return () => window.removeEventListener('toast', handler)
@@ -35,9 +33,7 @@ export function ToastContainer() {
         <div
           key={t.id}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-200 ${
-            t.type === 'success'
-              ? 'bg-gray-900 text-white'
-              : 'bg-red-600 text-white'
+            t.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
           }`}
         >
           {t.type === 'success'
@@ -45,6 +41,17 @@ export function ToastContainer() {
             : <XCircle className="w-4 h-4 text-red-200 shrink-0" />
           }
           {t.message}
+          {t.onUndo && (
+            <button
+              onClick={() => {
+                t.onUndo?.()
+                setToasts(prev => prev.filter(x => x.id !== t.id))
+              }}
+              className="ml-1 flex items-center gap-1 underline underline-offset-2 opacity-90 hover:opacity-100 font-semibold"
+            >
+              <RotateCcw className="w-3 h-3" /> Desfazer
+            </button>
+          )}
           <button
             onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
             className="ml-1 opacity-60 hover:opacity-100"

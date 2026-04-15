@@ -5,6 +5,17 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Pencil, Trash2 } from 'lucide-react'
 
+const ACCOUNT_COLORS = [
+  { value: '#6366f1', label: 'Índigo' },
+  { value: '#0ea5e9', label: 'Azul' },
+  { value: '#10b981', label: 'Verde' },
+  { value: '#f59e0b', label: 'Âmbar' },
+  { value: '#ef4444', label: 'Vermelho' },
+  { value: '#8b5cf6', label: 'Roxo' },
+  { value: '#ec4899', label: 'Rosa' },
+  { value: '#6b7280', label: 'Cinza' },
+]
+
 type Account = {
   id: string
   name: string
@@ -12,6 +23,8 @@ type Account = {
   limit_amount?: number | null
   closing_day?: number | null
   due_day?: number | null
+  min_balance_alert?: number | null
+  color?: string | null
 }
 
 export function AccountActions({ account }: { account: Account }) {
@@ -25,7 +38,12 @@ export function AccountActions({ account }: { account: Account }) {
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
-    const payload: any = { name: data.get('name') as string }
+    const minAlert = data.get('min_balance_alert') as string
+    const payload: any = {
+      name: data.get('name') as string,
+      min_balance_alert: minAlert ? parseFloat(minAlert) : null,
+      color: (data.get('color') as string) || null,
+    }
     if (account.type === 'credit_card') {
       payload.limit_amount = parseFloat(data.get('limit_amount') as string) || null
       payload.closing_day = parseInt(data.get('closing_day') as string) || null
@@ -115,6 +133,41 @@ export function AccountActions({ account }: { account: Account }) {
               </div>
             </>
           )}
+
+          {account.type !== 'credit_card' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Alertar saldo abaixo de (opcional)</label>
+              <input
+                name="min_balance_alert"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={account.min_balance_alert ?? ''}
+                placeholder="Ex: 500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cor da conta</label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {ACCOUNT_COLORS.map(c => (
+                <label key={c.value} className="cursor-pointer">
+                  <input type="radio" name="color" value={c.value} defaultChecked={account.color === c.value} className="sr-only" />
+                  <span
+                    className="block w-7 h-7 rounded-full border-2 border-transparent hover:scale-110 transition-transform"
+                    style={{ backgroundColor: c.value, outline: account.color === c.value ? `2px solid ${c.value}` : 'none', outlineOffset: '2px' }}
+                    title={c.label}
+                  />
+                </label>
+              ))}
+              <label className="cursor-pointer">
+                <input type="radio" name="color" value="" defaultChecked={!account.color} className="sr-only" />
+                <span className="block w-7 h-7 rounded-full border-2 border-gray-300 bg-white hover:scale-110 transition-transform text-gray-400 flex items-center justify-center text-xs" title="Padrão">✕</span>
+              </label>
+            </div>
+          </div>
 
           <div className="flex gap-3 justify-end pt-2">
             <button type="button" onClick={() => setEditOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">

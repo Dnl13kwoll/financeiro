@@ -1,13 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
-import { Plus } from 'lucide-react'
+import { Plus, Bookmark } from 'lucide-react'
 import { DescriptionWithSuggest } from './category-suggest'
+import { TransactionTemplates, saveTransactionTemplate } from './transaction-templates'
 
-type Account = { id: string; name: string }
+type Account = { id: string; name: string; type?: string }
 type Category = { id: string; name: string; type: 'income' | 'expense' }
 
 export function NewTransactionButton({
@@ -25,11 +26,48 @@ export function NewTransactionButton({
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState<'income' | 'expense' | 'transfer'>('expense')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [installments, setInstallments] = useState(1)
+  const [formAmount, setFormAmount] = useState('')
+  const [formDescription, setFormDescription] = useState('')
+  const [formTags, setFormTags] = useState('')
+  const formRef = useRef<HTMLFormElement>(null)
   const router = useRouter()
 
   const filteredCategories = categories.filter(c =>
     type === 'transfer' ? false : c.type === type
   )
+
+  function handleLoadTemplate(t: {
+    type: string
+    amount: number | null
+    description: string | null
+    category_id: string | null
+    account_id: string | null
+    tags: string[]
+  }) {
+    if (t.type === 'income' || t.type === 'expense' || t.type === 'transfer') setType(t.type)
+    if (t.amount) setFormAmount(String(t.amount))
+    if (t.description) setFormDescription(t.description)
+    if (t.category_id) setSelectedCategoryId(t.category_id)
+    if (t.account_id) setSelectedAccountId(t.account_id)
+    if (t.tags?.length) setFormTags(t.tags.join(', '))
+  }
+
+  async function handleSaveTemplate() {
+    const name = window.prompt('Nome do template:')
+    if (!name?.trim()) return
+    const tags = formTags.split(',').map(t => t.trim()).filter(Boolean)
+    await saveTransactionTemplate(coupleId, userId, {
+      name: name.trim(),
+      type,
+      amount: formAmount ? parseFloat(formAmount) : null,
+      description: formDescription || null,
+      category_id: selectedCategoryId || null,
+      account_id: selectedAccountId || null,
+      tags,
+    })
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -38,32 +76,70 @@ export function NewTransactionButton({
     const data = new FormData(form)
 
     const supabase = createClient()
-    const rawTags = (data.get('tags') as string) ?? ''
-    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
+    const tags = formTags.split(',').map(t => t.trim()).filter(Boolean)
 
-    const payload: any = {
-      type,
-      amount: parseFloat(data.get('amount') as string),
-      description: (data.get('description') as string) || null,
-      category_id: (data.get('category_id') as string) || null,
-      account_id: data.get('account_id') as string,
-      to_account_id: type === 'transfer' ? (data.get('to_account_id') as string) || null : null,
-      date: data.get('date') as string,
-      competence_date: data.get('date') as string,
-      is_private: data.get('is_private') === 'on',
-      tags: tags.length > 0 ? tags : [],
-      user_id: userId,
-      couple_id: coupleId,
+    const n = installments
+    const totalAmount = parseFloat(formAmount)
+    const baseDate = new Date((data.get('date') as string) + 'T12:00:00')
+    const description = formDescription || null
+
+    if (n > 1 && type === 'expense') {
+      const { data: installGroup } = await (supabase.from('installments') as any).insert({
+        description,
+        total_amount: totalAmount,
+        installment_count: n,
+        couple_id: coupleId,
+        user_id: userId,
+        start_date: baseDate.toISOString().slice(0, 10),
+      }).select('id').single()
+
+      if (installGroup) {
+        const items = Array.from({ length: n }, (_, i) => {
+          const dueDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate())
+          return {
+            installment_id: installGroup.id,
+            installment_number: i + 1,
+            amount: parseFloat((totalAmount / n).toFixed(2)),
+            due_date: dueDate.toISOString().slice(0, 10),
+            paid: false,
+          }
+        })
+        await (supabase.from('installment_items') as any).insert(items)
+      }
+    } else {
+      const payload: any = {
+        type,
+        amount: totalAmount,
+        description,
+        category_id: selectedCategoryId || null,
+        account_id: selectedAccountId || (data.get('account_id') as string),
+        to_account_id: type === 'transfer' ? (data.get('to_account_id') as string) || null : null,
+        date: baseDate.toISOString().slice(0, 10),
+        competence_date: baseDate.toISOString().slice(0, 10),
+        is_private: data.get('is_private') === 'on',
+        tags: tags.length > 0 ? tags : [],
+        user_id: userId,
+        couple_id: coupleId,
+        comment: (data.get('comment') as string) || null,
+      }
+      await (supabase.from('transactions') as any).insert(payload)
     }
-    await (supabase.from('transactions') as any).insert(payload)
 
     setLoading(false)
     setOpen(false)
-    form.reset()
+    resetForm()
+    showToast(n > 1 ? `Parcelamento em ${n}x criado!` : 'Transação salva!')
+    router.refresh()
+  }
+
+  function resetForm() {
     setType('expense')
     setSelectedCategoryId('')
-    showToast('Transação salva!')
-    router.refresh()
+    setSelectedAccountId('')
+    setInstallments(1)
+    setFormAmount('')
+    setFormDescription('')
+    setFormTags('')
   }
 
   const today = new Date().toISOString().slice(0, 10)
@@ -78,8 +154,22 @@ export function NewTransactionButton({
         Nova Transação
       </button>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Nova Transação">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <Modal open={open} onClose={() => { setOpen(false); resetForm() }} title="Nova Transação">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          {/* Templates picker */}
+          <div className="flex items-center justify-between">
+            <TransactionTemplates coupleId={coupleId} userId={userId} onLoad={handleLoadTemplate} />
+            <button
+              type="button"
+              onClick={handleSaveTemplate}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary-600 transition-colors"
+              title="Salvar formulário atual como template"
+            >
+              <Bookmark className="w-3.5 h-3.5" />
+              Salvar como template
+            </button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
             <div className="grid grid-cols-3 gap-2">
@@ -108,6 +198,8 @@ export function NewTransactionButton({
               step="0.01"
               min="0.01"
               required
+              value={formAmount}
+              onChange={e => setFormAmount(e.target.value)}
               placeholder="0,00"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
@@ -118,6 +210,8 @@ export function NewTransactionButton({
             categories={filteredCategories}
             type={type}
             onCategoryChange={(id) => setSelectedCategoryId(id)}
+            value={formDescription}
+            onChange={setFormDescription}
           />
 
           <div>
@@ -127,6 +221,8 @@ export function NewTransactionButton({
             <select
               name="account_id"
               required
+              value={selectedAccountId}
+              onChange={e => setSelectedAccountId(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Selecione...</option>
@@ -184,10 +280,37 @@ export function NewTransactionButton({
             <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
             <input
               name="tags"
+              value={formTags}
+              onChange={e => setFormTags(e.target.value)}
               placeholder="viagem, casa, pet (separadas por vírgula)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Comentário</label>
+            <input
+              name="comment"
+              placeholder="Observação opcional"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          {type === 'expense' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Parcelas</label>
+              <select
+                name="installments"
+                value={installments}
+                onChange={e => setInstallments(parseInt(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {Array.from({ length: 24 }, (_, i) => i + 1).map(n => (
+                  <option key={n} value={n}>{n === 1 ? 'À vista' : `${n}x`}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
             <input name="is_private" type="checkbox" className="rounded" />
@@ -195,7 +318,7 @@ export function NewTransactionButton({
           </label>
 
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+            <button type="button" onClick={() => { setOpen(false); resetForm() }} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
               Cancelar
             </button>
             <button

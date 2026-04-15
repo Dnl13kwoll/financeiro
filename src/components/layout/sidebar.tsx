@@ -18,7 +18,13 @@ import {
   X,
   CalendarClock,
   TrendingUp,
+  Activity,
+  Heart,
+  ClipboardList,
+  Landmark,
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { PrivacyToggle } from '@/components/ui/privacy-toggle'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -33,7 +39,11 @@ const navItems = [
   { href: '/goals', label: 'Metas', icon: Target },
   { href: '/timeline', label: 'Linha do Tempo', icon: CalendarClock },
   { href: '/projection', label: 'Projeção', icon: TrendingUp },
+  { href: '/planning', label: 'Planejamento', icon: ClipboardList },
+  { href: '/networth', label: 'Patrimônio', icon: Landmark },
+  { href: '/wishlist', label: 'Lista de Desejos', icon: Heart },
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
+  { href: '/activity', label: 'Atividade', icon: Activity },
   { href: '/settings', label: 'Configurações', icon: Settings },
 ]
 
@@ -79,7 +89,14 @@ export function Sidebar() {
   )
 
   const LogoutButton = () => (
-    <div className="p-4 border-t border-gray-100">
+    <div className="p-4 border-t border-gray-100 space-y-1">
+      <div className="flex items-center justify-between px-3 py-1">
+        <span className="text-xs text-gray-400">Tema</span>
+        <div className="flex items-center gap-1">
+          <PrivacyToggle />
+          <ThemeToggle />
+        </div>
+      </div>
       <button
         onClick={handleLogout}
         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"

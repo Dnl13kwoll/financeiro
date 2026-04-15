@@ -1,16 +1,21 @@
+import type { Metadata } from 'next'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import type { Transaction } from '@/types/database'
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from 'lucide-react'
+
+export const metadata: Metadata = { title: 'Transações' }
 import { NewTransactionButton } from '@/components/features/transactions/new-transaction-button'
-import { TransactionActions } from '@/components/features/transactions/transaction-actions'
+import { TransactionsTable } from '@/components/features/transactions/transactions-table'
 import { TransactionFilters } from '@/components/features/transactions/transaction-filters'
 import { CategoryManager } from '@/components/features/categories/category-manager'
 import { ImportCSVButton } from '@/components/features/transactions/import-csv-button'
+import { ImportOFXButton } from '@/components/features/transactions/import-ofx-button'
+import { ExportButton } from '@/components/features/transactions/export-button'
+import { TransactionSummary } from '@/components/features/transactions/transaction-summary'
+import { CategoryTotals } from '@/components/features/transactions/category-totals'
 import { Suspense } from 'react'
 import { SortHeader } from '@/components/features/transactions/sort-header'
 import Link from 'next/link'
+// SortHeader/Link kept for pagination below
 
 const typeConfig: Record<
   Transaction['type'],
@@ -33,10 +38,12 @@ const typeConfig: Record<
   },
 }
 
+const PAGE_SIZE = 50
+
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string }>
+  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string; private?: string; page?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -65,6 +72,7 @@ export default async function TransactionsPage({
 
   const sortCol = params.sort && ['date', 'amount', 'description'].includes(params.sort) ? params.sort : 'date'
   const sortAsc = params.dir === 'asc'
+  const currentPage = parseInt(params.page ?? '1')
 
   let query = coupleId
     ? supabase
@@ -80,6 +88,7 @@ export default async function TransactionsPage({
   if (query && params.type) query = (query as any).eq('type', params.type)
   if (query && params.category_id) query = (query as any).eq('category_id', params.category_id)
   if (query && params.account_id) query = (query as any).eq('account_id', params.account_id)
+  if (query && params.private === '1') query = (query as any).eq('is_private', true)
 
   const transactionsRes = query ? await query : null
 
@@ -107,6 +116,42 @@ export default async function TransactionsPage({
     )
   }
 
+  // Summary
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+  // Category totals
+  const catMap = new Map<string, number>()
+  transactions.filter(t => t.type === 'expense').forEach(t => {
+    const name = (t.categories as any)?.name ?? 'Sem categoria'
+    catMap.set(name, (catMap.get(name) ?? 0) + t.amount)
+  })
+  const categoryTotals = Array.from(catMap.entries())
+    .map(([name, total]) => ({ name, total, pct: totalExpense > 0 ? Math.round((total / totalExpense) * 100) : 0 }))
+    .sort((a, b) => b.total - a.total)
+
+  // Pagination
+  const totalCount = transactions.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const paginated = transactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  function pageUrl(p: number) {
+    const sp = new URLSearchParams()
+    if (params.month) sp.set('month', params.month)
+    if (params.date_from) sp.set('date_from', params.date_from)
+    if (params.date_to) sp.set('date_to', params.date_to)
+    if (params.type) sp.set('type', params.type)
+    if (params.category_id) sp.set('category_id', params.category_id)
+    if (params.account_id) sp.set('account_id', params.account_id)
+    if (params.q) sp.set('q', params.q)
+    if (params.tag) sp.set('tag', params.tag)
+    if (params.sort) sp.set('sort', params.sort)
+    if (params.dir) sp.set('dir', params.dir)
+    if (params.private) sp.set('private', params.private)
+    sp.set('page', String(p))
+    return `/transactions?${sp.toString()}`
+  }
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Transações" />
@@ -117,7 +162,9 @@ export default async function TransactionsPage({
             <TransactionFilters accounts={accounts} categories={categories} />
           </Suspense>
           <div className="flex gap-2 flex-wrap">
+            {coupleId && <ExportButton coupleId={coupleId} filters={{ monthStart, monthEnd, type: params.type, category_id: params.category_id, account_id: params.account_id, q: params.q, tag: params.tag }} />}
             {coupleId && <ImportCSVButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
+            {coupleId && <ImportOFXButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
             {coupleId && <CategoryManager categories={categories} coupleId={coupleId} />}
             {coupleId && (
               <NewTransactionButton
@@ -130,93 +177,40 @@ export default async function TransactionsPage({
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-500 text-left text-xs">
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">
-                  <Suspense><SortHeader label="Descrição" column="description" /></Suspense>
-                </th>
-                <th className="px-4 py-3 hidden md:table-cell">Categoria</th>
-                <th className="px-4 py-3 hidden md:table-cell">Conta</th>
-                <th className="px-4 py-3 hidden sm:table-cell">
-                  <Suspense><SortHeader label="Data" column="date" /></Suspense>
-                </th>
-                <th className="px-4 py-3 text-right">
-                  <Suspense><SortHeader label="Valor" column="amount" className="ml-auto" /></Suspense>
-                </th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((t) => {
-                const config = typeConfig[t.type as Transaction['type']]
-                return (
-                  <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        {config.icon}
-                        <span className="text-xs text-gray-500 hidden sm:inline">{config.label}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      <div className="flex flex-col gap-0.5">
-                        <span>
-                          {t.description ?? '—'}
-                          {t.is_private && (
-                            <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">privado</span>
-                          )}
-                        </span>
-                        {t.comment && (
-                          <span className="text-xs text-gray-400 italic">💬 {t.comment}</span>
-                        )}
-                        {(t.tags ?? []).length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {(t.tags as string[]).map((tag) => (
-                              <Link
-                                key={tag}
-                                href={`/transactions?tag=${encodeURIComponent(tag)}`}
-                                className="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded-full hover:bg-primary-100 transition-colors"
-                              >
-                                {tag}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-                      {(t.categories as { name?: string } | null)?.name ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-                      {(t.accounts as { name?: string } | null)?.name ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{formatDate(t.date)}</td>
-                    <td className={`px-4 py-3 text-right font-semibold ${config.color}`}>
-                      {t.type === 'expense' ? '-' : ''}
-                      {formatCurrency(t.amount)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <TransactionActions
-                        transaction={{ id: t.id, type: t.type, amount: t.amount, description: t.description, category_id: t.category_id, account_id: t.account_id, date: t.date, is_private: t.is_private, tags: t.tags ?? [], comment: t.comment }}
-                        accounts={accounts}
-                        categories={categories}
-                      />
-                    </td>
-                  </tr>
-                )
-              })}
-              {transactions.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-gray-400">
-                    {coupleId ? 'Nenhuma transação encontrada.' : 'Crie um casal em Configurações para começar.'}
-                  </td>
-                </tr>
+        {/* Summary cards */}
+        {transactions.length > 0 && (
+          <TransactionSummary income={totalIncome} expense={totalExpense} />
+        )}
+
+        <TransactionsTable
+          transactions={paginated}
+          accounts={accounts}
+          categories={categories}
+          coupleId={coupleId}
+          userId={user!.id}
+        />
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>{totalCount} transações · página {currentPage} de {totalPages}</span>
+            <div className="flex gap-2">
+              {currentPage > 1 && (
+                <Link href={pageUrl(currentPage - 1)} className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  ← Anterior
+                </Link>
               )}
-            </tbody>
-          </table>
-        </div>
+              {currentPage < totalPages && (
+                <Link href={pageUrl(currentPage + 1)} className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  Próxima →
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Category totals */}
+        <CategoryTotals categories={categoryTotals} />
       </div>
     </div>
   )

@@ -5,6 +5,8 @@ import { NewInstallmentButton } from '@/components/features/installments/new-ins
 import { InstallmentActions } from '@/components/features/installments/installment-actions'
 import { InstallmentItemToggle } from '@/components/features/installments/installment-item-toggle'
 import { InstallmentItemEdit } from '@/components/features/installments/installment-item-edit'
+import { InstallmentItemCancel } from '@/components/features/installments/installment-item-cancel'
+import { InstallmentItemReschedule } from '@/components/features/installments/installment-item-reschedule'
 
 export default async function InstallmentsPage() {
   const supabase = await createClient()
@@ -106,13 +108,27 @@ export default async function InstallmentsPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className={`font-medium ${item.paid ? 'text-green-600 line-through' : 'text-gray-700'}`}>
+                      <span className={`font-medium ${item.paid ? 'text-green-600 line-through' : item.canceled ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
                         {formatCurrency(item.amount)}
                       </span>
                       {!item.paid && !item.canceled && (
                         <InstallmentItemEdit
                           itemId={item.id}
                           amount={item.amount}
+                          partNumber={item.part_number}
+                        />
+                      )}
+                      {!item.paid && !item.canceled && (
+                        <InstallmentItemReschedule
+                          itemId={item.id}
+                          dueDate={item.due_date}
+                          partNumber={item.part_number}
+                        />
+                      )}
+                      {!item.paid && (
+                        <InstallmentItemCancel
+                          itemId={item.id}
+                          canceled={item.canceled}
                           partNumber={item.part_number}
                         />
                       )}

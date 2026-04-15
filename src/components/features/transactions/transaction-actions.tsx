@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { Copy, Pencil, Trash2 } from 'lucide-react'
+import { TransactionSplitToggle } from '@/components/features/transactions/transaction-split-toggle'
+import { ConvertToRecurring } from '@/components/features/transactions/convert-to-recurring'
 
 type Account = { id: string; name: string }
 type Category = { id: string; name: string; type: 'income' | 'expense' }
@@ -20,20 +22,26 @@ type Transaction = {
   is_private: boolean
   tags?: string[]
   comment?: string | null
+  split_id?: string | null
 }
 
 export function TransactionActions({
   transaction,
   accounts,
   categories,
+  coupleId,
+  userId,
 }: {
   transaction: Transaction
   accounts: Account[]
   categories: Category[]
+  coupleId?: string
+  userId?: string
 }) {
   const [editOpen, setEditOpen] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [deleteTimer, setDeleteTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   const router = useRouter()
 
   const filteredCategories = categories.filter(c =>
@@ -87,14 +95,20 @@ export function TransactionActions({
     router.refresh()
   }
 
-  async function handleDelete() {
-    if (!confirm('Excluir esta transação?')) return
-    const supabase = createClient()
-    await (supabase.from('transactions') as any)
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', transaction.id)
-    showToast('Transação excluída.', 'error')
-    router.refresh()
+  function handleDelete() {
+    // Optimistic: show undo toast, commit after 4 s unless cancelled
+    const timer = setTimeout(async () => {
+      const supabase = createClient()
+      await (supabase.from('transactions') as any)
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', transaction.id)
+      router.refresh()
+    }, 4000)
+    setDeleteTimer(timer)
+    showToast('Transação excluída. Desfazer?', 'error', () => {
+      clearTimeout(timer)
+      setDeleteTimer(null)
+    })
   }
 
   return (
@@ -115,6 +129,20 @@ export function TransactionActions({
         >
           <Copy className="w-3.5 h-3.5" />
         </button>
+        {transaction.type === 'expense' && (
+          <TransactionSplitToggle
+            transactionId={transaction.id}
+            amount={transaction.amount}
+            hasSplit={!!transaction.split_id}
+          />
+        )}
+        {transaction.type === 'expense' && coupleId && userId && (
+          <ConvertToRecurring
+            transaction={transaction}
+            coupleId={coupleId}
+            userId={userId}
+          />
+        )}
         <button
           onClick={handleDelete}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"

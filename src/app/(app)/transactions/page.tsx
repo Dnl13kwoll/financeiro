@@ -7,6 +7,7 @@ import { NewTransactionButton } from '@/components/features/transactions/new-tra
 import { TransactionsTable } from '@/components/features/transactions/transactions-table'
 import { TransactionFilters } from '@/components/features/transactions/transaction-filters'
 import { CategoryManager } from '@/components/features/categories/category-manager'
+import { CategoryRules } from '@/components/features/categories/category-rules'
 import { ImportCSVButton } from '@/components/features/transactions/import-csv-button'
 import { ImportOFXButton } from '@/components/features/transactions/import-ofx-button'
 import { ExportButton } from '@/components/features/transactions/export-button'
@@ -22,7 +23,7 @@ const PAGE_SIZE = 50
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string; private?: string; page?: string }>
+  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string; private?: string; reconciled?: string; page?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -68,6 +69,7 @@ export default async function TransactionsPage({
   if (query && params.category_id) query = (query as any).eq('category_id', params.category_id)
   if (query && params.account_id) query = (query as any).eq('account_id', params.account_id)
   if (query && params.private === '1') query = (query as any).eq('is_private', true)
+  if (query && params.reconciled === '1') query = (query as any).eq('reconciled', true)
 
   const transactionsRes = query ? await query : null
 
@@ -77,9 +79,19 @@ export default async function TransactionsPage({
 
   const categoriesRes = await supabase.from('categories').select('id, name, type, couple_id').order('name')
 
+  const rulesRes = coupleId
+    ? await (supabase.from('category_rules') as any)
+        .select('id, pattern, match_type, category_id, categories(name)')
+        .eq('couple_id', coupleId)
+    : null
+
   let transactions: any[] = transactionsRes?.data ?? []
   const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
   const categories: { id: string; name: string; type: 'income' | 'expense'; couple_id?: string }[] = (categoriesRes?.data ?? []) as any[]
+  const rules: any[] = ((rulesRes?.data ?? []) as any[]).map((r: any) => ({
+    id: r.id, pattern: r.pattern, match_type: r.match_type, category_id: r.category_id,
+    category_name: r.categories?.name,
+  }))
 
   if (params.q) {
     const q = params.q.toLowerCase()
@@ -127,6 +139,7 @@ export default async function TransactionsPage({
     if (params.sort) sp.set('sort', params.sort)
     if (params.dir) sp.set('dir', params.dir)
     if (params.private) sp.set('private', params.private)
+    if (params.reconciled) sp.set('reconciled', params.reconciled)
     sp.set('page', String(p))
     return `/transactions?${sp.toString()}`
   }
@@ -145,6 +158,7 @@ export default async function TransactionsPage({
             {coupleId && <ImportCSVButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
             {coupleId && <ImportOFXButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
             {coupleId && <CategoryManager categories={categories} coupleId={coupleId} />}
+            {coupleId && <CategoryRules coupleId={coupleId} categories={categories} rules={rules} />}
             {coupleId && (
               <NewTransactionButton
                 coupleId={coupleId}

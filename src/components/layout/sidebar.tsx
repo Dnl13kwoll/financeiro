@@ -22,6 +22,7 @@ import {
   Heart,
   ClipboardList,
   Landmark,
+  HelpCircle,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -45,6 +46,7 @@ const navItems = [
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/activity', label: 'Atividade', icon: Activity },
   { href: '/settings', label: 'Configurações', icon: Settings },
+  { href: '/help', label: 'Ajuda', icon: HelpCircle },
 ]
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {

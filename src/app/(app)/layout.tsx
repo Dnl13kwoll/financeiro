@@ -5,6 +5,7 @@ import { QuickAddFab } from '@/components/layout/quick-add-fab'
 import { ToastContainer } from '@/components/ui/toast'
 import { KeyboardShortcuts } from '@/components/ui/keyboard-shortcuts'
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
+import { OnboardingTour } from '@/components/features/onboarding/onboarding-tour'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <PWAInstallBanner />
       <QuickAddFab />
       <ToastContainer />
+      <OnboardingTour />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -33,6 +33,19 @@ export function NewTransactionButton({
   const [formTags, setFormTags] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
   const router = useRouter()
+
+  // Keyboard shortcut: press 'n' to open new transaction
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'n' || e.key === 'N') {
+        setOpen(true)
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [])
 
   const filteredCategories = categories.filter(c =>
     type === 'transfer' ? false : c.type === type

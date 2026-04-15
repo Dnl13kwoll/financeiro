@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Planejamento' }
 import { Header } from '@/components/layout/header'
 import { CopyPlanButton } from '@/components/features/planning/copy-plan-button'
+import { AnnualPlanView } from '@/components/features/planning/annual-plan-view'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { PlanItemRow } from '@/components/features/planning/plan-item-row'
@@ -12,11 +13,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 export default async function PlanningPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>
+  searchParams: Promise<{ month?: string; view?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const params = await searchParams
+  const annualView = params.view === 'annual'
 
   const memberRes = await supabase
     .from('couple_members')
@@ -57,6 +59,33 @@ export default async function PlanningPage({
   const totalIncome = (incomeRes?.data ?? []).reduce((s: number, t: any) => s + t.amount, 0)
   const categories: { id: string; name: string }[] = (categoriesRes?.data ?? []) as any[]
 
+  // Annual view: fetch all 12 months of the current year
+  let annualMonths: { month: string; label: string; planned: number; spent: number; income: number }[] = []
+  if (annualView && coupleId) {
+    const yearMonths = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(year, i, 1)
+      return {
+        month: d.toISOString().slice(0, 10),
+        label: d.toLocaleDateString('pt-BR', { month: 'short' }),
+        monthEnd: new Date(year, i + 1, 0).toISOString().slice(0, 10),
+      }
+    })
+    annualMonths = await Promise.all(yearMonths.map(async ({ month, label, monthEnd }) => {
+      const [pRes, eRes, iRes] = await Promise.all([
+        (supabase.from('monthly_plans') as any).select('planned_amount').eq('couple_id', coupleId).eq('month', month),
+        supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', month).lte('competence_date', monthEnd).is('deleted_at', null),
+        supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'income').gte('competence_date', month).lte('competence_date', monthEnd).is('deleted_at', null),
+      ])
+      return {
+        month,
+        label,
+        planned: (pRes.data ?? []).reduce((s: number, p: any) => s + p.planned_amount, 0),
+        spent: (eRes.data ?? []).reduce((s: number, t: any) => s + t.amount, 0),
+        income: (iRes.data ?? []).reduce((s: number, t: any) => s + t.amount, 0),
+      }
+    }))
+  }
+
   // Map spent per category_id
   const spentByCat = new Map<string | null, number>()
   expenses.forEach((e: any) => {
@@ -78,6 +107,28 @@ export default async function PlanningPage({
       <Header title="Planejamento Mensal" />
 
       <div className="p-4 md:p-6 space-y-4">
+        {/* View toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+            <Link
+              href={`/planning?month=${monthParam}`}
+              className={`px-3 py-1.5 transition-colors ${!annualView ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              Mensal
+            </Link>
+            <Link
+              href={`/planning?view=annual&month=${monthParam}`}
+              className={`px-3 py-1.5 transition-colors ${annualView ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              Anual {year}
+            </Link>
+          </div>
+        </div>
+
+        {annualView ? (
+          <AnnualPlanView year={year} months={annualMonths} />
+        ) : (
+        <>
         {/* Month nav */}
         <div className="flex items-center justify-between">
           <Link href={`/planning?month=${prevMonth}`} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
@@ -146,6 +197,8 @@ export default async function PlanningPage({
           <div className="text-center py-16 text-gray-400">
             Crie um casal em Configurações para começar.
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

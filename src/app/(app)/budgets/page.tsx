@@ -5,6 +5,7 @@ import { NewBudgetButton } from '@/components/features/budgets/new-budget-button
 import { BudgetDeleteButton } from '@/components/features/budgets/budget-actions'
 import { CopyBudgetsButton } from '@/components/features/budgets/copy-budgets-button'
 import { RolloverBudgetButton } from '@/components/features/budgets/rollover-budget-button'
+import { SuggestBudgetsButton } from '@/components/features/budgets/suggest-budgets-button'
 import { BudgetAlertNotifier } from '@/components/features/budgets/budget-alert-notifier'
 
 export default async function BudgetsPage() {
@@ -83,6 +84,7 @@ export default async function BudgetsPage() {
       )}
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex gap-2 justify-end flex-wrap">
+          {coupleId && <SuggestBudgetsButton coupleId={coupleId} currentMonth={monthStart} />}
           {coupleId && <RolloverBudgetButton coupleId={coupleId} currentMonth={monthStart} prevMonth={prevMonthStart} />}
           {coupleId && <CopyBudgetsButton coupleId={coupleId} currentMonth={monthStart} />}
           {coupleId && <NewBudgetButton coupleId={coupleId} categories={categories} />}

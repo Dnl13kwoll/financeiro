@@ -1,7 +1,7 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useState } from 'react'
-import { X, Lock } from 'lucide-react'
+import { X, Lock, CheckCircle2 } from 'lucide-react'
 
 type Account = { id: string; name: string }
 type Category = { id: string; name: string; type: string }
@@ -19,9 +19,10 @@ export function TransactionFilters({
     searchParams.get('date_from') ? 'range' : 'month'
   )
 
-  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag', 'private']
+  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag', 'private', 'reconciled']
   const hasActiveFilters = FILTER_KEYS.some(k => !!searchParams.get(k))
   const privateOnly = searchParams.get('private') === '1'
+  const reconciledOnly = searchParams.get('reconciled') === '1'
 
   function clearFilters() {
     setMode('month')
@@ -180,6 +181,20 @@ export function TransactionFilters({
       >
         <Lock className="w-3.5 h-3.5" />
         Privadas
+      </button>
+
+      {/* Reconciled only toggle */}
+      <button
+        onClick={() => update('reconciled', reconciledOnly ? '' : '1')}
+        title="Mostrar apenas transações conciliadas"
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
+          reconciledOnly
+            ? 'bg-green-600 text-white border-green-600'
+            : 'text-gray-500 border-gray-200 hover:bg-gray-50'
+        }`}
+      >
+        <CheckCircle2 className="w-3.5 h-3.5" />
+        Conciliadas
       </button>
 
       {hasActiveFilters && (

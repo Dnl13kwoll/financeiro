@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { NewGoalButton, GoalActions } from '@/components/features/goals/goal-actions'
 import { GoalContributions } from '@/components/features/goals/goal-contributions'
+import { AlertTriangle } from 'lucide-react'
 
 export default async function GoalsPage() {
   const supabase = await createClient()
@@ -35,11 +36,39 @@ export default async function GoalsPage() {
 
   const today = new Date()
 
+  // Goals with deadline within 30 days that aren't done
+  const urgentGoals = goals.filter(g => {
+    if (!g.deadline || g.current_amount >= g.target_amount) return false
+    const daysLeft = Math.ceil((new Date(g.deadline).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    return daysLeft >= 0 && daysLeft <= 30
+  })
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Metas" />
 
       <div className="p-6 space-y-4 max-w-2xl">
+        {urgentGoals.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+            <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm">
+              <AlertTriangle className="w-4 h-4" />
+              Prazo se aproximando
+            </div>
+            {urgentGoals.map(g => {
+              const daysLeft = Math.ceil((new Date(g.deadline).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+              const progress = Math.round((g.current_amount / g.target_amount) * 100)
+              return (
+                <div key={g.id} className="flex justify-between items-center text-sm">
+                  <span className="text-amber-800 font-medium">{g.name}</span>
+                  <span className="text-amber-600">
+                    {daysLeft === 0 ? 'Hoje!' : `${daysLeft} dia${daysLeft !== 1 ? 's' : ''}`} · {progress}%
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
         <div className="flex justify-end">
           {coupleId && <NewGoalButton coupleId={coupleId} accounts={accounts} />}
         </div>
@@ -51,10 +80,12 @@ export default async function GoalsPage() {
 
           // Monthly savings calculation
           let monthlySavingsNeeded: number | null = null
+          let daysUntilDeadline: number | null = null
           if (!done && goal.deadline) {
             const deadline = new Date(goal.deadline)
             const months = (deadline.getFullYear() - today.getFullYear()) * 12 + (deadline.getMonth() - today.getMonth())
             if (months > 0) monthlySavingsNeeded = remaining / months
+            daysUntilDeadline = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           }
 
           const linkedAccount = (goal.accounts as any)?.name
@@ -66,7 +97,12 @@ export default async function GoalsPage() {
                   <p className="font-semibold text-gray-900">{goal.name}</p>
                   <div className="flex flex-wrap gap-2 mt-0.5">
                     {goal.deadline && (
-                      <p className="text-xs text-gray-400">Prazo: {formatDate(goal.deadline)}</p>
+                      <p className={`text-xs ${daysUntilDeadline !== null && daysUntilDeadline <= 30 && !done ? 'text-amber-500 font-medium' : 'text-gray-400'}`}>
+                        Prazo: {formatDate(goal.deadline)}
+                        {daysUntilDeadline !== null && daysUntilDeadline <= 30 && !done && (
+                          <span className="ml-1">({daysUntilDeadline}d)</span>
+                        )}
+                      </p>
                     )}
                     {linkedAccount && (
                       <p className="text-xs text-blue-500">Conta: {linkedAccount}</p>

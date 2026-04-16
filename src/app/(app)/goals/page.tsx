@@ -7,9 +7,14 @@ import { NewGoalButton, GoalActions } from '@/components/features/goals/goal-act
 import { GoalContributions } from '@/components/features/goals/goal-contributions'
 import { AlertTriangle } from 'lucide-react'
 
-export default async function GoalsPage() {
+export default async function GoalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const { sort = 'created' } = await searchParams
 
   const memberRes = await supabase
     .from('couple_members')
@@ -31,10 +36,32 @@ export default async function GoalsPage() {
       : Promise.resolve(null),
   ])
 
-  const goals: any[] = goalsRes?.data ?? []
+  let goals: any[] = goalsRes?.data ?? []
   const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
 
   const today = new Date()
+
+  // Sort goals
+  if (sort === 'deadline') {
+    goals = [...goals].sort((a, b) => {
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    })
+  } else if (sort === 'progress') {
+    goals = [...goals].sort((a, b) => {
+      const pA = a.current_amount / a.target_amount
+      const pB = b.current_amount / b.target_amount
+      return pB - pA
+    })
+  } else if (sort === 'progress_asc') {
+    goals = [...goals].sort((a, b) => {
+      const pA = a.current_amount / a.target_amount
+      const pB = b.current_amount / b.target_amount
+      return pA - pB
+    })
+  }
 
   // Goals with deadline within 30 days that aren't done
   const urgentGoals = goals.filter(g => {
@@ -69,7 +96,23 @@ export default async function GoalsPage() {
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
+            {([
+              { value: 'created', label: 'Recentes' },
+              { value: 'deadline', label: 'Prazo' },
+              { value: 'progress', label: '% ↓' },
+              { value: 'progress_asc', label: '% ↑' },
+            ] as const).map(opt => (
+              <a
+                key={opt.value}
+                href={`/goals?sort=${opt.value}`}
+                className={`px-2.5 py-1.5 transition-colors border-l border-gray-200 first:border-l-0 ${sort === opt.value ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                {opt.label}
+              </a>
+            ))}
+          </div>
           {coupleId && <NewGoalButton coupleId={coupleId} accounts={accounts} />}
         </div>
 
@@ -88,13 +131,35 @@ export default async function GoalsPage() {
             daysUntilDeadline = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           }
 
+          // Projected completion based on average contribution pace
+          let projectedCompletion: string | null = null
+          const contributions: any[] = goal.goal_contributions ?? []
+          if (!done && contributions.length >= 2) {
+            const sorted = [...contributions].sort((a, b) => new Date(a.contributed_at).getTime() - new Date(b.contributed_at).getTime())
+            const first = new Date(sorted[0].contributed_at)
+            const last = new Date(sorted[sorted.length - 1].contributed_at)
+            const monthsElapsed = Math.max(1, (last.getFullYear() - first.getFullYear()) * 12 + (last.getMonth() - first.getMonth()))
+            const totalContributed = sorted.reduce((s: number, c: any) => s + c.amount, 0)
+            const avgPerMonth = totalContributed / monthsElapsed
+            if (avgPerMonth > 0) {
+              const monthsNeeded = Math.ceil(remaining / avgPerMonth)
+              const projected = new Date(today.getFullYear(), today.getMonth() + monthsNeeded, 1)
+              projectedCompletion = projected.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+            }
+          }
+
           const linkedAccount = (goal.accounts as any)?.name
 
+          const nearComplete = !done && progress >= 90
+
           return (
-            <div key={goal.id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <div key={goal.id} className={`bg-white rounded-xl p-5 shadow-sm ${nearComplete ? 'border-2 border-green-300' : 'border border-gray-100'}`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-semibold text-gray-900">{goal.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-gray-900">{goal.name}</p>
+                    {nearComplete && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Quase lá! {progress}%</span>}
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-0.5">
                     {goal.deadline && (
                       <p className={`text-xs ${daysUntilDeadline !== null && daysUntilDeadline <= 30 && !done ? 'text-amber-500 font-medium' : 'text-gray-400'}`}>
@@ -150,6 +215,13 @@ export default async function GoalsPage() {
               {monthlySavingsNeeded !== null && (
                 <div className="mt-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
                   Poupando {formatCurrency(monthlySavingsNeeded)}/mês você atinge a meta no prazo.
+                </div>
+              )}
+
+              {/* Projected completion */}
+              {projectedCompletion && (
+                <div className="mt-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                  No ritmo atual, a meta será concluída em <strong>{projectedCompletion}</strong>.
                 </div>
               )}
 

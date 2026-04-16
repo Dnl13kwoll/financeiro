@@ -21,6 +21,54 @@ type ColumnMap = {
   type_col: number | null
 }
 
+type FormatProfile = {
+  name: string
+  separator: string | RegExp
+  colMap: ColumnMap
+  typeMap?: Record<string, 'income' | 'expense'>
+  defaultType: 'expense' | 'income' | 'auto'
+}
+
+const FORMAT_PROFILES: Record<string, FormatProfile> = {
+  auto: {
+    name: 'Detectar automaticamente',
+    separator: /[;,]/,
+    colMap: { date: 0, description: 1, amount: 2, type_col: null },
+    defaultType: 'auto',
+  },
+  mobills: {
+    name: 'Mobills',
+    // Data;Categoria;Nome;Valor;Tipo;Status
+    separator: ';',
+    colMap: { date: 0, description: 2, amount: 3, type_col: 4 },
+    typeMap: { 'despesa': 'expense', 'receita': 'income', 'transferencia': 'expense', 'transferência': 'expense' },
+    defaultType: 'auto',
+  },
+  organizze: {
+    name: 'Organizze',
+    // Data,Descrição,Categoria,Valor,Tipo
+    separator: ',',
+    colMap: { date: 0, description: 1, amount: 3, type_col: 4 },
+    typeMap: { 'receita': 'income', 'despesa': 'expense', '-1': 'expense', '1': 'income' },
+    defaultType: 'auto',
+  },
+  nubank: {
+    name: 'Nubank (fatura)',
+    // date,category,title,amount
+    separator: ',',
+    colMap: { date: 0, description: 2, amount: 3, type_col: null },
+    defaultType: 'expense',
+  },
+  inter: {
+    name: 'Banco Inter',
+    // Data;Tipo Lançamento;Histórico;Valor
+    separator: ';',
+    colMap: { date: 0, description: 2, amount: 3, type_col: 1 },
+    typeMap: { 'crédito': 'income', 'credito': 'income', 'débito': 'expense', 'debito': 'expense', 'entrada': 'income', 'saída': 'expense', 'saida': 'expense' },
+    defaultType: 'auto',
+  },
+}
+
 function parseDate(str: string): string | null {
   const mBR = str.trim().match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/)
   const mISO = str.trim().match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/)
@@ -29,14 +77,14 @@ function parseDate(str: string): string | null {
   return null
 }
 
-function splitLine(line: string): string[] {
-  return line.split(/[;,]/).map(c => c.replace(/^"|"$/g, '').trim())
+function splitLine(line: string, separator: string | RegExp): string[] {
+  return line.split(separator).map(c => c.replace(/^"|"$/g, '').trim())
 }
 
 function autoDetectColumns(headers: string[]): ColumnMap {
   const lh = headers.map(h => h.toLowerCase())
   const dateIdx = lh.findIndex(h => /data|date|dt/.test(h))
-  const descIdx = lh.findIndex(h => /descri|memo|hist|lançamento|lancamento|detail/.test(h))
+  const descIdx = lh.findIndex(h => /descri|memo|hist|lançamento|lancamento|detail|nome|title/.test(h))
   const amtIdx = lh.findIndex(h => /valor|amount|value|vl|credit|debit/.test(h))
   return {
     date: dateIdx >= 0 ? dateIdx : 0,
@@ -46,10 +94,10 @@ function autoDetectColumns(headers: string[]): ColumnMap {
   }
 }
 
-function parseRowsWithMap(lines: string[], headers: string[], map: ColumnMap, defaultType: 'expense' | 'income' | 'auto'): ParsedRow[] {
+function parseRowsWithProfile(lines: string[], map: ColumnMap, defaultType: 'expense' | 'income' | 'auto', separator: string | RegExp, typeMap?: Record<string, 'income' | 'expense'>): ParsedRow[] {
   const rows: ParsedRow[] = []
   for (const line of lines) {
-    const cols = splitLine(line)
+    const cols = splitLine(line, separator)
     if (cols.length < 2) continue
     const dateRaw = cols[map.date] ?? ''
     const isoDate = parseDate(dateRaw)
@@ -59,11 +107,20 @@ function parseRowsWithMap(lines: string[], headers: string[], map: ColumnMap, de
     if (isNaN(amount) || amount === 0) continue
     const isNegative = amountRaw.startsWith('-')
     const desc = cols[map.description] ?? ''
-    const type = defaultType === 'auto' ? (isNegative ? 'expense' : 'income') : defaultType
+    let type: 'income' | 'expense'
+    if (map.type_col !== null && typeMap) {
+      const typeRaw = (cols[map.type_col] ?? '').toLowerCase().trim()
+      type = typeMap[typeRaw] ?? (defaultType === 'auto' ? (isNegative ? 'expense' : 'income') : defaultType)
+    } else if (defaultType === 'auto') {
+      type = isNegative ? 'expense' : 'income'
+    } else {
+      type = defaultType
+    }
     rows.push({ date: isoDate, description: desc, amount, type })
   }
   return rows
 }
+
 
 export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: string; userId: string; accounts: Account[] }) {
   const [open, setOpen] = useState(false)
@@ -76,6 +133,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
   const [loading, setLoading] = useState(false)
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? '')
   const [defaultType, setDefaultType] = useState<'expense' | 'income' | 'auto'>('auto')
+  const [formatKey, setFormatKey] = useState<string>('auto')
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -88,17 +146,30 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
       const text = ev.target?.result as string
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
       if (lines.length < 2) { setError('Arquivo muito curto ou sem dados.'); return }
-      const hdrs = splitLine(lines[0])
+      const profile = FORMAT_PROFILES[formatKey] ?? FORMAT_PROFILES.auto
+      const hdrs = splitLine(lines[0], profile.separator)
       setHeaders(hdrs)
       setRawLines(lines.slice(1))
-      setColMap(autoDetectColumns(hdrs))
-      setStep('map')
+      if (formatKey === 'auto') {
+        setColMap(autoDetectColumns(hdrs))
+        setDefaultType('auto')
+        setStep('map')
+      } else {
+        // Known format: use profile directly, skip manual mapping
+        setColMap(profile.colMap)
+        setDefaultType(profile.defaultType)
+        const parsed = parseRowsWithProfile(lines.slice(1), profile.colMap, profile.defaultType, profile.separator, profile.typeMap)
+        if (parsed.length === 0) { setError('Nenhuma linha válida encontrada. Verifique se o formato está correto.'); return }
+        setRows(parsed)
+        setStep('preview')
+      }
     }
     reader.readAsText(file, 'UTF-8')
   }
 
   function applyMap() {
-    const parsed = parseRowsWithMap(rawLines, headers, colMap, defaultType)
+    const profile = FORMAT_PROFILES[formatKey] ?? FORMAT_PROFILES.auto
+    const parsed = parseRowsWithProfile(rawLines, colMap, defaultType, profile.separator, profile.typeMap)
     if (parsed.length === 0) { setError('Nenhuma linha válida encontrada com este mapeamento.'); return }
     setRows(parsed)
     setError('')
@@ -133,6 +204,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
     setRawLines([])
     setHeaders([])
     setError('')
+    setFormatKey('auto')
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -152,9 +224,27 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
           </div>
         ) : step === 'upload' ? (
           <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-              Suporta CSV com cabeçalho. Na próxima etapa você pode mapear as colunas manualmente.
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Formato do arquivo</label>
+              <select
+                value={formatKey}
+                onChange={e => setFormatKey(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {Object.entries(FORMAT_PROFILES).map(([key, p]) => (
+                  <option key={key} value={key}>{p.name}</option>
+                ))}
+              </select>
             </div>
+            {formatKey === 'auto' ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                Detecção automática de colunas. Na próxima etapa você poderá ajustar o mapeamento.
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
+                Formato <strong>{FORMAT_PROFILES[formatKey]?.name}</strong> selecionado — o mapeamento de colunas será aplicado automaticamente.
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Arquivo CSV</label>
               <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile}
@@ -206,7 +296,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
             {/* Preview row 1 */}
             {rawLines[0] && (
               <div className="bg-gray-50 rounded-lg p-3 text-xs font-mono text-gray-600 truncate">
-                Amostra: {splitLine(rawLines[0]).map((v, i) => <span key={i} className="mr-2">[{i}] {v}</span>)}
+                Amostra: {splitLine(rawLines[0], /[;,]/).map((v, i) => <span key={i} className="mr-2">[{i}] {v}</span>)}
               </div>
             )}
             {error && <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3"><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />{error}</div>}
@@ -217,7 +307,14 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm font-medium text-gray-700">{rows.length} transações — prévia:</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">{rows.length} transações — prévia:</p>
+              <select value={accountId} onChange={e => setAccountId(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
             <div className="border border-gray-200 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
               <table className="w-full text-xs">
                 <thead className="bg-gray-50">
@@ -243,7 +340,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
             </div>
             {error && <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3"><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />{error}</div>}
             <div className="flex gap-3 justify-end pt-2">
-              <button type="button" onClick={() => setStep('map')} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Voltar</button>
+              <button type="button" onClick={() => setStep(formatKey === 'auto' ? 'map' : 'upload')} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Voltar</button>
               <button onClick={handleImport} disabled={loading}
                 className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50"
               >

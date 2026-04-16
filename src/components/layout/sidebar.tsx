@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LayoutDashboard,
   CreditCard,
@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Landmark,
   HelpCircle,
+  Star,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -49,25 +50,44 @@ const navItems = [
   { href: '/help', label: 'Ajuda', icon: HelpCircle },
 ]
 
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavLinks({ pathname, onNavigate, favorites, onToggleFavorite }: {
+  pathname: string
+  onNavigate?: () => void
+  favorites: string[]
+  onToggleFavorite: (href: string) => void
+}) {
   return (
     <>
-      {navItems.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          onClick={onNavigate}
-          className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-            pathname === href
-              ? 'bg-primary-50 text-primary-700'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-          )}
-        >
-          <Icon className="w-4 h-4 shrink-0" />
-          {label}
-        </Link>
-      ))}
+      {navItems.map(({ href, label, icon: Icon }) => {
+        const isFav = favorites.includes(href)
+        return (
+          <div key={href} className="group relative flex items-center">
+            <Link
+              href={href}
+              onClick={onNavigate}
+              className={cn(
+                'flex flex-1 items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === href
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              )}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+            </Link>
+            <button
+              onClick={e => { e.preventDefault(); onToggleFavorite(href) }}
+              className={cn(
+                'absolute right-2 p-0.5 rounded transition-opacity',
+                isFav ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              )}
+              title={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            >
+              <Star className={cn('w-3 h-3', isFav ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300')} />
+            </button>
+          </div>
+        )
+      })}
     </>
   )
 }
@@ -77,6 +97,22 @@ export function Sidebar() {
   const router = useRouter()
   const supabase = createClient()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [favorites, setFavorites] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('sidebar-favorites')
+      if (stored) setFavorites(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  function toggleFavorite(href: string) {
+    const updated = favorites.includes(href)
+      ? favorites.filter(f => f !== href)
+      : [...favorites, href]
+    setFavorites(updated)
+    localStorage.setItem('sidebar-favorites', JSON.stringify(updated))
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -148,7 +184,20 @@ export function Sidebar() {
           </button>
         </div>
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+          {favorites.length > 0 && (
+            <>
+              <p className="text-xs text-gray-400 px-3 py-1 font-medium">Favoritos</p>
+              {navItems.filter(n => favorites.includes(n.href)).map(({ href, label, icon: Icon }) => (
+                <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+                  className={cn('flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors', pathname === href ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50')}>
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  {label}
+                </Link>
+              ))}
+              <div className="border-t border-gray-100 my-1" />
+            </>
+          )}
+          <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} favorites={favorites} onToggleFavorite={toggleFavorite} />
         </nav>
         <LogoutButton />
       </div>
@@ -157,7 +206,20 @@ export function Sidebar() {
       <aside className="hidden lg:flex w-60 min-h-screen bg-white border-r border-gray-100 flex-col">
         <Logo />
         <nav className="flex-1 p-4 space-y-1">
-          <NavLinks pathname={pathname} />
+          {favorites.length > 0 && (
+            <>
+              <p className="text-xs text-gray-400 px-3 py-1 font-medium">Favoritos</p>
+              {navItems.filter(n => favorites.includes(n.href)).map(({ href, label, icon: Icon }) => (
+                <Link key={href} href={href}
+                  className={cn('flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors', pathname === href ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50')}>
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  {label}
+                </Link>
+              ))}
+              <div className="border-t border-gray-100 my-1" />
+            </>
+          )}
+          <NavLinks pathname={pathname} favorites={favorites} onToggleFavorite={toggleFavorite} />
         </nav>
         <LogoutButton />
       </aside>

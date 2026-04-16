@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ThemeSwitcher } from './theme-switcher'
 import { GlobalSearch } from './global-search'
 import { NotificationBell } from './notification-bell'
+import { PrivacyToggle } from '@/components/ui/privacy-toggle'
 
 export async function Header({ title }: { title: string }) {
   const supabase = await createClient()
@@ -16,6 +17,7 @@ export async function Header({ title }: { title: string }) {
       <div className="flex items-center gap-2 md:gap-3">
         <GlobalSearch />
         <NotificationBell coupleId={coupleId} />
+        <PrivacyToggle />
         <ThemeSwitcher />
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-gray-900">

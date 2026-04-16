@@ -25,6 +25,7 @@ type Account = {
   due_day?: number | null
   min_balance_alert?: number | null
   color?: string | null
+  notes?: string | null
 }
 
 export function AccountActions({ account }: { account: Account }) {
@@ -43,6 +44,7 @@ export function AccountActions({ account }: { account: Account }) {
       name: data.get('name') as string,
       min_balance_alert: minAlert ? parseFloat(minAlert) : null,
       color: (data.get('color') as string) || null,
+      notes: (data.get('notes') as string) || null,
     }
     if (account.type === 'credit_card') {
       payload.limit_amount = parseFloat(data.get('limit_amount') as string) || null
@@ -148,6 +150,16 @@ export function AccountActions({ account }: { account: Account }) {
               />
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+            <input
+              name="notes"
+              defaultValue={account.notes ?? ''}
+              placeholder="Observações sobre a conta (opcional)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cor da conta</label>

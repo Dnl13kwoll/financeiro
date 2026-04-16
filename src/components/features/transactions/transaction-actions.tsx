@@ -58,6 +58,7 @@ export function TransactionActions({
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
     await (supabase.from('transactions') as any).update({
       comment: (data.get('comment') as string) || null,
+      receipt_url: (data.get('receipt_url') as string) || null,
       amount: parseFloat(data.get('amount') as string),
       description: (data.get('description') as string) || null,
       category_id: (data.get('category_id') as string) || null,
@@ -234,6 +235,17 @@ export function TransactionActions({
               name="comment"
               defaultValue={transaction.comment ?? ''}
               placeholder="Ex: era presente, dividido com amigos..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Link do comprovante</label>
+            <input
+              name="receipt_url"
+              type="url"
+              defaultValue={(transaction as any).receipt_url ?? ''}
+              placeholder="https://... (link de foto ou PDF)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

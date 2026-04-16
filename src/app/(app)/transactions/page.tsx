@@ -23,7 +23,7 @@ const PAGE_SIZE = 50
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string; private?: string; reconciled?: string; page?: string }>
+  searchParams: Promise<{ month?: string; date_from?: string; date_to?: string; type?: string; category_id?: string; account_id?: string; q?: string; tag?: string; sort?: string; dir?: string; private?: string; reconciled?: string; amount_min?: string; amount_max?: string; page?: string; no_category?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -57,7 +57,7 @@ export default async function TransactionsPage({
   let query = coupleId
     ? supabase
         .from('transactions')
-        .select('*, categories(name), accounts(name)')
+        .select('*, categories(name, color), accounts(name, color)')
         .eq('couple_id', coupleId)
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)
@@ -70,6 +70,8 @@ export default async function TransactionsPage({
   if (query && params.account_id) query = (query as any).eq('account_id', params.account_id)
   if (query && params.private === '1') query = (query as any).eq('is_private', true)
   if (query && params.reconciled === '1') query = (query as any).eq('reconciled', true)
+  if (query && params.amount_min) query = (query as any).gte('amount', parseFloat(params.amount_min))
+  if (query && params.amount_max) query = (query as any).lte('amount', parseFloat(params.amount_max))
 
   const transactionsRes = query ? await query : null
 
@@ -106,6 +108,9 @@ export default async function TransactionsPage({
       (t.tags ?? []).some((tg: string) => tg.toLowerCase().includes(tag))
     )
   }
+  if (params.no_category === '1') {
+    transactions = transactions.filter(t => !t.category_id)
+  }
 
   // Summary
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
@@ -119,6 +124,17 @@ export default async function TransactionsPage({
   })
   const categoryTotals = Array.from(catMap.entries())
     .map(([name, total]) => ({ name, total, pct: totalExpense > 0 ? Math.round((total / totalExpense) * 100) : 0 }))
+    .sort((a, b) => b.total - a.total)
+
+  // Tag totals
+  const tagMap = new Map<string, number>()
+  transactions.filter(t => t.type === 'expense').forEach(t => {
+    ;(t.tags ?? []).forEach((tag: string) => {
+      tagMap.set(tag, (tagMap.get(tag) ?? 0) + t.amount)
+    })
+  })
+  const tagTotals = Array.from(tagMap.entries())
+    .map(([name, total]) => ({ name, total }))
     .sort((a, b) => b.total - a.total)
 
   // Pagination
@@ -140,6 +156,8 @@ export default async function TransactionsPage({
     if (params.dir) sp.set('dir', params.dir)
     if (params.private) sp.set('private', params.private)
     if (params.reconciled) sp.set('reconciled', params.reconciled)
+    if (params.amount_min) sp.set('amount_min', params.amount_min)
+    if (params.amount_max) sp.set('amount_max', params.amount_max)
     sp.set('page', String(p))
     return `/transactions?${sp.toString()}`
   }
@@ -204,6 +222,26 @@ export default async function TransactionsPage({
 
         {/* Category totals */}
         <CategoryTotals categories={categoryTotals} />
+
+        {/* Tag totals */}
+        {tagTotals.length > 0 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Despesas por tag</h3>
+            <div className="flex flex-wrap gap-2">
+              {tagTotals.map(t => (
+                <a
+                  key={t.name}
+                  href={`/transactions?tag=${encodeURIComponent(t.name)}`}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium hover:bg-primary-100 transition-colors"
+                >
+                  <span>{t.name}</span>
+                  <span className="text-primary-500">·</span>
+                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.total)}</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

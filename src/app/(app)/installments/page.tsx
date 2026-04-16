@@ -9,7 +9,14 @@ import { InstallmentItemCancel } from '@/components/features/installments/instal
 import { InstallmentItemReschedule } from '@/components/features/installments/installment-item-reschedule'
 import { InstallmentCollapsible } from '@/components/features/installments/installment-collapsible'
 
-export default async function InstallmentsPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function InstallmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
+  const statusFilter = (await searchParams).status ?? 'active'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -57,12 +64,53 @@ export default async function InstallmentsPage() {
       .reduce((s: number, i: any) => s + i.amount, 0)
   }, 0)
 
+  const displayedInstallments = statusFilter === 'all'
+    ? installments
+    : installments.filter(i => i.status === statusFilter)
+
+  // Gráfico fluxo futuro de parcelas — próximos 6 meses
+  const futureFlow = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1)
+    const mStart = d.toISOString().slice(0, 10)
+    const mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
+    const label = d.toLocaleDateString('pt-BR', { month: 'short' })
+    const total = activeInstallments.reduce((sum, inst) => {
+      return sum + (inst.installment_items ?? []).filter((item: any) => !item.paid && !item.canceled && item.due_date >= mStart && item.due_date <= mEnd).reduce((s: number, item: any) => s + item.amount, 0)
+    }, 0)
+    return { label, total }
+  })
+  const maxFlow = Math.max(...futureFlow.map(f => f.total), 1)
+
+  // Parcelas vencidas não pagas (lista detalhada)
+  const overdueList = activeInstallments.flatMap(inst =>
+    (inst.installment_items ?? [])
+      .filter((i: any) => !i.paid && !i.canceled && i.due_date < todayStr)
+      .map((i: any) => ({ description: inst.description, dueDate: i.due_date, amount: i.amount, partNum: i.part_number, totalParts: inst.total_parts }))
+  ).sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Parcelamentos" />
 
       <div className="p-4 md:p-6 space-y-4">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          {/* Status filter tabs */}
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+            {([
+              { value: 'active', label: 'Ativos' },
+              { value: 'paid', label: 'Pagos' },
+              { value: 'canceled', label: 'Cancelados' },
+              { value: 'all', label: 'Todos' },
+            ] as const).map(opt => (
+              <a
+                key={opt.value}
+                href={`/installments?status=${opt.value}`}
+                className={`px-3 py-1.5 transition-colors ${statusFilter === opt.value ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                {opt.label}
+              </a>
+            ))}
+          </div>
           {coupleId && <NewInstallmentButton coupleId={coupleId} userId={user!.id} accounts={accounts} categories={categories} />}
         </div>
 
@@ -84,7 +132,47 @@ export default async function InstallmentsPage() {
           </div>
         )}
 
-        {installments.map((inst) => {
+        {/* Parcelas vencidas não pagas */}
+        {overdueList.length > 0 && (
+          <section className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-red-800 mb-2">⚠ Parcelas em atraso ({overdueList.length})</h3>
+            <div className="space-y-1.5">
+              {overdueList.map((o, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <div>
+                    <span className="text-red-700 font-medium">{o.description}</span>
+                    <span className="text-red-400 text-xs ml-2">parcela {o.partNum}/{o.totalParts} · {formatDate(o.dueDate)}</span>
+                  </div>
+                  <span className="font-semibold text-red-700 financial-value">{formatCurrency(o.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Gráfico fluxo futuro */}
+        {activeInstallments.length > 0 && futureFlow.some(f => f.total > 0) && (
+          <section className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Parcelas nos próximos 6 meses</h3>
+            <div className="flex items-end gap-2" style={{ height: '80px' }}>
+              {futureFlow.map((f, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="w-full flex items-end" style={{ height: '60px' }}>
+                    <div
+                      className={`w-full rounded-t-sm ${i === 0 ? 'bg-blue-500' : 'bg-blue-300'}`}
+                      style={{ height: `${(f.total / maxFlow) * 100}%`, minHeight: f.total > 0 ? '4px' : '0' }}
+                      title={formatCurrency(f.total)}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400">{f.label}</span>
+                  {f.total > 0 && <span className="text-xs font-medium text-blue-600 financial-value">{formatCurrency(f.total)}</span>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {displayedInstallments.map((inst) => {
           const items = (inst.installment_items ?? []) as {
             id: string
             part_number: number
@@ -197,9 +285,9 @@ export default async function InstallmentsPage() {
           )
         })}
 
-        {installments.length === 0 && (
+        {displayedInstallments.length === 0 && (
           <div className="text-center py-16 text-gray-400">
-            {coupleId ? 'Nenhum parcelamento cadastrado.' : 'Crie um casal em Configurações para começar.'}
+            {coupleId ? `Nenhum parcelamento ${statusFilter === 'all' ? 'cadastrado' : statusFilter === 'paid' ? 'pago' : statusFilter === 'canceled' ? 'cancelado' : 'ativo'}.` : 'Crie um casal em Configurações para começar.'}
           </div>
         )}
       </div>

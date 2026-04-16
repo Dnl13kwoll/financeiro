@@ -25,6 +25,9 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
       limit_amount: type === 'credit_card' ? parseFloat(data.get('limit_amount') as string) || null : null,
       closing_day: type === 'credit_card' ? parseInt(data.get('closing_day') as string) || null : null,
       due_day: type === 'credit_card' ? parseInt(data.get('due_day') as string) || null : null,
+      color: (data.get('color') as string) || null,
+      notes: (data.get('notes') as string) || null,
+      min_balance_alert: data.get('min_balance_alert') ? parseFloat(data.get('min_balance_alert') as string) : null,
       user_id: userId,
       couple_id: coupleId,
     }
@@ -123,6 +126,42 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
               </div>
             </>
           )}
+
+          {/* Color + notes */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cor de identificação</label>
+              <div className="flex items-center gap-2">
+                <input
+                  name="color"
+                  type="color"
+                  defaultValue="#6366f1"
+                  className="h-9 w-14 border border-gray-300 rounded-lg cursor-pointer"
+                />
+                <span className="text-xs text-gray-400">opcional</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Alerta de saldo mínimo</label>
+              <input
+                name="min_balance_alert"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="ex: 100,00"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+            <input
+              name="notes"
+              placeholder="Ex: conta salário, reserva de emergência..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
 
           <div className="flex gap-3 justify-end pt-2">
             <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">

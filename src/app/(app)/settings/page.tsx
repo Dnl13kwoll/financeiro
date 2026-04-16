@@ -9,6 +9,8 @@ import { PushSubscribeButton } from '@/components/features/notifications/push-su
 import { BackupButton } from '@/components/features/settings/backup-button'
 import { BackupImport } from '@/components/features/settings/backup-import'
 import { DangerZone } from '@/components/features/settings/danger-zone'
+import { DailyLimitSetting } from '@/components/features/settings/daily-limit-setting'
+import { EditProfile } from '@/components/features/settings/edit-profile'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -16,7 +18,7 @@ export default async function SettingsPage() {
 
   const memberRes = await supabase
     .from('couple_members')
-    .select('couple_id, role, couples(currency)')
+    .select('couple_id, role, couples(currency, daily_limit)')
     .eq('user_id', user!.id)
     .single()
 
@@ -24,6 +26,7 @@ export default async function SettingsPage() {
   const coupleId: string | null = memberData?.couple_id ?? null
   const role: string = memberData?.role ?? ''
   const currency: string = memberData?.couples?.currency ?? 'BRL'
+  const dailyLimit: number | null = memberData?.couples?.daily_limit ?? null
 
   const membersRes = coupleId
     ? await supabase
@@ -52,7 +55,10 @@ export default async function SettingsPage() {
         <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
           <h3 className="font-semibold text-gray-900 mb-4">Meu Perfil</h3>
           <div className="space-y-2 text-sm text-gray-600">
-            <p><span className="font-medium text-gray-900">Nome:</span>{' '}{user?.user_metadata?.full_name ?? '—'}</p>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900">Nome:</span>
+              <EditProfile currentName={user?.user_metadata?.full_name ?? ''} />
+            </div>
             <p><span className="font-medium text-gray-900">Email:</span>{' '}{user?.email}</p>
           </div>
         </section>
@@ -74,6 +80,9 @@ export default async function SettingsPage() {
                 : <span className="text-sm font-medium text-gray-900">{currency}</span>
               }
             </div>
+            {coupleId && role === 'owner' && (
+              <DailyLimitSetting coupleId={coupleId} currentLimit={dailyLimit} />
+            )}
             <div className="space-y-2">
               {members.map((m, i) => {
                 const profile = m.profiles as { name?: string; email?: string } | null

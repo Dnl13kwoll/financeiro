@@ -19,10 +19,11 @@ export function TransactionFilters({
     searchParams.get('date_from') ? 'range' : 'month'
   )
 
-  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag', 'private', 'reconciled']
+  const FILTER_KEYS = ['month', 'date_from', 'date_to', 'type', 'category_id', 'account_id', 'q', 'tag', 'private', 'reconciled', 'amount_min', 'amount_max', 'no_category']
   const hasActiveFilters = FILTER_KEYS.some(k => !!searchParams.get(k))
   const privateOnly = searchParams.get('private') === '1'
   const reconciledOnly = searchParams.get('reconciled') === '1'
+  const noCategoryOnly = searchParams.get('no_category') === '1'
 
   function clearFilters() {
     setMode('month')
@@ -183,6 +184,26 @@ export function TransactionFilters({
         Privadas
       </button>
 
+      {/* Amount range */}
+      <input
+        type="number"
+        placeholder="Valor mín"
+        step="0.01"
+        min="0"
+        defaultValue={searchParams.get('amount_min') ?? ''}
+        onChange={e => update('amount_min', e.target.value)}
+        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-24"
+      />
+      <input
+        type="number"
+        placeholder="Valor máx"
+        step="0.01"
+        min="0"
+        defaultValue={searchParams.get('amount_max') ?? ''}
+        onChange={e => update('amount_max', e.target.value)}
+        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-24"
+      />
+
       {/* Reconciled only toggle */}
       <button
         onClick={() => update('reconciled', reconciledOnly ? '' : '1')}
@@ -195,6 +216,19 @@ export function TransactionFilters({
       >
         <CheckCircle2 className="w-3.5 h-3.5" />
         Conciliadas
+      </button>
+
+      {/* No category toggle */}
+      <button
+        onClick={() => update('no_category', noCategoryOnly ? '' : '1')}
+        title="Mostrar apenas transações sem categoria"
+        className={`px-3 py-1.5 text-sm border rounded-lg transition-colors ${
+          noCategoryOnly
+            ? 'bg-amber-500 text-white border-amber-500'
+            : 'text-gray-500 border-gray-200 hover:bg-gray-50'
+        }`}
+      >
+        Sem categoria
       </button>
 
       {hasActiveFilters && (

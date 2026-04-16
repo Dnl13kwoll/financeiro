@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
-import { Trash2, Tag, X } from 'lucide-react'
+import { Trash2, Tag, X, CheckCircle2 } from 'lucide-react'
 
 type Category = { id: string; name: string; type: string }
 
@@ -30,6 +30,18 @@ export function BulkActionsBar({
     setLoading(false)
     onClearSelection()
     showToast(`${selectedIds.length} transação(ões) excluída(s).`, 'error')
+    router.refresh()
+  }
+
+  async function handleBulkReconcile() {
+    setLoading(true)
+    const supabase = createClient()
+    await (supabase.from('transactions') as any)
+      .update({ reconciled: true })
+      .in('id', selectedIds)
+    setLoading(false)
+    onClearSelection()
+    showToast(`${selectedIds.length} transação(ões) conciliada(s)!`)
     router.refresh()
   }
 
@@ -81,6 +93,14 @@ export function BulkActionsBar({
           </div>
         )}
       </div>
+
+      <button
+        onClick={handleBulkReconcile}
+        disabled={loading}
+        className="flex items-center gap-1.5 text-green-400 hover:text-green-300 transition-colors"
+      >
+        <CheckCircle2 className="w-4 h-4" /> Conciliar
+      </button>
 
       <button
         onClick={handleBulkDelete}

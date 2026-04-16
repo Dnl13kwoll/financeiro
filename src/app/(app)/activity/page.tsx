@@ -17,7 +17,12 @@ function timeAgo(date: string): string {
   return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
-export default async function ActivityPage() {
+export default async function ActivityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>
+}) {
+  const filterParam = (await searchParams).filter ?? 'all'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -100,17 +105,35 @@ export default async function ActivityPage() {
 
   // Sort all by time desc
   feed.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+  const filteredFeed = filterParam === 'all' ? feed : feed.filter(f => f.id.startsWith(filterParam === 'transactions' ? 'tx-' : filterParam === 'goals' ? 'gh-' : ''))
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Feed de Atividade" />
 
       <div className="p-4 md:p-6 max-w-xl space-y-3">
-        {feed.length === 0 && (
+        {/* Filter tabs */}
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+          {([
+            { value: 'all', label: 'Tudo' },
+            { value: 'transactions', label: 'Transações' },
+            { value: 'goals', label: 'Metas' },
+          ] as const).map(opt => (
+            <a
+              key={opt.value}
+              href={`/activity?filter=${opt.value}`}
+              className={`px-3 py-1.5 transition-colors ${filterParam === opt.value ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              {opt.label}
+            </a>
+          ))}
+        </div>
+
+        {filteredFeed.length === 0 && (
           <div className="text-center py-16 text-gray-400">Nenhuma atividade recente.</div>
         )}
 
-        {feed.map(item => (
+        {filteredFeed.map(item => (
           <div key={item.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-start gap-3">
             <div className="mt-0.5 p-2 rounded-lg bg-gray-50 shrink-0">{item.icon}</div>
             <div className="flex-1 min-w-0">

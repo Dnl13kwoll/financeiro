@@ -45,14 +45,34 @@ export default async function AccountsPage() {
         .order('created_at')
     : null
 
-  const balancesRes = coupleId
-    ? await supabase.from('account_balances').select('*')
-    : null
+  const now30 = new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const todayDate = new Date().toISOString().slice(0, 10)
+
+  const [balancesRes, forecastInstRes] = await Promise.all([
+    coupleId ? supabase.from('account_balances').select('*') : Promise.resolve(null),
+    coupleId
+      ? await (supabase.from('installment_items') as any)
+          .select('amount, installments(account_id)')
+          .eq('paid', false)
+          .eq('canceled', false)
+          .gte('due_date', todayDate)
+          .lte('due_date', now30)
+      : Promise.resolve(null),
+  ])
 
   const accounts: Account[] = (accountsRes?.data ?? []) as Account[]
   const balances: any[] = balancesRes?.data ?? []
 
   const balanceMap = new Map(balances.map((b) => [b.id, b.balance]))
+
+  // Previsão de saldo por conta (descontando parcelas pendentes 30d)
+  const forecastDeductMap = new Map<string, number>()
+  ;((forecastInstRes as any)?.data ?? []).forEach((item: any) => {
+    const accountId = (item.installments as any)?.account_id
+    if (accountId) {
+      forecastDeductMap.set(accountId, (forecastDeductMap.get(accountId) ?? 0) + item.amount)
+    }
+  })
 
   return (
     <div className="flex flex-col flex-1">
@@ -119,16 +139,42 @@ export default async function AccountsPage() {
                         </>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Fecha dia {account.closing_day} · Vence dia {account.due_day}
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-400">
+                        Fecha dia {account.closing_day} · Vence dia {account.due_day}
+                      </p>
+                      <a
+                        href={`/cards/${account.id}`}
+                        className="text-xs text-primary-600 hover:underline relative z-10"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        Ver fatura →
+                      </a>
+                    </div>
                   </>
                 )
-              })() : (
-                <p className="text-2xl font-bold mt-2 text-primary-600">
-                  {formatCurrency(balanceMap.get(account.id) ?? 0)}
-                </p>
-              )}
+              })() : (() => {
+                const bal = balanceMap.get(account.id) ?? 0
+                const minAlert = (account as any).min_balance_alert
+                const belowAlert = minAlert !== null && minAlert !== undefined && bal < minAlert
+                return (
+                  <>
+                    <p className={`text-2xl font-bold mt-2 ${belowAlert ? 'text-red-600' : 'text-primary-600'}`}>
+                      {formatCurrency(bal)}
+                    </p>
+                    {belowAlert && (
+                      <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
+                        ⚠ Saldo abaixo de {formatCurrency(minAlert)}
+                      </p>
+                    )}
+                    {forecastDeductMap.has(account.id) && (
+                      <p className="text-xs text-orange-500 mt-0.5">
+                        Previsão 30d: {formatCurrency(bal - (forecastDeductMap.get(account.id) ?? 0))}
+                      </p>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           ))}
 

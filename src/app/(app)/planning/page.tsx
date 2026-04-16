@@ -9,6 +9,8 @@ import { PlanItemRow } from '@/components/features/planning/plan-item-row'
 import { AddPlanItem } from '@/components/features/planning/add-plan-item'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { EmergencyFundCalculator } from '@/components/features/planning/emergency-fund-calculator'
+import { LoanSimulator } from '@/components/features/planning/loan-simulator'
 
 export default async function PlanningPage({
   searchParams,
@@ -200,6 +202,16 @@ export default async function PlanningPage({
         )}
         </>
         )}
+
+        {/* Calculadoras financeiras */}
+        <div className="space-y-4 pt-2">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Calculadoras</h2>
+          <EmergencyFundCalculator
+            avgMonthlyExpense={expenses.reduce((s: number, e: any) => s + e.amount, 0)}
+            currentBalance={0}
+          />
+          <LoanSimulator />
+        </div>
       </div>
     </div>
   )

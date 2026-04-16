@@ -19,7 +19,7 @@ const MONTH_LABELS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Jul
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; view?: string; year?: string; monthA?: string; monthB?: string }>
+  searchParams: Promise<{ month?: string; view?: string; year?: string; monthA?: string; monthB?: string; category?: string; tag?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -76,6 +76,17 @@ export default async function ReportsPage({
     const catSummary = Array.from(catMap.entries())
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => b.total - a.total)
+
+    // Per-category per-month for drill-down
+    const selectedCategory = params.category ?? null
+    const catMonthMap = new Map<string, number[]>() // catName -> array[12]
+    annualTx.filter(t => t.type === 'expense').forEach(t => {
+      const name = (t.categories as any)?.name ?? 'Sem categoria'
+      const m = parseInt(t.competence_date.slice(5, 7)) - 1
+      if (!catMonthMap.has(name)) catMonthMap.set(name, Array(12).fill(0))
+      catMonthMap.get(name)![m] += t.amount
+    })
+    const drilldownMonths = selectedCategory ? (catMonthMap.get(selectedCategory) ?? Array(12).fill(0)) : null
 
     const maxBar = Math.max(...monthlyData.map(m => Math.max(m.income, m.expense)), 1)
 
@@ -192,20 +203,45 @@ export default async function ReportsPage({
             <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-4">Despesas por categoria — {year}</h3>
               <div className="space-y-3">
-                {catSummary.map(c => (
-                  <div key={c.name}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">{c.name}</span>
-                      <span className="font-medium text-gray-900 financial-value">{formatCurrency(c.total)}</span>
+                {catSummary.map(c => {
+                  const isSelected = selectedCategory === c.name
+                  return (
+                    <div key={c.name}>
+                      <a
+                        href={`/reports?view=annual&year=${year}${isSelected ? '' : `&category=${encodeURIComponent(c.name)}`}`}
+                        className="flex justify-between text-sm mb-1 group"
+                      >
+                        <span className={`transition-colors ${isSelected ? 'text-primary-700 font-semibold' : 'text-gray-700 group-hover:text-primary-600'}`}>
+                          {c.name} {isSelected ? '▲' : '▶'}
+                        </span>
+                        <span className="font-medium text-gray-900 financial-value">{formatCurrency(c.total)}</span>
+                      </a>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full ${isSelected ? 'bg-primary-600' : 'bg-primary-500'}`}
+                          style={{ width: `${Math.min(100, (c.total / totalAnnualExpense) * 100)}%` }}
+                        />
+                      </div>
+                      {/* Drill-down: month breakdown */}
+                      {isSelected && drilldownMonths && (
+                        <div className="mt-3 grid grid-cols-6 md:grid-cols-12 gap-1 text-xs">
+                          {drilldownMonths.map((amt, i) => (
+                            <a
+                              key={i}
+                              href={`/transactions?category_id=&month=${year}-${String(i + 1).padStart(2, '0')}`}
+                              className="flex flex-col items-center p-1.5 rounded bg-primary-50 hover:bg-primary-100 transition-colors"
+                            >
+                              <span className="text-gray-400">{MONTH_NAMES[i]}</span>
+                              <span className={`font-medium mt-0.5 financial-value ${amt > 0 ? 'text-primary-700' : 'text-gray-300'}`}>
+                                {amt > 0 ? formatCurrency(amt) : '—'}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div
-                        className="bg-primary-500 h-1.5 rounded-full"
-                        style={{ width: `${Math.min(100, (c.total / totalAnnualExpense) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           )}
@@ -354,6 +390,8 @@ export default async function ReportsPage({
   }
 
   // ── MONTHLY VIEW ─────────────────────────────────────────────────────────────
+  const drillCategory = params.category ?? null
+  const drillTag = params.tag ?? null
   const monthParam = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const [year, month] = monthParam.split('-').map(Number)
   const monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
@@ -367,7 +405,7 @@ export default async function ReportsPage({
   // 6-month trend range (current month + 5 before)
   const trendStart = new Date(year, month - 6, 1).toISOString().slice(0, 10)
 
-  const [transactionsRes, prevTransactionsRes, membersRes, trendRes] = await Promise.all([
+  const [transactionsRes, prevTransactionsRes, membersRes, trendRes, monthRecurringRes] = await Promise.all([
     coupleId
       ? supabase.from('transactions').select('*, categories(name), accounts(name)').eq('couple_id', coupleId).gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null).order('date', { ascending: false })
       : Promise.resolve(null),
@@ -378,13 +416,20 @@ export default async function ReportsPage({
       ? supabase.from('couple_members').select('user_id, profiles(name, email)').eq('couple_id', coupleId)
       : Promise.resolve(null),
     coupleId
-      ? supabase.from('transactions').select('type, amount, competence_date, categories(name)').eq('couple_id', coupleId).gte('competence_date', trendStart).lte('competence_date', monthEnd).is('deleted_at', null)
+      ? supabase.from('transactions').select('type, amount, competence_date, categories(name), description, tags').eq('couple_id', coupleId).gte('competence_date', trendStart).lte('competence_date', monthEnd).is('deleted_at', null)
+      : Promise.resolve(null),
+    coupleId
+      ? supabase.from('recurring_accounts').select('name, amount').eq('couple_id', coupleId).eq('active', true)
       : Promise.resolve(null),
   ])
   const transactions: any[] = transactionsRes?.data ?? []
   const prevTransactions: any[] = prevTransactionsRes?.data ?? []
   const members: any[] = membersRes?.data ?? []
   const trendTx: any[] = trendRes?.data ?? []
+  const monthRecurring: any[] = monthRecurringRes?.data ?? []
+
+  // Cashflow mensal
+  const totalRecurringMonth = monthRecurring.reduce((s, r) => s + (r.amount ?? 0), 0)
 
   // Build 6-month trend labels (oldest → current)
   const trendMonths = Array.from({ length: 6 }, (_, i) => {
@@ -440,6 +485,17 @@ export default async function ReportsPage({
   const expensePct = pctChange(totalExpense, prevExpense)
   const balancePct = pctChange(totalIncome - totalExpense, prevIncome - prevExpense)
 
+  // Account breakdown
+  const accountMap = new Map<string, { name: string; income: number; expense: number }>()
+  transactions.forEach((t: any) => {
+    const name = (t.accounts as any)?.name ?? 'Sem conta'
+    const existing = accountMap.get(name) ?? { name, income: 0, expense: 0 }
+    if (t.type === 'income') existing.income += t.amount
+    else if (t.type === 'expense') existing.expense += t.amount
+    accountMap.set(name, existing)
+  })
+  const accountSummary = Array.from(accountMap.values()).sort((a, b) => (b.income + b.expense) - (a.income + a.expense))
+
   const categoryMap = new Map<string, { name: string; total: number }>()
   transactions.filter(t => t.type === 'expense').forEach((t: any) => {
     const name = (t.categories as { name?: string } | null)?.name ?? 'Sem categoria'
@@ -458,6 +514,37 @@ export default async function ReportsPage({
   const tagSummary = Array.from(tagMap.entries())
     .map(([name, total]) => ({ name, total }))
     .sort((a, b) => b.total - a.total)
+
+  // Inflação pessoal por categoria (comparar mês atual vs média dos 3 meses anteriores no trendTx)
+  const prev3MonthKeys = trendMonths.slice(0, 3).map(m => m.key)
+  const inflationData = categorySummary.map(c => {
+    const prev3Total = trendTx
+      .filter((t: any) => t.type === 'expense' && prev3MonthKeys.includes(t.competence_date?.slice(0, 7)) && ((t.categories as any)?.name ?? 'Sem categoria') === c.name)
+      .reduce((s: number, t: any) => s + t.amount, 0)
+    const prev3Avg = prev3Total / 3
+    const growth = prev3Avg > 0 ? Math.round(((c.total - prev3Avg) / prev3Avg) * 100) : null
+    return { name: c.name, current: c.total, prev3Avg, growth }
+  }).filter(c => c.growth !== null).sort((a, b) => (b.growth ?? 0) - (a.growth ?? 0))
+  const fastestGrowing = inflationData[0]
+
+  // Detector de assinaturas: descrições que aparecem em 2+ dos últimos 3 meses mas NÃO estão em recurring_accounts
+  const normalizeDesc = (s: string) => s.toLowerCase().replace(/\s+\d+\s*/g, ' ').replace(/[#\-_]/g, ' ').trim()
+  const recurringNames = new Set(monthRecurring.map((r: any) => normalizeDesc(r.name ?? '')))
+  const descMonthMap = new Map<string, Set<string>>() // normalizedDesc -> set of months
+  trendTx.filter((t: any) => t.type === 'expense' && t.description).forEach((t: any) => {
+    const norm = normalizeDesc(t.description)
+    const monthKey = t.competence_date?.slice(0, 7)
+    if (!descMonthMap.has(norm)) descMonthMap.set(norm, new Set())
+    descMonthMap.get(norm)!.add(monthKey)
+  })
+  const suspectedSubscriptions = Array.from(descMonthMap.entries())
+    .filter(([norm, months]) => months.size >= 2 && !recurringNames.has(norm))
+    .map(([norm]) => {
+      const orig = trendTx.find((t: any) => normalizeDesc(t.description) === norm)
+      return { description: orig?.description ?? norm, months: descMonthMap.get(norm)!.size }
+    })
+    .sort((a, b) => b.months - a.months)
+    .slice(0, 5)
 
   const exportRows = transactions.map((t: any) => ({
     date: t.date,
@@ -527,6 +614,62 @@ export default async function ReportsPage({
           </div>
         </div>
 
+        {/* Cashflow mensal */}
+        {coupleId && (totalIncome > 0 || totalExpense > 0) && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-3">Cashflow real do mês</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">+ Receitas</span>
+                <span className="font-medium text-green-600 financial-value">{formatCurrency(totalIncome)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">− Despesas</span>
+                <span className="font-medium text-red-600 financial-value">{formatCurrency(totalExpense)}</span>
+              </div>
+              {totalRecurringMonth > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">− Recorrentes (mês)</span>
+                  <span className="font-medium text-orange-600 financial-value">{formatCurrency(totalRecurringMonth)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-gray-100 pt-2 font-semibold">
+                <span className="text-gray-700">= Cashflow</span>
+                <span className={`financial-value ${totalIncome - totalExpense - totalRecurringMonth >= 0 ? 'text-primary-600' : 'text-red-600'}`}>
+                  {formatCurrency(totalIncome - totalExpense - totalRecurringMonth)}
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Categoria com maior crescimento */}
+        {fastestGrowing && fastestGrowing.growth !== null && fastestGrowing.growth > 20 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+            <span className="text-xl">📈</span>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">{fastestGrowing.name} cresceu {fastestGrowing.growth}% vs. média dos 3 meses anteriores</p>
+              <p className="text-xs text-amber-600 mt-0.5">Média anterior: {formatCurrency(fastestGrowing.prev3Avg)} · Este mês: {formatCurrency(fastestGrowing.current)}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Detector de assinaturas */}
+        {suspectedSubscriptions.length > 0 && (
+          <section className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-blue-800 mb-2">🔍 Possíveis assinaturas não cadastradas</h3>
+            <p className="text-xs text-blue-600 mb-3">Transações que aparecem em {suspectedSubscriptions[0]?.months}+ meses mas não estão em Recorrentes.</p>
+            <div className="space-y-1.5">
+              {suspectedSubscriptions.map(s => (
+                <div key={s.description} className="flex items-center justify-between text-sm">
+                  <span className="text-blue-700">{s.description}</span>
+                  <a href="/recurring" className="text-xs text-blue-500 hover:underline">Cadastrar →</a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Por categoria */}
         {categorySummary.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
@@ -536,9 +679,13 @@ export default async function ReportsPage({
             </div>
             <div className="space-y-3">
               {categorySummary.map((c) => (
-                <div key={c.name}>
+                <a
+                  key={c.name}
+                  href={`/reports?month=${monthParam}&category=${encodeURIComponent(c.name)}`}
+                  className="block group"
+                >
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-700">{c.name}</span>
+                    <span className="text-gray-700 group-hover:text-primary-600 transition-colors">{c.name}</span>
                     <span className="font-medium text-gray-900 financial-value">{formatCurrency(c.total)}</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -547,9 +694,52 @@ export default async function ReportsPage({
                       style={{ width: `${Math.min(100, (c.total / totalExpense) * 100)}%` }}
                     />
                   </div>
-                </div>
+                </a>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Drill-down por categoria */}
+        {drillCategory && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <a
+                href={`/reports?month=${monthParam}`}
+                className="text-sm text-primary-600 hover:underline flex items-center gap-1"
+              >
+                ← Voltar
+              </a>
+              <h3 className="font-semibold text-gray-900">
+                {drillCategory} — {monthLabel}
+              </h3>
+            </div>
+            {(() => {
+              const drillTx = transactions.filter((t: any) =>
+                t.type === 'expense' &&
+                ((t.categories as any)?.name ?? 'Sem categoria') === drillCategory
+              )
+              if (drillTx.length === 0) {
+                return <p className="text-sm text-gray-400 py-4 text-center">Nenhuma transação nessa categoria neste mês.</p>
+              }
+              const drillTotal = drillTx.reduce((s: number, t: any) => s + t.amount, 0)
+              return (
+                <>
+                  <p className="text-sm text-gray-500 mb-3">{drillTx.length} transações · Total: <span className="font-medium text-gray-900">{formatCurrency(drillTotal)}</span></p>
+                  <div className="space-y-2">
+                    {drillTx.map((t: any, i: number) => (
+                      <div key={t.id ?? i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                        <div className="min-w-0">
+                          <p className="text-sm text-gray-800 truncate">{t.description ?? '—'}</p>
+                          <p className="text-xs text-gray-400">{t.date} · {(t.accounts as any)?.name ?? '—'}</p>
+                        </div>
+                        <span className="text-sm font-medium text-red-600 ml-4 shrink-0 financial-value">{formatCurrency(t.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )
+            })()}
           </section>
         )}
 
@@ -579,6 +769,40 @@ export default async function ReportsPage({
                   </div>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Por conta */}
+        {accountSummary.length > 0 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4">Movimentação por conta</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-gray-500 text-left">
+                    <th className="pb-2 font-medium">Conta</th>
+                    <th className="pb-2 font-medium text-right">Receitas</th>
+                    <th className="pb-2 font-medium text-right">Despesas</th>
+                    <th className="pb-2 font-medium text-right">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accountSummary.map(a => {
+                    const balance = a.income - a.expense
+                    return (
+                      <tr key={a.name} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-2 text-gray-700">{a.name}</td>
+                        <td className="py-2 text-right text-green-600 financial-value">{a.income > 0 ? formatCurrency(a.income) : '—'}</td>
+                        <td className="py-2 text-right text-red-600 financial-value">{a.expense > 0 ? formatCurrency(a.expense) : '—'}</td>
+                        <td className={`py-2 text-right font-medium financial-value ${balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                          {formatCurrency(balance)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </section>
         )}
@@ -615,27 +839,67 @@ export default async function ReportsPage({
           </section>
         )}
 
+        {/* Inflação pessoal por categoria */}
+        {inflationData.length > 0 && (
+          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-1">Inflação pessoal por categoria</h3>
+            <p className="text-xs text-gray-400 mb-4">Comparação com média dos 3 meses anteriores</p>
+            <div className="space-y-2">
+              {inflationData.map(c => (
+                <div key={c.name} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">{c.name}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-400 text-xs financial-value">média {formatCurrency(c.prev3Avg)}</span>
+                    <span className={`font-medium text-xs px-2 py-0.5 rounded-full ${(c.growth ?? 0) > 10 ? 'bg-red-50 text-red-600' : (c.growth ?? 0) < -10 ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'}`}>
+                      {(c.growth ?? 0) > 0 ? '+' : ''}{c.growth}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Por tag */}
         {tagSummary.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">Despesas por tag</h3>
             <div className="space-y-3">
-              {tagSummary.map((t) => (
-                <div key={t.name}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded-full">{t.name}</span>
-                    </span>
-                    <span className="font-medium text-gray-900 financial-value">{formatCurrency(t.total)}</span>
+              {tagSummary.map((t) => {
+                const isSelectedTag = drillTag === t.name
+                return (
+                  <div key={t.name}>
+                    <a href={`/reports?month=${monthParam}${isSelectedTag ? '' : `&tag=${encodeURIComponent(t.name)}`}`} className="block group">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className={`flex items-center gap-1.5 text-xs px-1.5 py-0.5 rounded-full transition-colors ${isSelectedTag ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 group-hover:bg-primary-100'}`}>
+                          {t.name} {isSelectedTag ? '▲' : '▶'}
+                        </span>
+                        <span className="font-medium text-gray-900 financial-value">{formatCurrency(t.total)}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div className="bg-primary-400 h-1.5 rounded-full" style={{ width: `${Math.min(100, (t.total / totalExpense) * 100)}%` }} />
+                      </div>
+                    </a>
+                    {/* Tag drill-down */}
+                    {isSelectedTag && (() => {
+                      const tagTx = transactions.filter((tx: any) => tx.type === 'expense' && (tx.tags ?? []).includes(t.name))
+                      return (
+                        <div className="mt-2 ml-2 space-y-1 border-l-2 border-primary-200 pl-3">
+                          {tagTx.map((tx: any, i: number) => (
+                            <div key={tx.id ?? i} className="flex items-center justify-between text-xs">
+                              <div>
+                                <span className="text-gray-700">{tx.description ?? '—'}</span>
+                                <span className="text-gray-400 ml-2">{tx.date}</span>
+                              </div>
+                              <span className="font-medium text-red-600 financial-value">{formatCurrency(tx.amount)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5">
-                    <div
-                      className="bg-primary-400 h-1.5 rounded-full"
-                      style={{ width: `${Math.min(100, (t.total / totalExpense) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </section>
         )}

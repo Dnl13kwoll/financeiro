@@ -3,24 +3,35 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, X } from 'lucide-react'
+
+type RolloverItem = {
+  category_id: string
+  category_name: string
+  surplus: number
+  curr_amount: number
+}
+
+function formatCurrencyLocal(v: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+}
 
 export function RolloverBudgetButton({
   coupleId,
-  currentMonth,   // e.g. "2025-05-01"
-  prevMonth,      // e.g. "2025-04-01"
+  currentMonth,
+  prevMonth,
 }: {
   coupleId: string
   currentMonth: string
   prevMonth: string
 }) {
   const [loading, setLoading] = useState(false)
+  const [preview, setPreview] = useState<RolloverItem[] | null>(null)
+  const [applying, setApplying] = useState(false)
   const router = useRouter()
 
-  async function handleRollover() {
-    if (!confirm('Transferir saldo não utilizado do mês anterior para este mês?')) return
+  async function handlePreview() {
     setLoading(true)
-
     try {
       const supabase = createClient()
       const prevMonthEnd = new Date(
@@ -29,21 +40,17 @@ export function RolloverBudgetButton({
         0
       ).toISOString().slice(0, 10)
 
-      // Fetch previous month's budgets
       const { data: prevBudgets } = await (supabase.from('budgets') as any)
-        .select('id, category_id, amount')
+        .select('id, category_id, amount, categories(name)')
         .eq('couple_id', coupleId)
         .eq('month', prevMonth)
 
       if (!prevBudgets || prevBudgets.length === 0) {
         showToast('Nenhum orçamento no mês anterior.', 'error')
-        setLoading(false)
         return
       }
 
-      // Fetch expenses from previous month per category
-      const { data: prevExpenses } = await (supabase
-        .from('transactions') as any)
+      const { data: prevExpenses } = await (supabase.from('transactions') as any)
         .select('category_id, amount')
         .eq('couple_id', coupleId)
         .eq('type', 'expense')
@@ -53,12 +60,47 @@ export function RolloverBudgetButton({
 
       const spentMap = new Map<string, number>()
       for (const e of (prevExpenses ?? []) as any[]) {
-        if (e.category_id) {
-          spentMap.set(e.category_id, (spentMap.get(e.category_id) ?? 0) + e.amount)
-        }
+        if (e.category_id) spentMap.set(e.category_id, (spentMap.get(e.category_id) ?? 0) + e.amount)
       }
 
-      // Fetch current month's budgets to know existing amounts
+      const { data: currBudgets } = await (supabase.from('budgets') as any)
+        .select('id, category_id, amount')
+        .eq('couple_id', coupleId)
+        .eq('month', currentMonth)
+
+      const currMap = new Map<string, number>(
+        (currBudgets ?? []).map((b: any) => [b.category_id, b.amount])
+      )
+
+      const items: RolloverItem[] = []
+      for (const prev of prevBudgets) {
+        const spent = spentMap.get(prev.category_id) ?? 0
+        const surplus = prev.amount - spent
+        if (surplus <= 0) continue
+        items.push({
+          category_id: prev.category_id,
+          category_name: prev.categories?.name ?? 'Sem categoria',
+          surplus,
+          curr_amount: currMap.get(prev.category_id) ?? 0,
+        })
+      }
+
+      if (items.length === 0) {
+        showToast('Nenhum saldo disponível para transferir.', 'error')
+      } else {
+        setPreview(items)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleApply() {
+    if (!preview) return
+    setApplying(true)
+    try {
+      const supabase = createClient()
+
       const { data: currBudgets } = await (supabase.from('budgets') as any)
         .select('id, category_id, amount, alert_threshold')
         .eq('couple_id', coupleId)
@@ -68,54 +110,90 @@ export function RolloverBudgetButton({
         (currBudgets ?? []).map((b: any) => [b.category_id, { id: b.id, amount: b.amount, alert_threshold: b.alert_threshold ?? 80 }])
       )
 
-      let rolledCount = 0
-
-      for (const prev of prevBudgets) {
-        const spent = spentMap.get(prev.category_id) ?? 0
-        const surplus = prev.amount - spent
-        if (surplus <= 0) continue // nothing to roll over
-
-        const curr = currMap.get(prev.category_id)
+      for (const item of preview) {
+        const curr = currMap.get(item.category_id)
         if (curr) {
-          // Update existing budget
           await (supabase.from('budgets') as any)
-            .update({ amount: curr.amount + surplus })
+            .update({ amount: curr.amount + item.surplus })
             .eq('id', curr.id)
         } else {
-          // Create budget for this month with the rollover amount
           await (supabase.from('budgets') as any).insert({
             couple_id: coupleId,
-            category_id: prev.category_id,
+            category_id: item.category_id,
             month: currentMonth,
-            amount: surplus,
+            amount: item.surplus,
             alert_threshold: 80,
           })
         }
-        rolledCount++
       }
 
-      if (rolledCount === 0) {
-        showToast('Nenhum saldo disponível para transferir.', 'error')
-      } else {
-        showToast(`Saldo de ${rolledCount} categoria(s) transferido!`)
-        router.refresh()
-      }
+      showToast(`Saldo de ${preview.length} categoria(s) transferido!`)
+      setPreview(null)
+      router.refresh()
     } catch {
       showToast('Erro ao fazer rollover.', 'error')
     } finally {
-      setLoading(false)
+      setApplying(false)
     }
   }
 
   return (
-    <button
-      onClick={handleRollover}
-      disabled={loading}
-      title="Transferir saldo não usado do mês anterior"
-      className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-    >
-      <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-      {loading ? 'Transferindo...' : 'Rollover'}
-    </button>
+    <>
+      <button
+        onClick={handlePreview}
+        disabled={loading}
+        title="Transferir saldo não usado do mês anterior"
+        className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+      >
+        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        {loading ? 'Carregando...' : 'Rollover'}
+      </button>
+
+      {preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Saldo a transferir</h3>
+              <button onClick={() => setPreview(null)} className="text-gray-400 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              O saldo não utilizado de cada categoria será adicionado ao orçamento deste mês.
+            </p>
+            <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
+              {preview.map(item => (
+                <div key={item.category_id} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">{item.category_name}</span>
+                  <div className="text-right">
+                    <span className="text-green-600 font-medium">+{formatCurrencyLocal(item.surplus)}</span>
+                    {item.curr_amount > 0 && (
+                      <p className="text-xs text-gray-400">
+                        {formatCurrencyLocal(item.curr_amount)} → {formatCurrencyLocal(item.curr_amount + item.surplus)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPreview(null)}
+                className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleApply}
+                disabled={applying}
+                className="flex-1 px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+              >
+                {applying ? 'Aplicando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

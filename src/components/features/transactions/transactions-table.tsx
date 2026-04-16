@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Paperclip, LayoutList, AlignJustify } from 'lucide-react'
 import { TransactionActions } from './transaction-actions'
 import { BulkActionsBar } from './bulk-actions'
 import { ReconcileToggle } from './reconcile-toggle'
@@ -26,9 +26,10 @@ type TxRow = {
   reconciled?: boolean
   tags?: string[]
   comment?: string | null
+  receipt_url?: string | null
   split_id?: string | null
-  categories?: { name?: string } | null
-  accounts?: { name?: string } | null
+  categories?: { name?: string; color?: string | null } | null
+  accounts?: { name?: string; color?: string | null } | null
 }
 
 export function TransactionsTable({
@@ -45,6 +46,7 @@ export function TransactionsTable({
   userId: string
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [compact, setCompact] = useState(false)
 
   function toggleSelect(id: string) {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -61,6 +63,16 @@ export function TransactionsTable({
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-50">
+          <span className="text-xs text-gray-400">{transactions.length} transações</span>
+          <button
+            onClick={() => setCompact(v => !v)}
+            title={compact ? 'Modo expandido' : 'Modo compacto'}
+            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+          >
+            {compact ? <AlignJustify className="w-4 h-4" /> : <LayoutList className="w-4 h-4" />}
+          </button>
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-gray-500 text-left text-xs">
@@ -91,7 +103,7 @@ export function TransactionsTable({
                   key={t.id}
                   className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-primary-50' : ''}`}
                 >
-                  <td className="px-3 py-3">
+                  <td className={`px-3 ${compact ? 'py-1' : 'py-3'}`}>
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -99,10 +111,10 @@ export function TransactionsTable({
                       className="rounded"
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={`px-4 ${compact ? 'py-1' : 'py-3'}`}>
                     <div className="flex items-center gap-1.5">
                       {config.icon}
-                      <span className="text-xs text-gray-500 hidden sm:inline">{config.label}</span>
+                      {!compact && <span className="text-xs text-gray-500 hidden sm:inline">{config.label}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-900">
@@ -113,6 +125,11 @@ export function TransactionsTable({
                         {t.split_id && <span className="ml-2 text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">divisão</span>}
                       </span>
                       {t.comment && <span className="text-xs text-gray-400 italic">💬 {t.comment}</span>}
+                      {t.receipt_url && (
+                        <a href={t.receipt_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700">
+                          <Paperclip className="w-3 h-3" /> comprovante
+                        </a>
+                      )}
                       {(t.tags ?? []).length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {(t.tags as string[]).map((tag) => (
@@ -122,8 +139,22 @@ export function TransactionsTable({
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{t.categories?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{t.accounts?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
+                    <div className="flex items-center gap-1.5">
+                      {t.categories?.color && (
+                        <span className="w-2 h-2 rounded-full shrink-0 inline-block" style={{ backgroundColor: t.categories.color }} />
+                      )}
+                      {t.categories?.name ?? '—'}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
+                    <div className="flex items-center gap-1.5">
+                      {t.accounts?.color && (
+                        <span className="w-2 h-2 rounded-full shrink-0 inline-block" style={{ backgroundColor: t.accounts.color }} />
+                      )}
+                      {t.accounts?.name ?? '—'}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{formatDate(t.date)}</td>
                   <td className={`px-4 py-3 text-right font-semibold ${config.color}`}>
                     {t.type === 'expense' ? '-' : ''}{formatCurrency(t.amount)}

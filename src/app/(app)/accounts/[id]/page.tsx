@@ -107,11 +107,19 @@ export default async function AccountDetailPage({
         <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 capitalize">{account.type === 'credit_card' ? 'Cartão de Crédito' : account.type === 'bank' ? 'Banco' : 'Dinheiro'}</p>
+              <div className="flex items-center gap-2">
+                {account.color && (
+                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: account.color }} />
+                )}
+                <p className="text-sm text-gray-500">{account.type === 'credit_card' ? 'Cartão de Crédito' : account.type === 'bank' ? 'Banco' : 'Dinheiro'}</p>
+              </div>
               <p className={`text-3xl font-bold mt-1 ${balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                 {formatCurrency(balance)}
               </p>
               <p className="text-xs text-gray-400 mt-1">Saldo atual</p>
+              {account.notes && (
+                <p className="text-xs text-gray-500 mt-2 italic">{account.notes}</p>
+              )}
             </div>
             <AccountReconcile
               accountId={id}

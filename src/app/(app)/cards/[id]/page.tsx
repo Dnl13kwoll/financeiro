@@ -81,6 +81,16 @@ export default async function CardPage({
   })
   const catBreakdown = Array.from(catMap.entries()).sort((a, b) => b[1] - a[1])
 
+  // Projeção da fatura
+  const isCurrentCycle = !sp.cycle
+  const daysElapsedInCycle = isCurrentCycle
+    ? Math.max(1, Math.ceil((now.getTime() - cycleStart.getTime()) / 86400000))
+    : null
+  const daysInCycle = Math.max(1, Math.ceil((cycleEnd.getTime() - cycleStart.getTime()) / 86400000))
+  const projectedInvoice = daysElapsedInCycle && daysElapsedInCycle < daysInCycle && invoiceTotal > 0
+    ? Math.round((invoiceTotal / daysElapsedInCycle) * daysInCycle)
+    : null
+
   const cycleLabel = cycleStart.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
   return (
@@ -136,6 +146,14 @@ export default async function CardPage({
                   style={{ width: `${Math.min(100, (invoiceTotal / account.limit_amount) * 100)}%` }}
                 />
               </div>
+            </div>
+          )}
+          {projectedInvoice && (
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
+              <span className="text-gray-500">Projeção do ciclo completo</span>
+              <span className={`font-semibold financial-value ${projectedInvoice > (account.limit_amount ?? Infinity) * 0.8 ? 'text-red-600' : 'text-orange-600'}`}>
+                ~{formatCurrency(projectedInvoice)}
+              </span>
             </div>
           )}
         </div>

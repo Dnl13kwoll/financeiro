@@ -7,6 +7,7 @@ import { showToast } from '@/components/ui/toast'
 import { Plus, Bookmark } from 'lucide-react'
 import { DescriptionWithSuggest } from './category-suggest'
 import { TransactionTemplates, saveTransactionTemplate } from './transaction-templates'
+import { TagsInput } from './tags-input'
 
 type Account = { id: string; name: string; type?: string }
 type Category = { id: string; name: string; type: 'income' | 'expense' }
@@ -30,7 +31,7 @@ export function NewTransactionButton({
   const [installments, setInstallments] = useState(1)
   const [formAmount, setFormAmount] = useState('')
   const [formDescription, setFormDescription] = useState('')
-  const [formTags, setFormTags] = useState('')
+  const [formTags, setFormTags] = useState<string[]>([])
   const formRef = useRef<HTMLFormElement>(null)
   const router = useRouter()
 
@@ -64,13 +65,13 @@ export function NewTransactionButton({
     if (t.description) setFormDescription(t.description)
     if (t.category_id) setSelectedCategoryId(t.category_id)
     if (t.account_id) setSelectedAccountId(t.account_id)
-    if (t.tags?.length) setFormTags(t.tags.join(', '))
+    if (t.tags?.length) setFormTags(t.tags)
   }
 
   async function handleSaveTemplate() {
     const name = window.prompt('Nome do template:')
     if (!name?.trim()) return
-    const tags = formTags.split(',').map(t => t.trim()).filter(Boolean)
+    const tags = formTags
     await saveTransactionTemplate(coupleId, userId, {
       name: name.trim(),
       type,
@@ -89,7 +90,7 @@ export function NewTransactionButton({
     const data = new FormData(form)
 
     const supabase = createClient()
-    const tags = formTags.split(',').map(t => t.trim()).filter(Boolean)
+    const tags = formTags
 
     const n = installments
     const totalAmount = parseFloat(formAmount)
@@ -134,6 +135,7 @@ export function NewTransactionButton({
         user_id: userId,
         couple_id: coupleId,
         comment: (data.get('comment') as string) || null,
+        receipt_url: (data.get('receipt_url') as string) || null,
       }
       await (supabase.from('transactions') as any).insert(payload)
     }
@@ -152,7 +154,7 @@ export function NewTransactionButton({
     setInstallments(1)
     setFormAmount('')
     setFormDescription('')
-    setFormTags('')
+    setFormTags([])
   }
 
   const today = new Date().toISOString().slice(0, 10)
@@ -291,13 +293,7 @@ export function NewTransactionButton({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-            <input
-              name="tags"
-              value={formTags}
-              onChange={e => setFormTags(e.target.value)}
-              placeholder="viagem, casa, pet (separadas por vírgula)"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+            <TagsInput value={formTags} onChange={setFormTags} placeholder="viagem, casa, pet..." />
           </div>
 
           <div>
@@ -305,6 +301,16 @@ export function NewTransactionButton({
             <input
               name="comment"
               placeholder="Observação opcional"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Link do comprovante</label>
+            <input
+              name="receipt_url"
+              type="url"
+              placeholder="https://... (opcional)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>

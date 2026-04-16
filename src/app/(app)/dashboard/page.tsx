@@ -13,13 +13,14 @@ export default async function DashboardPage() {
 
   const memberRes = await supabase
     .from('couple_members')
-    .select('couple_id, couples(currency)')
+    .select('couple_id, couples(currency, daily_limit)')
     .eq('user_id', user!.id)
     .single()
 
   const memberData = memberRes.data as any
   const coupleId: string | null = memberData?.couple_id ?? null
   const currency: string = memberData?.couples?.currency ?? 'BRL'
+  const dailyLimit: number | null = memberData?.couples?.daily_limit ?? null
 
   const [balancesRes, alertAccountsRes] = await Promise.all([
     coupleId ? supabase.from('account_balances').select('*').eq('couple_id', coupleId) : Promise.resolve(null),
@@ -33,8 +34,16 @@ export default async function DashboardPage() {
     .map((a: any) => ({ name: a.name, balance: balanceMap2.get(a.id) ?? 0, threshold: a.min_balance_alert }))
 
   const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+
+  // Gastos de hoje
+  const todayExpensesRes = coupleId
+    ? await supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'expense').eq('competence_date', todayStr).is('deleted_at', null)
+    : null
+  const todayExpenses = (todayExpensesRes?.data ?? []).reduce((s: number, t: any) => s + t.amount, 0)
+  const dailyLimitExceeded = dailyLimit !== null && todayExpenses > dailyLimit
 
   // Histórico 6 meses
   const history: { label: string; income: number; expense: number }[] = []
@@ -63,6 +72,12 @@ export default async function DashboardPage() {
   const totalExpenses = currentMonth?.expense ?? 0
   const totalIncome = currentMonth?.income ?? 0
 
+  // Average daily spend
+  const daysElapsed = Math.max(1, now.getDate())
+  const avgDailySpend = totalExpenses / daysElapsed
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const projectedExpense = avgDailySpend * daysInMonth
+
   const budgetSummaryRes = coupleId
     ? await supabase.from('budget_summary' as any).select('*').eq('couple_id', coupleId).eq('month', monthStart)
     : null
@@ -90,7 +105,7 @@ export default async function DashboardPage() {
     ? await (supabase.from('installment_items') as any).select('id, due_date, amount, installments(description)').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next7)
     : null
   const recurringDueRes = coupleId
-    ? await supabase.from('recurring_accounts').select('id, name, day_due').eq('couple_id', coupleId).eq('active', true).gte('day_due', now.getDate()).lte('day_due', now.getDate() + 7)
+    ? await supabase.from('recurring_accounts').select('id, name, day_due, amount').eq('couple_id', coupleId).eq('active', true).gte('day_due', now.getDate()).lte('day_due', now.getDate() + 7)
     : null
 
   const dueSoon: any[] = dueSoonRes?.data ?? []
@@ -138,6 +153,43 @@ export default async function DashboardPage() {
 
   const maxBar = Math.max(...history.map(h => Math.max(h.income, h.expense)), 1)
 
+  // Taxa de economia (savings rate) dos últimos 3 meses
+  const last3 = history.slice(-3)
+  const avgIncome3 = last3.reduce((s, m) => s + m.income, 0) / 3
+  const avgExpense3 = last3.reduce((s, m) => s + m.expense, 0) / 3
+  const savingsRate = avgIncome3 > 0 ? Math.round(((avgIncome3 - avgExpense3) / avgIncome3) * 100) : null
+
+  // Δ% comparação com mês anterior
+  const prevMonth = history[history.length - 2]
+  const deltaExpensePct = prevMonth && prevMonth.expense > 0
+    ? Math.round(((totalExpenses - prevMonth.expense) / prevMonth.expense) * 100)
+    : null
+  const deltaIncomePct = prevMonth && prevMonth.income > 0
+    ? Math.round(((totalIncome - prevMonth.income) / prevMonth.income) * 100)
+    : null
+
+  // Score financeiro 0-100
+  const scoreSavings = savingsRate === null ? 0 : Math.min(40, Math.max(0, savingsRate) * 2) // 0-40 pts
+  const budgetUsage = totalBudget > 0 ? totalExpenses / totalBudget : 0
+  const scoreBudget = totalBudget > 0 ? Math.round(Math.max(0, (1 - Math.min(1, budgetUsage)) * 35)) : 0 // 0-35 pts
+  const scoreGoals = goals.length > 0 ? 25 : 10 // 0-25 pts
+  const financialScore = Math.min(100, Math.round(scoreSavings + scoreBudget + scoreGoals))
+  const scoreLabel = financialScore >= 80 ? 'Excelente' : financialScore >= 60 ? 'Bom' : financialScore >= 40 ? 'Regular' : 'Atenção'
+  const scoreColor = financialScore >= 80 ? '#22c55e' : financialScore >= 60 ? '#3b82f6' : financialScore >= 40 ? '#f59e0b' : '#ef4444'
+
+  // Breakdown gastos por usuário
+  const userExpensesRes = coupleId
+    ? await supabase.from('transactions').select('user_id, amount, profiles(name, email)').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null)
+    : null
+  const userExpMap = new Map<string, { name: string; total: number }>()
+  ;(userExpensesRes?.data ?? []).forEach((t: any) => {
+    const profile = t.profiles as any
+    const name = profile?.name ?? profile?.email ?? 'Usuário'
+    const existing = userExpMap.get(t.user_id) ?? { name, total: 0 }
+    userExpMap.set(t.user_id, { name, total: existing.total + t.amount })
+  })
+  const userExpenses = Array.from(userExpMap.values()).sort((a, b) => b.total - a.total)
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Dashboard" />
@@ -146,9 +198,81 @@ export default async function DashboardPage() {
         {/* Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <SummaryCard title="Saldo Total" value={formatCurrency(totalBalance, currency)} description="Todas as contas" color="green" />
-          <SummaryCard title="Gastos do Mês" value={formatCurrency(totalExpenses, currency)} description="Mês atual" color="red" />
-          <SummaryCard title="Receitas" value={formatCurrency(totalIncome, currency)} description="Mês atual" color="blue" />
+          <SummaryCard title="Gastos do Mês" value={formatCurrency(totalExpenses, currency)} description="vs. mês anterior" color="red" delta={deltaExpensePct} />
+          <SummaryCard title="Receitas" value={formatCurrency(totalIncome, currency)} description="vs. mês anterior" color="blue" delta={deltaIncomePct} />
           <SummaryCard title="Disponível" value={formatCurrency(available, currency)} description="Orçamento − Gastos" color={available >= 0 ? 'green' : 'red'} />
+          {todayExpenses > 0 && (
+            <SummaryCard title="Gastos de Hoje" value={formatCurrency(todayExpenses, currency)} description={todayStr} color="red" />
+          )}
+          {totalExpenses > 0 && (
+            <SummaryCard title="Média diária" value={formatCurrency(avgDailySpend, currency)} description={`Baseado em ${daysElapsed} dias`} color="red" />
+          )}
+          {totalExpenses > 0 && (
+            <SummaryCard title="Projeção do mês" value={formatCurrency(projectedExpense, currency)} description={`Se manter o ritmo atual`} color={projectedExpense > totalIncome ? 'red' : 'green'} />
+          )}
+          {/* Score financeiro */}
+          {coupleId && (
+            <div className="col-span-2 bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
+              <div className="w-16 h-16 relative flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke={scoreColor} strokeWidth="3"
+                    strokeDasharray={`${financialScore} 100`} strokeLinecap="round" />
+                </svg>
+                <span className="absolute text-xs font-bold text-gray-700">{financialScore}</span>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Score financeiro</p>
+                <p className="text-lg font-bold mt-0.5" style={{ color: scoreColor }}>{scoreLabel}</p>
+                <p className="text-xs text-gray-400">poupança · orçamento · metas</p>
+              </div>
+            </div>
+          )}
+          {/* Breakdown por usuário */}
+          {userExpenses.length > 1 && (
+            <div className="col-span-2 bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <p className="text-xs text-gray-500 mb-2">Gastos por pessoa — mês atual</p>
+              {userExpenses.map(u => (
+                <div key={u.name} className="mb-2">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-700">{u.name}</span>
+                    <span className="font-medium text-red-600 financial-value">{formatCurrency(u.total, currency)}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
+                    <div className="bg-red-400 h-1.5 rounded-full" style={{ width: `${Math.min(100, (u.total / totalExpenses) * 100)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {savingsRate !== null && (
+            <div className="col-span-2 lg:col-span-4">
+              <div className={`rounded-xl border p-4 flex items-center gap-4 ${savingsRate >= 20 ? 'bg-green-50 border-green-100' : savingsRate >= 0 ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100'}`}>
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-500">Taxa de poupança (média 3 meses)</p>
+                  <p className={`text-2xl font-bold mt-0.5 ${savingsRate >= 20 ? 'text-green-700' : savingsRate >= 0 ? 'text-amber-700' : 'text-red-700'}`}>
+                    {savingsRate}%
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {savingsRate >= 20 ? 'Excelente! Continue assim.' : savingsRate >= 10 ? 'Bom, mas há espaço para melhorar.' : savingsRate >= 0 ? 'Atenção: poupança baixa.' : 'Gastos maiores que receitas!'}
+                  </p>
+                </div>
+                <div className="w-24 h-24 relative flex items-center justify-center">
+                  <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                    <circle
+                      cx="18" cy="18" r="15.9" fill="none"
+                      stroke={savingsRate >= 20 ? '#22c55e' : savingsRate >= 0 ? '#f59e0b' : '#ef4444'}
+                      strokeWidth="3"
+                      strokeDasharray={`${Math.min(100, Math.max(0, savingsRate))} 100`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-gray-700">{savingsRate}%</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {!coupleId && (
@@ -196,6 +320,19 @@ export default async function DashboardPage() {
           </section>
         )}
 
+        {/* Alerta de limite diário */}
+        {dailyLimitExceeded && (
+          <section className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0" />
+              <p className="text-sm text-orange-800">
+                <span className="font-semibold">Limite diário ultrapassado!</span>{' '}
+                Você gastou {formatCurrency(todayExpenses, currency)} hoje (limite: {formatCurrency(dailyLimit!, currency)}).
+              </p>
+            </div>
+          </section>
+        )}
+
         {/* Alertas de saldo baixo */}
         {lowBalanceAlerts.length > 0 && (
           <section className="bg-red-50 border border-red-200 rounded-xl p-5">
@@ -219,10 +356,13 @@ export default async function DashboardPage() {
         {/* Saldo por conta */}
         {balances.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">Saldo por conta</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Saldo por conta</h3>
+              <a href="/accounts" className="text-xs text-primary-600 hover:underline">Ver contas</a>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {balances.map((b: any) => (
-                <div key={b.id} className="border border-gray-100 rounded-lg p-3">
+                <a key={b.id} href={`/accounts/${b.id}`} className="border border-gray-100 rounded-lg p-3 hover:border-primary-200 hover:bg-primary-50/30 transition-colors block">
                   <p className="text-xs text-gray-400 truncate">{b.name}</p>
                   <p className={`text-base font-bold mt-0.5 financial-value ${b.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                     {formatCurrency(b.balance, currency)}
@@ -230,7 +370,7 @@ export default async function DashboardPage() {
                   <p className="text-xs text-gray-400 capitalize mt-0.5">
                     {b.type === 'checking' ? 'Corrente' : b.type === 'savings' ? 'Poupança' : b.type === 'investment' ? 'Investimento' : b.type}
                   </p>
-                </div>
+                </a>
               ))}
             </div>
           </section>
@@ -246,21 +386,25 @@ export default async function DashboardPage() {
             <div className="space-y-4">
               {goals.map((goal: any) => {
                 const progress = Math.min(100, Math.round((goal.current_amount / goal.target_amount) * 100))
+                const nearComplete = progress >= 90
                 return (
-                  <div key={goal.id}>
+                  <div key={goal.id} className={nearComplete ? 'p-3 rounded-lg border border-green-200 bg-green-50' : ''}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700 font-medium">{goal.name}</span>
-                      <span className="text-gray-400 financial-value">
+                      <span className={`font-medium ${nearComplete ? 'text-green-800' : 'text-gray-700'}`}>
+                        {goal.name}
+                        {nearComplete && <span className="ml-2 text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full">Quase lá!</span>}
+                      </span>
+                      <span className={`financial-value ${nearComplete ? 'text-green-700' : 'text-gray-400'}`}>
                         {formatCurrency(goal.current_amount, currency)} / {formatCurrency(goal.target_amount, currency)}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className={`w-full rounded-full h-2 ${nearComplete ? 'bg-green-200' : 'bg-gray-100'}`}>
                       <div
-                        className="bg-primary-500 h-2 rounded-full transition-all"
+                        className={`h-2 rounded-full transition-all ${nearComplete ? 'bg-green-500' : 'bg-primary-500'}`}
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{progress}% concluído</p>
+                    <p className={`text-xs mt-0.5 ${nearComplete ? 'text-green-600 font-medium' : 'text-gray-400'}`}>{progress}% concluído</p>
                   </div>
                 )
               })}
@@ -285,7 +429,9 @@ export default async function DashboardPage() {
               {recurringDue.map((rec: any) => (
                 <div key={rec.id} className="flex justify-between text-sm">
                   <span className="text-orange-700">{rec.name} · dia {rec.day_due}</span>
-                  <span className="text-orange-600 text-xs">recorrente</span>
+                  <span className="font-medium text-orange-800 financial-value">
+                    {rec.amount ? formatCurrency(rec.amount) : <span className="text-orange-500 text-xs">recorrente</span>}
+                  </span>
                 </div>
               ))}
             </div>
@@ -421,15 +567,22 @@ export default async function DashboardPage() {
   )
 }
 
-function SummaryCard({ title, value, description, color }: {
-  title: string; value: string; description: string; color: 'green' | 'red' | 'blue'
+function SummaryCard({ title, value, description, color, delta }: {
+  title: string; value: string; description: string; color: 'green' | 'red' | 'blue'; delta?: number | null
 }) {
   const colors = { green: 'text-green-700', red: 'text-red-700', blue: 'text-blue-700' }
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-5 shadow-sm">
       <p className="text-xs text-gray-500">{title}</p>
       <p className={`text-lg md:text-2xl font-bold mt-1 financial-value ${colors[color]}`}>{value}</p>
-      <p className="text-xs text-gray-400 mt-1 hidden sm:block">{description}</p>
+      <div className="flex items-center gap-1.5 mt-1">
+        <p className="text-xs text-gray-400 hidden sm:block">{description}</p>
+        {delta !== null && delta !== undefined && (
+          <span className={`text-xs font-medium ${delta > 0 ? (color === 'blue' || color === 'green' ? 'text-green-600' : 'text-red-500') : 'text-green-600'}`}>
+            {delta > 0 ? '▲' : '▼'} {Math.abs(delta)}%
+          </span>
+        )}
+      </div>
     </div>
   )
 }

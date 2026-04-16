@@ -12,7 +12,7 @@ function escapeCSV(v: string | number | null | undefined): string {
 
 function rowsToXLS(rows: any[]): string {
   // Simple XML-based XLS (Excel-compatible)
-  const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Tags', 'Comentário', 'Privado']
+  const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Tags', 'Comentário', 'Privado', 'Comprovante']
   const toCell = (v: string | number | null | undefined) => `<Cell><Data ss:Type="String">${String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</Data></Cell>`
   const headerRow = headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')
   const dataRows = rows.map((t: any) => [
@@ -25,6 +25,7 @@ function rowsToXLS(rows: any[]): string {
     (t.tags ?? []).join('; '),
     t.comment ?? '',
     t.is_private ? 'Sim' : 'Não',
+    t.receipt_url ?? '',
   ].map(toCell).join('')).map(r => `<Row>${r}</Row>`).join('')
 
   return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Transações"><Table><Row>${headerRow}</Row>${dataRows}</Table></Worksheet></Workbook>`
@@ -51,7 +52,7 @@ export function ExportButton({
   async function fetchRows(): Promise<any[]> {
     const supabase = createClient()
     let query = (supabase.from('transactions') as any)
-      .select('date, description, amount, type, categories(name), accounts(name), tags, comment, is_private')
+      .select('date, description, amount, type, categories(name), accounts(name), tags, comment, is_private, receipt_url')
       .eq('couple_id', coupleId)
       .gte('competence_date', filters.monthStart)
       .lte('competence_date', filters.monthEnd)
@@ -70,8 +71,8 @@ export function ExportButton({
   async function handleExportCSV() {
     setLoading(true); setMenuOpen(false)
     const rows = await fetchRows()
-    const header = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Tags', 'Comentário', 'Privado']
-    const lines = [header.join(','), ...rows.map((t: any) => [escapeCSV(t.date), escapeCSV(t.description), escapeCSV(t.type === 'income' ? 'Entrada' : t.type === 'expense' ? 'Saída' : 'Transferência'), escapeCSV(t.type === 'expense' ? -t.amount : t.amount), escapeCSV(t.categories?.name), escapeCSV(t.accounts?.name), escapeCSV((t.tags ?? []).join('; ')), escapeCSV(t.comment), escapeCSV(t.is_private ? 'Sim' : 'Não')].join(','))]
+    const header = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Tags', 'Comentário', 'Privado', 'Comprovante']
+    const lines = [header.join(','), ...rows.map((t: any) => [escapeCSV(t.date), escapeCSV(t.description), escapeCSV(t.type === 'income' ? 'Entrada' : t.type === 'expense' ? 'Saída' : 'Transferência'), escapeCSV(t.type === 'expense' ? -t.amount : t.amount), escapeCSV(t.categories?.name), escapeCSV(t.accounts?.name), escapeCSV((t.tags ?? []).join('; ')), escapeCSV(t.comment), escapeCSV(t.is_private ? 'Sim' : 'Não'), escapeCSV(t.receipt_url)].join(','))]
     const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a'); a.href = url; a.download = `transacoes_${filters.monthStart}_${filters.monthEnd}.csv`; a.click()

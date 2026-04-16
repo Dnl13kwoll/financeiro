@@ -39,17 +39,34 @@ export default async function RecurringPage() {
   const active = recurring.filter(r => !r.paused)
   const paused = recurring.filter(r => r.paused)
 
-  const totalMonth = active.reduce((sum, rec) => {
+  const getRecAmount = (rec: any) => {
     const records = (rec.recurring_records ?? []) as any[]
     const cur = records.find((r: any) => r.reference_month === currentMonth)
-    return sum + (cur?.amount ?? rec.amount ?? 0)
-  }, 0)
+    return cur?.amount ?? rec.amount ?? 0
+  }
 
+  const totalMonth = active.reduce((sum, rec) => sum + getRecAmount(rec), 0)
   const paidMonth = active.reduce((sum, rec) => {
     const records = (rec.recurring_records ?? []) as any[]
     const cur = records.find((r: any) => r.reference_month === currentMonth)
-    return sum + (cur?.paid ? (cur?.amount ?? rec.amount ?? 0) : 0)
+    return sum + (cur?.paid ? getRecAmount(rec) : 0)
   }, 0)
+
+  // Breakdown by type
+  const totalExpenseMonth = active.filter(r => r.type === 'expense' || !r.type).reduce((sum, rec) => sum + getRecAmount(rec), 0)
+  const totalIncomeMonth = active.filter(r => r.type === 'income').reduce((sum, rec) => sum + getRecAmount(rec), 0)
+
+  // Custo anual estimado
+  const annualCost = active.reduce((sum, rec) => sum + getRecAmount(rec) * 12, 0)
+
+  // Agrupamento por categoria
+  const categoryGroupMap = new Map<string, { name: string; total: number; count: number }>()
+  active.forEach(rec => {
+    const catName = (rec.categories as any)?.name ?? 'Sem categoria'
+    const existing = categoryGroupMap.get(catName) ?? { name: catName, total: 0, count: 0 }
+    categoryGroupMap.set(catName, { ...existing, total: existing.total + getRecAmount(rec), count: existing.count + 1 })
+  })
+  const categoryGroups = Array.from(categoryGroupMap.values()).sort((a, b) => b.total - a.total)
 
   return (
     <div className="flex flex-col flex-1">
@@ -62,7 +79,15 @@ export default async function RecurringPage() {
         </div>
 
         {active.length > 0 && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Total despesas</p>
+              <p className="text-xl font-bold text-red-600 mt-1">{formatCurrency(totalExpenseMonth)}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Total receitas</p>
+              <p className="text-xl font-bold text-green-600 mt-1">{formatCurrency(totalIncomeMonth)}</p>
+            </div>
             <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
               <p className="text-xs text-gray-500">Total do mês</p>
               <p className="text-xl font-bold text-gray-900 mt-1">{formatCurrency(totalMonth)}</p>
@@ -70,6 +95,32 @@ export default async function RecurringPage() {
             <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
               <p className="text-xs text-gray-500">Já pago</p>
               <p className="text-xl font-bold text-green-600 mt-1">{formatCurrency(paidMonth)}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Custo anual estimado */}
+        {active.length > 0 && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-blue-600 font-medium">Custo anual estimado</p>
+              <p className="text-xl font-bold text-blue-800 mt-0.5">{formatCurrency(annualCost)}</p>
+            </div>
+            <p className="text-xs text-blue-400">{active.length} recorrente{active.length !== 1 ? 's' : ''} ativa{active.length !== 1 ? 's' : ''}</p>
+          </div>
+        )}
+
+        {/* Agrupamento por categoria */}
+        {categoryGroups.length > 1 && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Por categoria</h3>
+            <div className="space-y-2">
+              {categoryGroups.map(g => (
+                <div key={g.name} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">{g.name} <span className="text-gray-400 text-xs">({g.count})</span></span>
+                  <span className="font-medium text-gray-800">{formatCurrency(g.total)}<span className="text-gray-400 text-xs font-normal">/mês</span></span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -105,12 +156,21 @@ export default async function RecurringPage() {
                   />
                   <div>
                     <p className="font-medium text-gray-900">{rec.name}</p>
-                    <p className="text-xs text-gray-400">
-                      Vence dia {rec.day_due}
-                      {rec.amount ? ` · ${formatCurrency(rec.amount)}` : ''}
-                      {(rec.categories as any)?.name ? ` · ${(rec.categories as any).name}` : ''}
-                      {rec.end_date ? ` · até ${new Date(rec.end_date + 'T00:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}` : ''}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs text-gray-400">
+                        Vence dia {rec.day_due}
+                        {rec.amount ? ` · ${formatCurrency(rec.amount)}` : ''}
+                        {(rec.categories as any)?.name ? ` · ${(rec.categories as any).name}` : ''}
+                        {rec.end_date ? ` · até ${new Date(rec.end_date + 'T00:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}` : ''}
+                      </p>
+                      <a
+                        href={`/transactions?q=${encodeURIComponent(rec.name)}`}
+                        className="text-xs text-primary-500 hover:underline"
+                        title="Ver transações relacionadas"
+                      >
+                        transações →
+                      </a>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

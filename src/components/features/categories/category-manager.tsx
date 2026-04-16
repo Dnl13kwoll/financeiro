@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 
-type Category = { id: string; name: string; type: 'income' | 'expense'; sort_order?: number }
+type Category = { id: string; name: string; type: 'income' | 'expense'; sort_order?: number; color?: string | null }
 
 export function CategoryManager({ categories, coupleId }: { categories: Category[]; coupleId: string }) {
   const [open, setOpen] = useState(false)
@@ -21,6 +21,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
     await (supabase.from('categories') as any).insert({
       name: data.get('name') as string,
       type: data.get('type') as string,
+      color: (data.get('color') as string) || null,
       couple_id: coupleId,
     })
     setLoading(false)
@@ -75,6 +76,13 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
                 placeholder="Nome da categoria"
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
+              <input
+                name="color"
+                type="color"
+                defaultValue="#6366f1"
+                title="Cor da categoria"
+                className="h-9 w-10 border border-gray-300 rounded-lg cursor-pointer p-0.5"
+              />
               <select
                 name="type"
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -99,6 +107,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
                 {custom.map((c, i) => (
                   <div key={c.id} className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded">
                     <div className="flex items-center gap-2">
+                      {c.color && <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: c.color }} />}
                       <span className={`text-xs px-1.5 py-0.5 rounded ${c.type === 'expense' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                         {c.type === 'expense' ? 'Saída' : 'Entrada'}
                       </span>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -358,11 +359,11 @@ export default async function DashboardPage() {
           <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Saldo por conta</h3>
-              <a href="/accounts" className="text-xs text-primary-600 hover:underline">Ver contas</a>
+              <Link href="/accounts" className="text-xs text-primary-600 hover:underline">Ver contas</Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {balances.map((b: any) => (
-                <a key={b.id} href={`/accounts/${b.id}`} className="border border-gray-100 rounded-lg p-3 hover:border-primary-200 hover:bg-primary-50/30 transition-colors block">
+                <Link key={b.id} href={`/accounts/${b.id}`} className="border border-gray-100 rounded-lg p-3 hover:border-primary-200 hover:bg-primary-50/30 transition-colors block">
                   <p className="text-xs text-gray-400 truncate">{b.name}</p>
                   <p className={`text-base font-bold mt-0.5 financial-value ${b.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                     {formatCurrency(b.balance, currency)}
@@ -370,7 +371,7 @@ export default async function DashboardPage() {
                   <p className="text-xs text-gray-400 capitalize mt-0.5">
                     {b.type === 'checking' ? 'Corrente' : b.type === 'savings' ? 'Poupança' : b.type === 'investment' ? 'Investimento' : b.type}
                   </p>
-                </a>
+                </Link>
               ))}
             </div>
           </section>

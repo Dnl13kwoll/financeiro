@@ -25,7 +25,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     const newCoupleId = crypto.randomUUID()
 
     const { error: coupleErr } = await (supabase.from('couples') as any)
-      .insert({ id: newCoupleId, name: data.get('couple_name') as string, currency: 'BRL' })
+      .insert({ id: newCoupleId, currency: 'BRL' })
 
     if (coupleErr) {
       showToast('Erro ao criar casal: ' + coupleErr.message, 'error')

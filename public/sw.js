@@ -1,10 +1,7 @@
 const CACHE = 'financeiro-v1'
-const OFFLINE_URL = '/dashboard'
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(['/dashboard', '/', '/offline']))
-  )
+  // Não pré-cacheia rotas autenticadas para evitar erros de Request failed
   self.skipWaiting()
 })
 
@@ -29,7 +26,7 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE).then((c) => c.put(event.request, clone))
         return res
       })
-      .catch(() => caches.match(event.request).then((r) => r ?? caches.match(OFFLINE_URL)))
+      .catch(() => caches.match(event.request).then((r) => r ?? Response.error()))
   )
 })
 

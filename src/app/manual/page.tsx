@@ -53,7 +53,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 1.0 · Abril 2026</div>
+        <div className="version">Versão 2.0 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}

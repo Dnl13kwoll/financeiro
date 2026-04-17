@@ -11,24 +11,22 @@ export function OnboardingWizard({ userId }: { userId: string }) {
   const [step, setStep] = useState<Step>('couple')
   const [loading, setLoading] = useState(false)
   const [coupleId, setCoupleId] = useState<string | null>(null)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   async function handleCreateCouple(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
-    const form = e.currentTarget
-    const data = new FormData(form)
+    setError('')
     const supabase = createClient()
 
-    // Gera o ID client-side para não depender de .select() após insert
-    // (a policy SELECT de couples exige ser membro, mas o membro ainda não existe)
     const newCoupleId = crypto.randomUUID()
 
     const { error: coupleErr } = await (supabase.from('couples') as any)
       .insert({ id: newCoupleId, currency: 'BRL' })
 
     if (coupleErr) {
-      showToast('Erro ao criar casal: ' + coupleErr.message, 'error')
+      setError('Erro ao criar casal: ' + coupleErr.message)
       setLoading(false)
       return
     }
@@ -37,7 +35,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
       .insert({ couple_id: newCoupleId, user_id: userId, role: 'owner' })
 
     if (memberErr) {
-      showToast('Erro ao entrar no casal: ' + memberErr.message, 'error')
+      setError('Erro ao entrar no casal: ' + memberErr.message)
       setLoading(false)
       return
     }
@@ -120,6 +118,11 @@ export function OnboardingWizard({ userId }: { userId: string }) {
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={loading}

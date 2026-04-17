@@ -24,6 +24,7 @@ import {
   Landmark,
   HelpCircle,
   Star,
+  Plane,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -44,6 +45,7 @@ const navItems = [
   { href: '/planning', label: 'Planejamento', icon: ClipboardList },
   { href: '/networth', label: 'Patrimônio', icon: Landmark },
   { href: '/wishlist', label: 'Lista de Desejos', icon: Heart },
+  { href: '/travel', label: 'Viagens', icon: Plane },
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/activity', label: 'Atividade', icon: Activity },
   { href: '/settings', label: 'Configurações', icon: Settings },

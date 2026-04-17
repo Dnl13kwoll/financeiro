@@ -13,10 +13,12 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
     setError('')
     const supabase = createClient()
 
-    const { data: couple, error: coupleErr } = await (supabase.from('couples') as any)
-      .insert({ currency: 'BRL' })
-      .select()
-      .single()
+    // Gera o ID client-side para não precisar de .select() (que falharia pois
+    // a política SELECT de couples exige ser membro, mas o membro ainda não existe)
+    const coupleId = crypto.randomUUID()
+
+    const { error: coupleErr } = await (supabase.from('couples') as any)
+      .insert({ id: coupleId, currency: 'BRL' })
 
     if (coupleErr) {
       setError('Erro ao criar casal: ' + coupleErr.message)
@@ -24,12 +26,8 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
       return
     }
 
-    const memberPayload: any = {
-      user_id: userId,
-      couple_id: couple.id,
-      role: 'owner',
-    }
-    const { error: memberErr } = await (supabase.from('couple_members') as any).insert(memberPayload)
+    const { error: memberErr } = await (supabase.from('couple_members') as any)
+      .insert({ user_id: userId, couple_id: coupleId, role: 'owner' })
 
     if (memberErr) {
       setError('Erro ao criar membro: ' + memberErr.message)

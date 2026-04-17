@@ -13,10 +13,11 @@ export function CreateCoupleButton({ userId }: { userId: string }) {
     setError('')
 
     const res = await fetch('/api/couple', { method: 'POST' })
-    const json = await res.json()
+    let json: any = {}
+    try { json = await res.json() } catch {}
 
     if (!res.ok) {
-      setError(json.error ?? 'Erro ao criar casal')
+      setError(json.error ?? `Erro ao criar casal (${res.status})`)
       setLoading(false)
       return
     }

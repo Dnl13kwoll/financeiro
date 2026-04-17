@@ -14,9 +14,9 @@ export async function POST() {
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user.id)
-    .maybeSingle()
+    .limit(1)
 
-  if (existing) {
+  if (existing && existing.length > 0) {
     return NextResponse.json({ error: 'Você já pertence a um casal' }, { status: 400 })
   }
 

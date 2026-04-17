@@ -20,7 +20,8 @@ export default async function SettingsPage() {
     .from('couple_members')
     .select('couple_id, role, couples(currency, daily_limit)')
     .eq('user_id', user!.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   const memberData = memberRes.data as any
   const coupleId: string | null = memberData?.couple_id ?? null

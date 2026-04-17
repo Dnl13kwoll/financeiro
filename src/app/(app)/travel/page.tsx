@@ -26,17 +26,20 @@ export default async function TravelPage() {
   }
 
   const tripsRes = await (supabase as any)
-    .from('trips').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+    .from('trips').select('*').eq('couple_id', coupleId).order('sort_order').order('created_at', { ascending: false })
 
   const trips = tripsRes.data ?? []
   const tripIds: string[] = trips.map((t: any) => t.id)
 
-  const [expensesRes, placesRes, checklistsRes, companionsRes, quotesRes, goalsRes] = await Promise.all([
+  const [expensesRes, placesRes, checklistsRes, companionsRes, quotesRes, itineraryRes, diaryRes, attachmentsRes, goalsRes] = await Promise.all([
     tripIds.length > 0 ? (supabase as any).from('trip_expenses').select('*').in('trip_id', tripIds).order('created_at') : Promise.resolve({ data: [] }),
     tripIds.length > 0 ? (supabase as any).from('trip_places').select('*').in('trip_id', tripIds).order('sort_order') : Promise.resolve({ data: [] }),
     tripIds.length > 0 ? (supabase as any).from('trip_checklists').select('*').in('trip_id', tripIds).order('sort_order') : Promise.resolve({ data: [] }),
     tripIds.length > 0 ? (supabase as any).from('trip_companions').select('*').in('trip_id', tripIds) : Promise.resolve({ data: [] }),
     tripIds.length > 0 ? (supabase as any).from('trip_quotes').select('*').in('trip_id', tripIds).order('created_at') : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_itinerary').select('*').in('trip_id', tripIds).order('day_date').order('sort_order') : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_diary').select('*').in('trip_id', tripIds) : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_attachments').select('*').in('trip_id', tripIds).order('created_at') : Promise.resolve({ data: [] }),
     (supabase as any).from('goals').select('id, name, target_amount, current_amount').eq('couple_id', coupleId).eq('status', 'active'),
   ])
 
@@ -71,6 +74,9 @@ export default async function TravelPage() {
           initialChecklists={groupBy(checklistsRes.data ?? [], 'trip_id')}
           initialCompanions={groupBy(companionsRes.data ?? [], 'trip_id')}
           initialQuotes={groupBy(quotesRes.data ?? [], 'trip_id')}
+          initialItinerary={groupBy(itineraryRes.data ?? [], 'trip_id')}
+          initialDiary={groupBy(diaryRes.data ?? [], 'trip_id')}
+          initialAttachments={groupBy(attachmentsRes.data ?? [], 'trip_id')}
           goals={goalsRes.data ?? []}
         />
       </div>

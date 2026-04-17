@@ -10,11 +10,7 @@ export default async function TravelPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const memberRes = await (supabase as any)
-    .from('couple_members')
-    .select('couple_id')
-    .eq('user_id', user!.id)
-    .limit(1)
-    .maybeSingle()
+    .from('couple_members').select('couple_id').eq('user_id', user!.id).limit(1).maybeSingle()
 
   const coupleId: string | null = memberRes.data?.couple_id ?? null
 
@@ -30,34 +26,28 @@ export default async function TravelPage() {
   }
 
   const tripsRes = await (supabase as any)
-    .from('trips')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false })
+    .from('trips').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
 
   const trips = tripsRes.data ?? []
   const tripIds: string[] = trips.map((t: any) => t.id)
 
-  const [expensesRes, placesRes] = await Promise.all([
-    tripIds.length > 0
-      ? (supabase as any).from('trip_expenses').select('*').in('trip_id', tripIds).order('created_at')
-      : Promise.resolve({ data: [] }),
-    tripIds.length > 0
-      ? (supabase as any).from('trip_places').select('*').in('trip_id', tripIds).order('created_at')
-      : Promise.resolve({ data: [] }),
+  const [expensesRes, placesRes, checklistsRes, companionsRes, quotesRes, goalsRes] = await Promise.all([
+    tripIds.length > 0 ? (supabase as any).from('trip_expenses').select('*').in('trip_id', tripIds).order('created_at') : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_places').select('*').in('trip_id', tripIds).order('sort_order') : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_checklists').select('*').in('trip_id', tripIds).order('sort_order') : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_companions').select('*').in('trip_id', tripIds) : Promise.resolve({ data: [] }),
+    tripIds.length > 0 ? (supabase as any).from('trip_quotes').select('*').in('trip_id', tripIds).order('created_at') : Promise.resolve({ data: [] }),
+    (supabase as any).from('goals').select('id, name, target_amount, current_amount').eq('couple_id', coupleId).eq('status', 'active'),
   ])
 
-  // Group by trip_id
-  const expensesByTrip: Record<string, any[]> = {}
-  const placesByTrip: Record<string, any[]> = {}
-  ;(expensesRes.data ?? []).forEach((e: any) => {
-    if (!expensesByTrip[e.trip_id]) expensesByTrip[e.trip_id] = []
-    expensesByTrip[e.trip_id].push(e)
-  })
-  ;(placesRes.data ?? []).forEach((p: any) => {
-    if (!placesByTrip[p.trip_id]) placesByTrip[p.trip_id] = []
-    placesByTrip[p.trip_id].push(p)
-  })
+  function groupBy(arr: any[], key: string) {
+    return arr.reduce((acc: Record<string, any[]>, item: any) => {
+      const k = item[key]
+      if (!acc[k]) acc[k] = []
+      acc[k].push(item)
+      return acc
+    }, {})
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -69,15 +59,19 @@ export default async function TravelPage() {
           </div>
           <div>
             <h2 className="font-bold text-gray-900">Planejamento de Viagens</h2>
-            <p className="text-xs text-gray-400">Organize orçamento, destinos e locais para visitar</p>
+            <p className="text-xs text-gray-400">Orçamento, roteiro, checklist e companheiros</p>
           </div>
         </div>
 
         <TripManager
           coupleId={coupleId}
           initialTrips={trips}
-          initialExpenses={expensesByTrip}
-          initialPlaces={placesByTrip}
+          initialExpenses={groupBy(expensesRes.data ?? [], 'trip_id')}
+          initialPlaces={groupBy(placesRes.data ?? [], 'trip_id')}
+          initialChecklists={groupBy(checklistsRes.data ?? [], 'trip_id')}
+          initialCompanions={groupBy(companionsRes.data ?? [], 'trip_id')}
+          initialQuotes={groupBy(quotesRes.data ?? [], 'trip_id')}
+          goals={goalsRes.data ?? []}
         />
       </div>
     </div>

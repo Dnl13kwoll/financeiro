@@ -20,23 +20,29 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     const data = new FormData(form)
     const supabase = createClient()
 
-    // Create couple
-    const { data: couple, error: coupleErr } = await (supabase
-      .from('couples') as any)
-      .insert({ name: data.get('couple_name') as string, currency: 'BRL' })
-      .select('id')
-      .single()
+    // Gera o ID client-side para não depender de .select() após insert
+    // (a policy SELECT de couples exige ser membro, mas o membro ainda não existe)
+    const newCoupleId = crypto.randomUUID()
 
-    if (coupleErr || !couple) {
-      showToast('Erro ao criar casal.', 'error')
+    const { error: coupleErr } = await (supabase.from('couples') as any)
+      .insert({ id: newCoupleId, name: data.get('couple_name') as string, currency: 'BRL' })
+
+    if (coupleErr) {
+      showToast('Erro ao criar casal: ' + coupleErr.message, 'error')
       setLoading(false)
       return
     }
 
-    // Join as member
-    await (supabase.from('couple_members') as any).insert({ couple_id: couple.id, user_id: userId, role: 'owner' })
+    const { error: memberErr } = await (supabase.from('couple_members') as any)
+      .insert({ couple_id: newCoupleId, user_id: userId, role: 'owner' })
 
-    setCoupleId(couple.id)
+    if (memberErr) {
+      showToast('Erro ao entrar no casal: ' + memberErr.message, 'error')
+      setLoading(false)
+      return
+    }
+
+    setCoupleId(newCoupleId)
     setLoading(false)
     setStep('account')
   }

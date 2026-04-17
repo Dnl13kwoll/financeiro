@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { showToast } from '@/components/ui/toast'
 import { CheckCircle2, ChevronRight } from 'lucide-react'
 
 type Step = 'couple' | 'account' | 'done'
@@ -18,29 +17,17 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
 
-    const newCoupleId = crypto.randomUUID()
+    const res = await fetch('/api/couple', { method: 'POST' })
+    const json = await res.json()
 
-    const { error: coupleErr } = await (supabase.from('couples') as any)
-      .insert({ id: newCoupleId, currency: 'BRL' })
-
-    if (coupleErr) {
-      setError('Erro ao criar casal: ' + coupleErr.message)
+    if (!res.ok) {
+      setError(json.error ?? 'Erro ao criar casal')
       setLoading(false)
       return
     }
 
-    const { error: memberErr } = await (supabase.from('couple_members') as any)
-      .insert({ couple_id: newCoupleId, user_id: userId, role: 'owner' })
-
-    if (memberErr) {
-      setError('Erro ao entrar no casal: ' + memberErr.message)
-      setLoading(false)
-      return
-    }
-
-    setCoupleId(newCoupleId)
+    setCoupleId(json.coupleId)
     setLoading(false)
     setStep('account')
   }

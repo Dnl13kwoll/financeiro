@@ -63,7 +63,7 @@ export function TripManager({ coupleId, initialTrips, initialExpenses, initialPl
         <div className="text-center py-16 text-gray-400">
           <Plane className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">Nenhuma viagem planejada ainda.</p>
-          <p className="text-xs mt-1">Clique em "Nova viagem" para começar.</p>
+          <p className="text-xs mt-1">Clique em &quot;Nova viagem&quot; para começar.</p>
         </div>
       )}
 

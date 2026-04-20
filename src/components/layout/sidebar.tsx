@@ -25,6 +25,9 @@ import {
   HelpCircle,
   Star,
   Plane,
+  ShoppingCart,
+  Tag,
+  Lightbulb,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -46,6 +49,9 @@ const navItems = [
   { href: '/networth', label: 'Patrimônio', icon: Landmark },
   { href: '/wishlist', label: 'Lista de Desejos', icon: Heart },
   { href: '/travel', label: 'Viagens', icon: Plane },
+  { href: '/shopping', label: 'Lista de Compras', icon: ShoppingCart },
+  { href: '/price-history', label: 'Histórico de Preços', icon: Tag },
+  { href: '/insights', label: 'Insights', icon: Lightbulb },
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/activity', label: 'Atividade', icon: Activity },
   { href: '/settings', label: 'Configurações', icon: Settings },

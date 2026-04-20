@@ -40,7 +40,7 @@ export default async function TravelPage() {
     tripIds.length > 0 ? (supabase as any).from('trip_itinerary').select('*').in('trip_id', tripIds).order('day_date').order('sort_order') : Promise.resolve({ data: [] }),
     tripIds.length > 0 ? (supabase as any).from('trip_diary').select('*').in('trip_id', tripIds) : Promise.resolve({ data: [] }),
     tripIds.length > 0 ? (supabase as any).from('trip_attachments').select('*').in('trip_id', tripIds).order('created_at') : Promise.resolve({ data: [] }),
-    (supabase as any).from('goals').select('id, name, target_amount, current_amount').eq('couple_id', coupleId).eq('status', 'active'),
+    (supabase as any).from('goals').select('id, name, target_amount, current_amount').eq('couple_id', coupleId),
   ])
 
   function groupBy(arr: any[], key: string) {

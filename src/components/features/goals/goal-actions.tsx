@@ -18,11 +18,13 @@ type Goal = {
 export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; accounts?: { id: string; name: string }[] }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
+    setError(null)
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
@@ -34,7 +36,12 @@ export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; a
       deadline: (data.get('deadline') as string) || null,
       account_id: (data.get('account_id') as string) || null,
     }
-    await (supabase.from('goals') as any).insert(payload)
+    const result = await (supabase.from('goals') as any).insert(payload)
+    if (result.error) {
+      setError(result.error.message)
+      setLoading(false)
+      return
+    }
     setLoading(false)
     setOpen(false)
     form.reset()
@@ -105,6 +112,11 @@ export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; a
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
+            </div>
+          )}
+          {error && (
+            <div className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+              Erro: {error}
             </div>
           )}
           <div className="flex gap-3 justify-end pt-2">

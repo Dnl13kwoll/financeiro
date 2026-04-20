@@ -32,6 +32,8 @@ export function NewTransactionButton({
   const [formAmount, setFormAmount] = useState('')
   const [formDescription, setFormDescription] = useState('')
   const [formTags, setFormTags] = useState<string[]>([])
+  const [dupWarning, setDupWarning] = useState<{ description: string; amount: number; date: string } | null>(null)
+  const skipDupCheck = useRef(false)
   const formRef = useRef<HTMLFormElement>(null)
   const router = useRouter()
 
@@ -97,6 +99,27 @@ export function NewTransactionButton({
     const baseDate = new Date((data.get('date') as string) + 'T12:00:00')
     const description = formDescription || null
 
+    // Duplicate detection (only for single transactions, not installments)
+    if (n === 1 && !skipDupCheck.current && type !== 'transfer') {
+      const dateFrom = new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      const dateTo = new Date(baseDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      const { data: dups } = await (supabase.from('transactions') as any)
+        .select('id, description, amount, date')
+        .eq('couple_id', coupleId)
+        .eq('amount', totalAmount)
+        .eq('type', type)
+        .gte('date', dateFrom)
+        .lte('date', dateTo)
+        .is('deleted_at', null)
+        .limit(1)
+      if (dups && dups.length > 0) {
+        setDupWarning({ description: dups[0].description, amount: dups[0].amount, date: dups[0].date })
+        setLoading(false)
+        return
+      }
+    }
+    skipDupCheck.current = false
+
     if (n > 1 && type === 'expense') {
       const { data: installGroup } = await (supabase.from('installments') as any).insert({
         description,
@@ -155,6 +178,8 @@ export function NewTransactionButton({
     setFormAmount('')
     setFormDescription('')
     setFormTags([])
+    setDupWarning(null)
+    skipDupCheck.current = false
   }
 
   const today = new Date().toISOString().slice(0, 10)
@@ -336,13 +361,38 @@ export function NewTransactionButton({
             Transação privada (só você vê)
           </label>
 
+          {dupWarning && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm">
+              <p className="font-medium text-orange-800 mb-1">Possível duplicata detectada</p>
+              <p className="text-orange-700 text-xs mb-2">
+                Já existe uma transação de mesmo valor ({dupWarning.description ?? '—'}) em {new Date(dupWarning.date + 'T12:00:00').toLocaleDateString('pt-BR')}.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDupWarning(null)}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 hover:bg-orange-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { skipDupCheck.current = true; setDupWarning(null); formRef.current?.requestSubmit() }}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-orange-600 text-white hover:bg-orange-700"
+                >
+                  Salvar mesmo assim
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 justify-end pt-2">
             <button type="button" onClick={() => { setOpen(false); resetForm() }} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !!dupWarning}
               className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50"
             >
               {loading ? 'Salvando...' : 'Salvar'}

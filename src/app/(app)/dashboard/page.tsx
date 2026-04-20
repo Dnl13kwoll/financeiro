@@ -7,6 +7,10 @@ export const metadata: Metadata = { title: 'Dashboard' }
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { AlertTriangle } from 'lucide-react'
 import { PieChart } from '@/components/features/dashboard/pie-chart'
+import { CommitmentsCalendar } from '@/components/features/dashboard/commitments-calendar'
+import { DashboardHider } from '@/components/features/dashboard/hidable-widget'
+import { DashboardCustomizeButton } from '@/components/features/dashboard/dashboard-customize'
+import { DueInstallmentsChecker } from '@/components/features/dashboard/due-installments-checker'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -132,6 +136,30 @@ export default async function DashboardPage() {
 
   const forecastBalance = totalBalance - pendingInstallmentsTotal - pendingRecurringTotal
 
+  // Calendar: all month installments + all recurring
+  const calendarInstallRes = coupleId
+    ? await (supabase.from('installment_items') as any)
+        .select('due_date, amount, installments(description)')
+        .eq('paid', false)
+        .eq('canceled', false)
+        .gte('due_date', monthStart)
+        .lte('due_date', monthEnd)
+    : null
+  const calendarInstallEvents = (calendarInstallRes?.data ?? []).map((item: any) => ({
+    day: parseInt(item.due_date.slice(8, 10)),
+    label: (item.installments as any)?.description ?? 'Parcela',
+    amount: item.amount,
+  }))
+
+  const calendarRecurringRes = coupleId
+    ? await supabase.from('recurring_accounts').select('name, day_due, amount').eq('couple_id', coupleId).eq('active', true)
+    : null
+  const calendarRecurringEvents = (calendarRecurringRes?.data ?? []).map((r: any) => ({
+    day: r.day_due as number,
+    label: r.name as string,
+    amount: r.amount as number | null,
+  }))
+
   // Últimas transações
   const recentTxRes = coupleId
     ? await supabase.from('transactions').select('id, description, amount, type, date, categories(name)').eq('couple_id', coupleId).is('deleted_at', null).order('date', { ascending: false }).limit(5)
@@ -197,6 +225,11 @@ export default async function DashboardPage() {
       <Header title="Dashboard" />
 
       <div className="p-4 md:p-6 space-y-6 overflow-y-auto">
+        <DashboardHider />
+        {coupleId && <DueInstallmentsChecker coupleId={coupleId} />}
+        <div className="flex justify-end">
+          <DashboardCustomizeButton />
+        </div>
         {/* Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <SummaryCard title="Saldo Total" value={formatCurrency(totalBalance, currency)} description="Todas as contas" color="green" />
@@ -292,7 +325,7 @@ export default async function DashboardPage() {
 
         {/* Alertas de orçamento por categoria */}
         {budgetAlerts.length > 0 && (
-          <section className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+          <section data-widget="budget_alerts" className="bg-amber-50 border border-amber-200 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
               <h3 className="font-semibold text-amber-800 text-sm">Orçamento — atenção</h3>
@@ -337,7 +370,7 @@ export default async function DashboardPage() {
 
         {/* Alertas de saldo baixo */}
         {lowBalanceAlerts.length > 0 && (
-          <section className="bg-red-50 border border-red-200 rounded-xl p-5">
+          <section data-widget="low_balance" className="bg-red-50 border border-red-200 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-4 h-4 text-red-500" />
               <h3 className="font-semibold text-red-800 text-sm">Saldo baixo</h3>
@@ -380,7 +413,7 @@ export default async function DashboardPage() {
 
         {/* Metas ativas */}
         {goals.length > 0 && (
-          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <section data-widget="goals" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Metas em andamento</h3>
               <a href="/goals" className="text-xs text-primary-600 hover:underline">Ver todas</a>
@@ -440,9 +473,21 @@ export default async function DashboardPage() {
           </section>
         )}
 
+        {/* Calendário de compromissos */}
+        {coupleId && (
+          <div data-widget="calendar">
+            <CommitmentsCalendar
+              installmentEvents={calendarInstallEvents}
+              recurringEvents={calendarRecurringEvents}
+              currentMonth={now.getMonth() + 1}
+              currentYear={now.getFullYear()}
+            />
+          </div>
+        )}
+
         {/* Histórico 6 meses */}
         {coupleId && (
-          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <section data-widget="history" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-5">Histórico — últimos 6 meses</h3>
             <div className="flex items-end gap-3 h-36">
               {history.map((m, i) => (
@@ -472,7 +517,7 @@ export default async function DashboardPage() {
 
         {/* Evolução do saldo */}
         {coupleId && (
-          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <section data-widget="balance_evolution" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-5">Evolução do saldo</h3>
             <div className="relative" style={{ height: '80px' }}>
               <svg viewBox={`0 0 ${(history.length - 1) * 60} 80`} preserveAspectRatio="none" className="w-full h-full">
@@ -509,7 +554,7 @@ export default async function DashboardPage() {
 
         {/* Previsão de saldo 30 dias */}
         {coupleId && (
-          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <section data-widget="forecast" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-3">Previsão de saldo — 30 dias</h3>
             <div className="flex items-end gap-6">
               <div>
@@ -534,7 +579,7 @@ export default async function DashboardPage() {
 
         {/* Últimas transações */}
         {recentTx.length > 0 && (
-          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <section data-widget="recent_tx" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Últimas transações</h3>
               <a href="/transactions" className="text-xs text-primary-600 hover:underline">Ver todas</a>
@@ -559,7 +604,7 @@ export default async function DashboardPage() {
 
         {/* Gastos por categoria — pizza */}
         {catData.length > 0 && (
-          <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <section data-widget="category_pie" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">Gastos por categoria</h3>
             <PieChart data={catData} />
           </section>

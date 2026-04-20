@@ -1,14 +1,22 @@
-const CACHE = 'financeiro-v1'
+const CACHE_STATIC = 'financeiro-static-v2'
+const CACHE_PAGES  = 'financeiro-pages-v2'
+const CACHE_DATA   = 'financeiro-data-v2'
+const ALL_CACHES   = [CACHE_STATIC, CACHE_PAGES, CACHE_DATA]
+
+// Static assets to pre-cache on install
+const STATIC_PRECACHE = ['/icon.svg', '/manifest.json']
 
 self.addEventListener('install', (event) => {
-  // Não pré-cacheia rotas autenticadas para evitar erros de Request failed
+  event.waitUntil(
+    caches.open(CACHE_STATIC).then((c) => c.addAll(STATIC_PRECACHE))
+  )
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => !ALL_CACHES.includes(k)).map((k) => caches.delete(k)))
     )
   )
   self.clients.claim()
@@ -19,14 +27,70 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
   if (url.origin !== location.origin) return
 
+  // Skip Next.js internals and HMR
+  if (url.pathname.startsWith('/_next/webpack-hmr') ||
+      url.pathname.startsWith('/__nextjs')) return
+
+  // Static assets (_next/static): cache-first
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached
+        return fetch(event.request).then((res) => {
+          caches.open(CACHE_STATIC).then((c) => c.put(event.request, res.clone()))
+          return res
+        })
+      })
+    )
+    return
+  }
+
+  // Navigation requests (HTML pages): network-first, cache fallback
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          // Only cache successful responses
+          if (res.ok) {
+            caches.open(CACHE_PAGES).then((c) => c.put(event.request, res.clone()))
+          }
+          return res
+        })
+        .catch(() =>
+          caches.match(event.request).then((cached) => {
+            if (cached) return cached
+            // Offline fallback: return cached dashboard if available
+            return caches.match('/dashboard') ?? Response.error()
+          })
+        )
+    )
+    return
+  }
+
+  // API/data requests: network-first, stale fallback (max 50 entries)
+  if (url.pathname.startsWith('/api/') || url.pathname.includes('supabase')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res.ok) {
+            caches.open(CACHE_DATA).then((c) => c.put(event.request, res.clone()))
+          }
+          return res
+        })
+        .catch(() => caches.match(event.request).then((r) => r ?? Response.error()))
+    )
+    return
+  }
+
+  // Everything else: stale-while-revalidate
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const clone = res.clone()
-        caches.open(CACHE).then((c) => c.put(event.request, clone))
+    caches.match(event.request).then((cached) => {
+      const fetchPromise = fetch(event.request).then((res) => {
+        caches.open(CACHE_STATIC).then((c) => c.put(event.request, res.clone()))
         return res
       })
-      .catch(() => caches.match(event.request).then((r) => r ?? Response.error()))
+      return cached ?? fetchPromise
+    })
   )
 })
 

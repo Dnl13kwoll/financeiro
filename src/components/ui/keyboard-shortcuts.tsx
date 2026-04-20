@@ -41,6 +41,14 @@ export function KeyboardShortcuts() {
         case 'G':
           router.push('/goals')
           break
+        case 'b':
+        case 'B':
+          router.push('/budgets')
+          break
+        case 'p':
+        case 'P':
+          router.push('/projection')
+          break
         case '?':
           window.dispatchEvent(new CustomEvent('open-shortcuts-help'))
           break

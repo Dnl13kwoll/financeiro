@@ -6,6 +6,7 @@ import { RecurringActions } from '@/components/features/recurring/recurring-acti
 import { RecurringToggle } from '@/components/features/recurring/recurring-toggle'
 import { RecurringPauseToggle } from '@/components/features/recurring/recurring-pause-toggle'
 import { GenerateRecurringButton } from '@/components/features/recurring/generate-recurring-button'
+import { AutoGenerateRecurring } from '@/components/features/recurring/auto-generate-recurring'
 
 export default async function RecurringPage() {
   const supabase = await createClient()
@@ -73,6 +74,7 @@ export default async function RecurringPage() {
     <div className="flex flex-col flex-1">
       <Header title="Recorrentes" />
 
+      {coupleId && <AutoGenerateRecurring coupleId={coupleId} userId={user!.id} currentMonth={currentMonth} />}
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex gap-2 justify-end">
           {coupleId && <GenerateRecurringButton coupleId={coupleId} userId={user!.id} currentMonth={currentMonth} />}

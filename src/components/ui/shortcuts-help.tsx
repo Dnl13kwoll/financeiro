@@ -10,6 +10,8 @@ const shortcuts = [
   { keys: ['A'], desc: 'Ir para Contas' },
   { keys: ['R'], desc: 'Ir para Relatórios' },
   { keys: ['G'], desc: 'Ir para Metas' },
+  { keys: ['B'], desc: 'Ir para Orçamentos' },
+  { keys: ['P'], desc: 'Ir para Projeção' },
   { keys: ['?'], desc: 'Mostrar atalhos' },
 ]
 

@@ -25,11 +25,16 @@ export default function ManualPage() {
         ul { margin: 0.4rem 0 0.75rem 1.25rem; }
         ul li { font-size: 0.875rem; line-height: 1.6; color: #374151; margin-bottom: 0.2rem; }
         .badge { display: inline-block; background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.6rem; border-radius: 999px; margin-right: 0.4rem; }
+        .badge-blue { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.6rem; border-radius: 999px; margin-right: 0.4rem; }
+        .badge-new { display: inline-block; background: #fef9c3; color: #854d0e; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; margin-left: 0.3rem; vertical-align: middle; }
         .tip { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 0.5rem 0.75rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.5rem 0; }
         .tip p { margin: 0; color: #92400e; font-size: 0.8rem; }
         .tip strong { color: #78350f; }
+        .info { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 0.5rem 0.75rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.5rem 0; }
+        .info p { margin: 0; color: #1e40af; font-size: 0.8rem; }
         .section-card { border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1rem; background: #f9fafb; }
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
         .cover { background: linear-gradient(135deg, #166534, #16a34a); color: white; padding: 3rem 2rem; border-radius: 1rem; margin-bottom: 2rem; }
         .cover h1 { color: white; font-size: 2.5rem; }
         .cover p { color: #bbf7d0; font-size: 1rem; }
@@ -46,14 +51,13 @@ export default function ManualPage() {
         tr:nth-child(even) td { background: #f9fafb; }
       `}</style>
 
-      {/* Print button */}
       <PrintManualButton />
 
       {/* Cover */}
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 2.0 · Abril 2026</div>
+        <div className="version">Versão 3.0 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -70,17 +74,18 @@ export default function ManualPage() {
             <li><a href="#recorrentes">7. Recorrentes</a></li>
             <li><a href="#orcamentos">8. Orçamentos</a></li>
             <li><a href="#metas">9. Metas</a></li>
+            <li><a href="#timeline">10. Linha do Tempo</a></li>
           </ol>
           <ol className="toc" style={{ marginLeft: '1.25rem', listStyleType: 'none', paddingLeft: 0 }}>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#timeline">10. Linha do Tempo</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#projecao">11. Projeção</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#planejamento">12. Planejamento</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#patrimonio">13. Patrimônio</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#wishlist">14. Lista de Desejos</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#relatorios">15. Relatórios</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">16. Atividade</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">17. Configurações</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">18. Atalhos e dicas</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#viagens">16. Viagens</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">17. Atividade</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">18. Configurações</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">19. Atalhos e dicas</a></li>
           </ol>
         </div>
       </div>
@@ -97,26 +102,28 @@ export default function ManualPage() {
           <h4>Principais funcionalidades</h4>
           <ul>
             <li>Lançamento de receitas, despesas e transferências</li>
-            <li>Orçamentos por categoria com alertas</li>
+            <li>Orçamentos por categoria com alertas automáticos</li>
             <li>Metas financeiras com aportes e prazo</li>
             <li>Parcelamentos e contas recorrentes</li>
-            <li>Relatórios e projeções</li>
+            <li>Relatórios, projeções e cenários</li>
             <li>Planejamento mensal e anual</li>
             <li>Controle de patrimônio líquido</li>
             <li>Lista de desejos compartilhada</li>
+            <li>Planejamento completo de viagens</li>
           </ul>
         </div>
         <div className="section-card">
           <h4>Recursos técnicos</h4>
           <ul>
             <li>Acesso via navegador (desktop e mobile)</li>
-            <li>Instalável como app (PWA)</li>
+            <li>Instalável como app (PWA) com suporte offline</li>
             <li>Importação de extratos CSV e OFX</li>
             <li>Exportação de relatórios em PDF</li>
             <li>Modo privado para transações pessoais</li>
-            <li>Temas de cor personalizáveis</li>
+            <li>Temas de cor e modo escuro</li>
             <li>Auto-categorização por regras</li>
-            <li>Atalhos de teclado</li>
+            <li>Atalhos de teclado completos</li>
+            <li>Notificações push de vencimentos</li>
           </ul>
         </div>
       </div>
@@ -125,7 +132,7 @@ export default function ManualPage() {
       <div className="page-break" />
       <h2 id="acesso">2. Acesso e Onboarding</h2>
       <h3>2.1 Cadastro e login</h3>
-      <p>Acesse o sistema pelo navegador. Na primeira vez, clique em <strong>Criar conta</strong> e informe seu e-mail e senha. Você também pode entrar com Google, se disponível.</p>
+      <p>Acesse o sistema pelo navegador. Na primeira vez, clique em <strong>Criar conta</strong> e informe seu e-mail e senha.</p>
 
       <h3>2.2 Configuração inicial (Onboarding)</h3>
       <p>Ao fazer login pela primeira vez, o assistente de onboarding guia você em 2 etapas:</p>
@@ -139,28 +146,47 @@ export default function ManualPage() {
 
       {/* 3. Dashboard */}
       <h2 id="dashboard">3. Dashboard</h2>
-      <p>Visão geral da situação financeira do casal. Exibe os dados do mês atual.</p>
+      <p>Visão geral da situação financeira do casal. Exibe os dados do mês atual e alertas importantes.</p>
+
+      <h3>3.1 Widgets disponíveis</h3>
       <div className="two-col">
-        <div>
-          <h4>O que você vê</h4>
-          <ul>
-            <li><strong>Cards de saldo:</strong> saldo total de todas as contas</li>
-            <li><strong>Receitas e despesas:</strong> total do mês</li>
-            <li><strong>Orçamentos:</strong> status das categorias (% usado)</li>
-            <li><strong>Metas:</strong> progresso das metas ativas</li>
-            <li><strong>Próximos vencimentos:</strong> recorrentes e parcelamentos</li>
-            <li><strong>Últimas transações:</strong> 5 mais recentes</li>
-          </ul>
-        </div>
-        <div>
-          <h4>Ações rápidas</h4>
-          <ul>
-            <li>Pressione <span className="shortcut">N</span> para nova transação</li>
-            <li>Clique no botão <strong>+</strong> flutuante (mobile)</li>
-            <li>Acesse qualquer seção pelo menu lateral</li>
-          </ul>
-        </div>
+        <ul>
+          <li><strong>Saldo total:</strong> soma de todas as contas</li>
+          <li><strong>Gastos do mês:</strong> com comparação ao mês anterior (Δ%)</li>
+          <li><strong>Receitas:</strong> com comparação ao mês anterior</li>
+          <li><strong>Disponível:</strong> orçamento − gastos</li>
+          <li><strong>Score financeiro:</strong> nota 0–100 (poupança · orçamento · metas)</li>
+          <li><strong>Taxa de poupança:</strong> média dos últimos 3 meses</li>
+          <li><strong>Gastos por pessoa:</strong> quem gastou mais no casal</li>
+        </ul>
+        <ul>
+          <li><strong>Alertas de orçamento:</strong> categorias acima do limite</li>
+          <li><strong>Alertas de saldo baixo:</strong> contas abaixo do mínimo configurado</li>
+          <li><strong>Metas em andamento:</strong> progresso das 3 metas mais próximas</li>
+          <li><strong>Calendário de compromissos:</strong> parcelas e recorrentes no mês <span className="badge-new">NOVO</span></li>
+          <li><strong>Histórico 6 meses:</strong> gráfico de barras receitas vs despesas</li>
+          <li><strong>Evolução do saldo:</strong> linha de saldo histórico</li>
+          <li><strong>Últimas transações:</strong> 5 mais recentes</li>
+          <li><strong>Previsão de saldo 30 dias:</strong> saldo descontando parcelas pendentes</li>
+        </ul>
       </div>
+
+      <h3>3.2 Calendário de Compromissos <span className="badge-new">NOVO</span></h3>
+      <p>Widget interativo no Dashboard que exibe um calendário mensal com todos os vencimentos do mês:</p>
+      <ul>
+        <li>Pontinhos <strong style={{ color: '#f87171' }}>vermelhos</strong> = parcelas a pagar</li>
+        <li>Pontinhos <strong style={{ color: '#60a5fa' }}>azuis</strong> = contas recorrentes</li>
+        <li>Clique em qualquer dia para ver os detalhes dos compromissos</li>
+        <li>Use as setas para navegar entre meses</li>
+      </ul>
+
+      <h3>3.3 Widgets Personalizáveis <span className="badge-new">NOVO</span></h3>
+      <p>Clique no botão <strong>Personalizar</strong> (canto superior direito do Dashboard) para abrir o painel de customização. Você pode mostrar ou ocultar cada seção individualmente. As preferências são salvas no navegador (localStorage) e permanecem entre sessões.</p>
+
+      <h3>3.4 Alerta de vencimentos próximos <span className="badge-new">NOVO</span></h3>
+      <p>Ao abrir o Dashboard, o sistema verifica automaticamente se há parcelas ou recorrentes vencendo nos próximos 3 dias e exibe um aviso em destaque. O alerta aparece uma vez por dia para não ser intrusivo.</p>
+
+      <div className="tip"><p><strong>Dica:</strong> Pressione <span className="shortcut">N</span> para nova transação a partir de qualquer tela do sistema.</p></div>
 
       {/* 4. Contas */}
       <div className="page-break" />
@@ -206,25 +232,28 @@ export default function ManualPage() {
         </tbody>
       </table>
 
-      <h3>5.2 Filtros</h3>
-      <p>A página de transações oferece filtragem completa:</p>
+      <h3>5.2 Detecção de duplicatas <span className="badge-new">NOVO</span></h3>
+      <p>Ao salvar uma transação, o sistema verifica automaticamente se já existe outra com o mesmo valor e tipo nos últimos 2 dias. Se encontrar, exibe um aviso laranja antes de salvar:</p>
+      <ul>
+        <li>Clique <strong>Cancelar</strong> para não salvar</li>
+        <li>Clique <strong>Salvar mesmo assim</strong> se a transação for realmente distinta</li>
+      </ul>
+
+      <h3>5.3 Filtros</h3>
       <div className="two-col">
         <ul>
           <li>Por mês ou período personalizado</li>
-          <li>Botões de atalho: esta semana, este mês, últimos 30 dias</li>
           <li>Por tipo (entrada / saída / transferência)</li>
-          <li>Por categoria</li>
+          <li>Por categoria e conta</li>
         </ul>
         <ul>
-          <li>Por conta</li>
           <li>Busca por descrição ou categoria</li>
-          <li>Por tag</li>
-          <li>Apenas privadas</li>
-          <li>Apenas conciliadas</li>
+          <li>Por tag, privadas, conciliadas</li>
+          <li>Por faixa de valor</li>
         </ul>
       </div>
 
-      <h3>5.3 Ações por transação</h3>
+      <h3>5.4 Ações por transação</h3>
       <ul>
         <li><strong>Editar:</strong> altera qualquer campo</li>
         <li><strong>Excluir:</strong> com opção de desfazer nos próximos 5 segundos</li>
@@ -233,10 +262,10 @@ export default function ManualPage() {
         <li><strong>Comentar:</strong> adiciona notas e observações</li>
       </ul>
 
-      <h3>5.4 Templates</h3>
-      <p>Salve combinações frequentes (tipo + valor + categoria) como templates reutilizáveis. No formulário de nova transação, clique em <strong>Templates</strong> para carregar um preset salvo ou salve a configuração atual com um nome.</p>
+      <h3>5.5 Templates</h3>
+      <p>Salve combinações frequentes (tipo + valor + categoria) como templates reutilizáveis. No formulário de nova transação, clique em <strong>Templates</strong> para carregar um preset salvo.</p>
 
-      <h3>5.5 Importação</h3>
+      <h3>5.6 Importação</h3>
       <div className="two-col">
         <div className="section-card">
           <h4>CSV</h4>
@@ -248,9 +277,9 @@ export default function ManualPage() {
         </div>
       </div>
 
-      <h3>5.6 Auto-categorização por regras</h3>
+      <h3>5.7 Auto-categorização por regras</h3>
       <p>Acesse <strong>Regras</strong> na barra de ações da página de Transações para definir padrões de texto → categoria.</p>
-      <div className="tip"><p><strong>Exemplo:</strong> qualquer descrição que <em>contém</em> &ldquo;iFood&rdquo; → categoria &ldquo;Alimentação&rdquo;. Use <strong>Aplicar a todas as transações</strong> para recategorizar o histórico de uma vez.</p></div>
+      <div className="tip"><p><strong>Exemplo:</strong> qualquer descrição que <em>contém</em> &ldquo;iFood&rdquo; → categoria &ldquo;Alimentação&rdquo;.</p></div>
 
       {/* 6. Parcelamentos */}
       <div className="page-break" />
@@ -261,10 +290,10 @@ export default function ManualPage() {
         <li>O sistema gera as parcelas automaticamente, uma por mês</li>
         <li>Marque cada parcela como paga (lança automaticamente na conta escolhida)</li>
         <li>Parcelas em atraso são destacadas em vermelho</li>
-        <li>Reagende parcelas individualmente</li>
-        <li>Cancele parcelas futuras se necessário</li>
+        <li>Reagende parcelas individualmente se necessário</li>
+        <li>Cancele parcelas futuras se o parcelamento for quitado antecipadamente</li>
       </ul>
-      <p>O <strong>painel de resumo</strong> no topo da página mostra: dívida total restante, valor que vence no mês atual e total em atraso.</p>
+      <p>O <strong>painel de resumo</strong> no topo mostra: dívida total restante, valor que vence no mês e total em atraso. O <strong>gráfico de fluxo</strong> projeta os pagamentos dos próximos 6 meses.</p>
 
       {/* 7. Recorrentes */}
       <h2 id="recorrentes">7. Contas Recorrentes</h2>
@@ -273,87 +302,127 @@ export default function ManualPage() {
         <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
         <tbody>
           <tr><td>Nome</td><td>Descrição da conta (ex.: Netflix, Aluguel)</td></tr>
-          <tr><td>Valor</td><td>Valor mensal</td></tr>
+          <tr><td>Valor</td><td>Valor mensal padrão</td></tr>
           <tr><td>Dia de vencimento</td><td>Dia do mês em que vence</td></tr>
           <tr><td>Tipo</td><td>Despesa ou receita</td></tr>
-          <tr><td>Categoria</td><td>Agrupamento para orçamentos</td></tr>
-          <tr><td>Conta padrão</td><td>Conta debitada ao gerar a transação</td></tr>
+          <tr><td>Categoria</td><td>Agrupamento para orçamentos e relatórios</td></tr>
+          <tr><td>Data de encerramento</td><td>Quando a recorrente deve parar (opcional)</td></tr>
         </tbody>
       </table>
-      <p>Use o botão <strong>Gerar transações do mês</strong> para criar automaticamente todas as transações recorrentes que ainda não foram lançadas no mês atual. Você também pode converter qualquer transação avulsa em recorrente diretamente pela tabela de transações.</p>
+
+      <h3>7.1 Geração automática <span className="badge-new">NOVO</span></h3>
+      <p>Ao acessar a página de Recorrentes no início de cada mês, o sistema <strong>gera automaticamente</strong> as transações de todas as contas recorrentes ativas que ainda não foram lançadas. Isso acontece uma vez por mês por casal, sem necessidade de clicar em nenhum botão.</p>
+      <div className="info"><p>Se preferir disparar manualmente, o botão <strong>Gerar este mês</strong> ainda está disponível no topo da página.</p></div>
+
+      <h3>7.2 Gerenciamento</h3>
+      <ul>
+        <li>Marque como pago mês a mês (gera transação automaticamente na conta vinculada)</li>
+        <li>Pause/retome recorrentes temporariamente sem excluí-las</li>
+        <li>O mini-histórico (últimos 3 meses) mostra quais meses foram pagos</li>
+        <li>Converta qualquer transação avulsa em recorrente pela tabela de Transações</li>
+      </ul>
 
       {/* 8. Orçamentos */}
       <div className="page-break" />
       <h2 id="orcamentos">8. Orçamentos</h2>
-      <p>Define limites de gasto por categoria para o mês. O sistema monitora automaticamente.</p>
+      <p>Define limites de gasto por categoria para o mês. O sistema monitora automaticamente e envia alertas.</p>
 
       <h3>8.1 Criando orçamentos</h3>
-      <p>Clique em <strong>Novo orçamento</strong> e selecione a categoria e o valor limite mensal. Você pode definir um <strong>percentual de alerta</strong> (padrão 80%) — o sistema envia uma notificação quando o gasto atingir esse limiar.</p>
+      <p>Clique em <strong>Definir Orçamento</strong>, selecione a categoria, o valor limite e o <strong>percentual de alerta</strong> (padrão 80%). Quando o gasto atingir esse limiar, um alerta aparece no Dashboard e na página de Orçamentos.</p>
 
       <h3>8.2 Automações</h3>
       <ul>
         <li><strong>Copiar do mês anterior:</strong> replica todos os orçamentos do mês passado para o atual</li>
-        <li><strong>Rollover:</strong> transfere os saldos não utilizados do mês anterior para o atual (aumenta o limite pelo valor economizado)</li>
-        <li><strong>Sugerir com IA:</strong> calcula a média de gastos reais dos últimos 3 meses por categoria e sugere orçamentos</li>
+        <li><strong>Rollover:</strong> transfere os saldos não utilizados do mês anterior para o atual</li>
+        <li><strong>Sugerir com IA:</strong> calcula a média dos últimos 3 meses por categoria e sugere orçamentos</li>
       </ul>
 
       <h3>8.3 Acompanhamento</h3>
-      <p>Cada categoria exibe uma barra de progresso colorida: verde (abaixo do limite), amarelo (próximo do alerta), vermelho (extrapolado). O resumo no topo mostra total orçado vs. total gasto no mês.</p>
+      <p>Cada categoria exibe uma barra de progresso: verde (abaixo do limite), amarelo (próximo do alerta), vermelho (extrapolado). O card também mostra o <strong>ritmo de gasto</strong> — se você está gastando mais rápido do que o mês permite.</p>
 
       {/* 9. Metas */}
       <h2 id="metas">9. Metas</h2>
-      <p>Acompanhe o progresso de objetivos financeiros como reserva de emergência, entrada de imóvel, viagem, etc.</p>
+      <p>Acompanhe o progresso de objetivos financeiros: reserva de emergência, entrada de imóvel, viagem, etc.</p>
 
       <h3>9.1 Criando uma meta</h3>
       <ul>
         <li><strong>Nome:</strong> ex. &ldquo;Reserva de emergência&rdquo;</li>
         <li><strong>Valor alvo:</strong> quanto quer acumular</li>
         <li><strong>Prazo:</strong> data limite (opcional)</li>
-        <li><strong>Conta vinculada:</strong> usa o saldo dessa conta como progresso</li>
+        <li><strong>Conta vinculada:</strong> usa o saldo dessa conta como progresso (opcional)</li>
       </ul>
 
       <h3>9.2 Aportes manuais</h3>
-      <p>Se a meta não está vinculada a uma conta, clique em <strong>Aportar</strong> para registrar valores guardados. O histórico completo de aportes fica visível em cada meta.</p>
+      <p>Se a meta não está vinculada a uma conta, clique em <strong>Aportar</strong> para registrar valores guardados. O histórico completo de aportes fica visível em cada meta com data e observação.</p>
 
-      <h3>9.3 Alertas de prazo</h3>
-      <p>Quando o prazo de uma meta está a 30 dias ou menos, um banner de alerta aparece no topo da página. O sistema também calcula quanto você precisa poupar por mês para atingir a meta no prazo.</p>
+      <h3>9.3 Alertas e projeções</h3>
+      <ul>
+        <li>Quando o prazo está a 30 dias ou menos, um banner de alerta aparece no topo da página</li>
+        <li>O sistema calcula quanto você precisa poupar por mês para atingir a meta no prazo</li>
+        <li>A <strong>data projetada de conclusão</strong> é calculada com base na taxa média de aportes</li>
+      </ul>
 
-      <div className="tip"><p><strong>Meta concluída:</strong> ao atingir 100% do valor alvo, uma animação de celebração é exibida automaticamente.</p></div>
+      <div className="tip"><p><strong>Meta concluída:</strong> ao atingir 100% do valor alvo, o card exibe destaque especial.</p></div>
 
       {/* 10. Linha do Tempo */}
       <div className="page-break" />
       <h2 id="timeline">10. Linha do Tempo</h2>
-      <p>Exibe as transações em formato cronológico visual, agrupadas por dia. Ideal para revisar o que aconteceu ao longo do mês sem a visão de tabela.</p>
+      <p>Exibe os próximos vencimentos em ordem cronológica — parcelas e recorrentes juntas — para você planejar o fluxo de caixa dos próximos dias.</p>
       <ul>
-        <li>Navegue por mês usando as setas</li>
-        <li>Cada dia mostra o total de entradas e saídas</li>
-        <li>Clique em uma transação para ver os detalhes</li>
+        <li>Selecione o horizonte: 7, 15, 30 ou 60 dias</li>
+        <li>Cada dia mostra o total de compromissos e a soma dos valores</li>
+        <li>Parcelas e recorrentes exibem o valor e a conta associada</li>
+        <li>Hoje e amanhã são destacados em vermelho e laranja</li>
       </ul>
 
       {/* 11. Projeção */}
-      <h2 id="projecao">11. Projeção</h2>
-      <p>Simula o saldo futuro das contas com base nos dados cadastrados.</p>
+      <h2 id="projecao">11. Projeção Financeira</h2>
+      <p>Simula o saldo futuro com base na média histórica e nos dados cadastrados. Totalmente interativa.</p>
+
+      <h3>11.1 Horizonte de projeção <span className="badge-new">NOVO</span></h3>
+      <p>Selecione quantos meses projetar: <strong>3 meses</strong>, <strong>6 meses</strong> ou <strong>12 meses</strong>. Para horizontes maiores (6m/12m), o sistema também exibe o total acumulado de receitas, despesas e saldo projetado.</p>
+
+      <h3>11.2 Simulador de cenários <span className="badge-new">NOVO</span></h3>
+      <p>Clique em <strong>Simulador de cenários</strong> para exibir sliders interativos:</p>
       <ul>
-        <li>Considera as contas recorrentes com seus dias de vencimento</li>
-        <li>Considera parcelas futuras dos parcelamentos</li>
-        <li>Projeta o saldo mês a mês para os próximos 6 meses</li>
-        <li>Permite ajustar receitas e despesas esperadas manualmente</li>
+        <li><strong>Receita:</strong> ajuste de −50% a +50% em relação à média histórica</li>
+        <li><strong>Despesas:</strong> ajuste de −50% a +50% em relação à média histórica</li>
+        <li>Os gráficos e valores atualizam em tempo real conforme você move os sliders</li>
+        <li>Clique em <em>Resetar para base</em> para voltar à projeção padrão</li>
       </ul>
-      <div className="tip"><p><strong>Dica:</strong> mantenha as contas recorrentes atualizadas para que a projeção seja precisa.</p></div>
+      <div className="tip"><p><strong>Exemplo de uso:</strong> simule o que acontece se sua receita cair 20% ou se as despesas subirem 30%. Ótimo para planejar antes de mudar de emprego ou assumir um novo compromisso.</p></div>
+
+      <h3>11.3 Projeção por meta <span className="badge-new">NOVO</span></h3>
+      <p>No painel <strong>Projeção por meta</strong> (abaixo dos gráficos mensais), cada meta ativa exibe:</p>
+      <ul>
+        <li>Progresso atual (barra e %)</li>
+        <li>Estimativa de <strong>quantos meses</strong> faltam para atingir o valor alvo no ritmo atual</li>
+        <li>Mês e ano projetado de conclusão</li>
+        <li>Aviso em laranja se a projeção estoura o prazo definido na meta</li>
+      </ul>
+      <div className="info"><p>A projeção usa a economia mensal do cenário atual (receita ajustada − despesa ajustada). Mova os sliders para simular diferentes ritmos de poupança.</p></div>
 
       {/* 12. Planejamento */}
       <h2 id="planejamento">12. Planejamento</h2>
       <p>Aloca o orçamento mensal por categoria antes que o mês comece — semelhante ao método de envelope.</p>
 
       <h3>12.1 Planejamento mensal</h3>
-      <p>Para cada categoria, defina quanto planeja gastar. O sistema mostra em tempo real a diferença entre o planejado e o gasto real.</p>
-      <ul>
-        <li>Use <strong>Copiar do mês anterior</strong> para reutilizar o planejamento</li>
-        <li>O painel de resumo mostra: receita, total planejado e valor não alocado</li>
-      </ul>
+      <p>Para cada categoria, defina quanto planeja gastar. O sistema mostra em tempo real a diferença entre o planejado e o gasto real. Use <strong>Copiar do mês anterior</strong> para reutilizar o planejamento.</p>
 
       <h3>12.2 Planejamento anual</h3>
-      <p>Alterne para a aba <strong>Anual</strong> para ver todos os 12 meses do ano em um grid. Cada mês exibe: valor planejado, gasto real e uma barra de progresso. Clique em qualquer mês para editar seu planejamento.</p>
+      <p>Alterne para a aba <strong>Anual</strong> para ver todos os 12 meses em um grid com valor planejado, gasto real e barra de progresso.</p>
+
+      <h3>12.3 Calculadoras</h3>
+      <div className="two-col">
+        <div className="section-card">
+          <h4>Fundo de emergência</h4>
+          <p>Calcula quanto você precisa poupar com base no seu gasto mensal médio e no número de meses desejado de cobertura.</p>
+        </div>
+        <div className="section-card">
+          <h4>Simulador de financiamento</h4>
+          <p>Simula o valor da parcela mensal com base no valor total, taxa de juros e número de meses.</p>
+        </div>
+      </div>
 
       {/* 13. Patrimônio */}
       <div className="page-break" />
@@ -361,21 +430,23 @@ export default function ManualPage() {
       <p>Calcula e acompanha o patrimônio líquido do casal ao longo do tempo.</p>
       <ul>
         <li><strong>Ativos:</strong> soma de todos os saldos positivos nas contas</li>
-        <li><strong>Passivos:</strong> dívidas de cartão de crédito, parcelamentos a pagar</li>
+        <li><strong>Passivos:</strong> dívidas de cartão de crédito e contas com saldo negativo</li>
         <li><strong>Patrimônio líquido:</strong> ativos − passivos</li>
-        <li>Gráfico histórico de evolução mensal</li>
-        <li>Possibilidade de salvar snapshots mensais para comparação</li>
+        <li>Gráfico histórico de evolução (snapshots mensais)</li>
+        <li>Salve snapshots mensais manualmente para comparação ao longo do tempo</li>
+        <li>Seção de metas mostra o total já guardado em todas as metas</li>
       </ul>
 
       {/* 14. Lista de Desejos */}
       <h2 id="wishlist">14. Lista de Desejos</h2>
-      <p>Espaço para o casal listar compras e objetivos futuros para discussão e votação.</p>
+      <p>Espaço para o casal listar compras e objetivos futuros para discussão e votação antes de comprar.</p>
       <ul>
-        <li>Adicione itens com nome, valor estimado e descrição</li>
-        <li>Cada parceiro pode votar (aprovar/reprovar)</li>
-        <li>Filtre por itens aprovados pelos dois</li>
-        <li>Quando aprovado, converta em meta financeira</li>
+        <li>Adicione itens com nome, valor estimado, prioridade e link do produto</li>
+        <li>Cada parceiro pode votar: 👍 aprovar ou 👎 reprovar</li>
+        <li>Itens aprovados pelos dois ficam em destaque</li>
+        <li>Marque como comprado para mover para o histórico</li>
       </ul>
+      <div className="tip"><p><strong>Dica financeira:</strong> use a Lista de Desejos como filtro anti-impulso. Se o item não tiver votos positivos de ambos após 1 semana, talvez não valha a pena.</p></div>
 
       {/* 15. Relatórios */}
       <h2 id="relatorios">15. Relatórios</h2>
@@ -385,71 +456,148 @@ export default function ManualPage() {
       <table>
         <thead><tr><th>Visão</th><th>O que mostra</th></tr></thead>
         <tbody>
-          <tr><td>Mensal</td><td>Receitas, despesas e saldo do mês selecionado, com gráfico de pizza por categoria</td></tr>
-          <tr><td>Anual</td><td>Totais de receita e despesa por mês em formato de barras, ao longo do ano</td></tr>
-          <tr><td>Comparar</td><td>Dois meses lado a lado: receita, despesa, saldo e diferença por categoria</td></tr>
-          <tr><td>Tendência</td><td>Linha de gasto das top 4 categorias nos últimos 6 meses</td></tr>
+          <tr><td>Mensal</td><td>Receitas, despesas e saldo do mês; gráfico de pizza por categoria; breakdown por pessoa e por tag</td></tr>
+          <tr><td>Anual</td><td>Totais de receita e despesa por mês em barras; ranking de categorias; drill-down por categoria</td></tr>
+          <tr><td>Comparar</td><td>Dois meses lado a lado: receita, despesa, saldo e diferença por categoria (Δ e Δ%)</td></tr>
+          <tr><td>Tendência</td><td>Linha de gasto das top categorias nos últimos 6 meses</td></tr>
         </tbody>
       </table>
 
-      <h3>15.2 Exportar relatório</h3>
-      <p>Clique no botão <strong>Imprimir</strong> em qualquer visão para abrir o diálogo de impressão do navegador. Selecione <em>Salvar como PDF</em> para guardar o relatório. O CSS de impressão remove automaticamente o menu lateral e botões.</p>
+      <h3>15.2 Exportar</h3>
+      <p>Clique em <strong>Imprimir / PDF</strong> em qualquer visão. O CSS de impressão remove automaticamente o menu lateral e botões, gerando um documento limpo.</p>
 
-      {/* 16. Atividade */}
+      {/* 16. Viagens */}
       <div className="page-break" />
-      <h2 id="atividade">16. Atividade</h2>
-      <p>Log de todas as ações realizadas pelo casal no sistema. Útil para auditoria e rastreabilidade.</p>
+      <h2 id="viagens">16. Viagens</h2>
+      <p>Módulo completo de planejamento de viagens: orçamento, roteiro, checklist, companheiros e muito mais.</p>
+
+      <h3>16.1 Criando uma viagem</h3>
+      <p>Clique em <strong>Nova viagem</strong> e preencha nome, destino, datas e orçamento total. Você pode vincular a viagem a uma <strong>meta financeira</strong> existente para acompanhar o progresso da poupança.</p>
+
+      <h3>16.2 Abas de cada viagem</h3>
+      <table>
+        <thead><tr><th>Aba</th><th>Funcionalidade</th></tr></thead>
+        <tbody>
+          <tr><td>Orçamento</td><td>Registre gastos por categoria (transporte, hospedagem, alimentação...). Veja gasto real vs. orçamento com barra de progresso. Suporta referência de reserva (booking ref).</td></tr>
+          <tr><td>Locais</td><td>Adicione lugares para visitar com nome, endereço e link do Maps. Botão para abrir rota direto no Google Maps.</td></tr>
+          <tr><td>Checklist</td><td>Lista de itens para levar/fazer. Marque como concluído conforme prepara a viagem.</td></tr>
+          <tr><td>Companheiros</td><td>Liste quem vai na viagem com nome e contato. Útil para viagens em grupo.</td></tr>
+          <tr><td>Roteiro</td><td>Organize as atividades dia a dia. Vincule locais já cadastrados ao itinerário. Defina hora de início/fim.</td></tr>
+          <tr><td>Notas</td><td>Diário da viagem com auto-save. Escreva anotações por dia, memórias e observações.</td></tr>
+          <tr><td>Arquivos</td><td>Anexe documentos, passagens, vouchers e fotos (armazenamento no Supabase Storage).</td></tr>
+          <tr><td>Hoje</td><td>Visão do dia atual: atividades do roteiro de hoje, previsão do tempo no destino e espaço para notas diárias.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>16.3 Funcionalidades extras</h3>
+      <div className="two-col">
+        <ul>
+          <li><strong>Tags:</strong> categorize viagens por tipo (praia, negócios, aventura...)</li>
+          <li><strong>Arquivar:</strong> mova viagens concluídas para o arquivo sem excluir</li>
+          <li><strong>Duplicar:</strong> clone uma viagem como base para outra similar</li>
+          <li><strong>Compartilhar:</strong> gere um link público de visualização (somente leitura)</li>
+        </ul>
+        <ul>
+          <li><strong>Exportar PDF:</strong> relatório completo da viagem com todos os dados</li>
+          <li><strong>Google Calendar:</strong> exporte as datas da viagem para o calendário (.ics)</li>
+          <li><strong>Reordenar:</strong> arraste as viagens para organizar por prioridade</li>
+          <li><strong>Busca:</strong> filtre viagens por nome ou destino</li>
+        </ul>
+      </div>
+
+      <h3>16.4 Painel de estatísticas</h3>
+      <p>Clique em <strong>Estatísticas</strong> no topo da página para ver um resumo de todas as suas viagens: total de viagens, orçamento total, destinos mais visitados e lista de países. Clique em um destino para filtrar apenas as viagens para aquele lugar.</p>
+
+      {/* 17. Atividade */}
+      <div className="page-break" />
+      <h2 id="atividade">17. Atividade</h2>
+      <p>Feed cronológico de todas as ações realizadas pelo casal no sistema.</p>
       <ul>
-        <li>Registra criações, edições e exclusões de transações, contas, metas, etc.</li>
-        <li>Mostra usuário, data/hora e descrição da ação</li>
-        <li>Filtrável por período</li>
+        <li>Exibe transações, aportes em metas e pagamentos de parcelas</li>
+        <li>Mostra usuário, valor e tempo relativo (há X minutos/horas)</li>
+        <li>Filtre por tipo: todas as ações, somente transações ou somente metas</li>
+        <li>Ícones coloridos: verde = entrada, vermelho = saída, azul = transferência</li>
       </ul>
 
-      {/* 17. Configurações */}
-      <h2 id="configuracoes">17. Configurações</h2>
-      <h3>17.1 Perfil pessoal</h3>
+      {/* 18. Configurações */}
+      <h2 id="configuracoes">18. Configurações</h2>
+      <h3>18.1 Perfil pessoal</h3>
       <ul>
-        <li>Alterar nome e e-mail</li>
-        <li>Trocar senha</li>
-        <li>Escolher tema de cor (verde, azul, roxo, rosa, laranja)</li>
+        <li>Alterar nome de exibição</li>
+        <li>Ativar/desativar modo privacidade (oculta todos os valores financeiros)</li>
         <li>Ativar modo escuro</li>
-        <li>Ativar/desativar modo privacidade (oculta valores)</li>
+        <li>Escolher tema de cor (verde, azul, roxo, etc.)</li>
       </ul>
 
-      <h3>17.2 Configurações do casal</h3>
+      <h3>18.2 Configurações do casal</h3>
       <ul>
         <li>Alterar nome do casal</li>
-        <li>Gerenciar membros (ver quem está no casal)</li>
-        <li>Gerar link de convite para o parceiro</li>
-        <li>Definir moeda padrão</li>
+        <li>Definir moeda padrão (BRL, USD, EUR...)</li>
+        <li>Configurar limite diário de gastos (alerta no Dashboard)</li>
+        <li>Gerenciar membros e papéis (proprietário / membro)</li>
+        <li>Gerar link de convite com validade de 7 dias</li>
       </ul>
 
-      <h3>17.3 Zona de perigo (somente proprietário)</h3>
-      <p style={{ color: '#dc2626' }}>Esta seção permite excluir permanentemente todos os dados do casal: transações, contas, metas, orçamentos e históricos. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
+      <h3>18.3 Notificações</h3>
+      <p>Ative as <strong>notificações push</strong> para receber alertas no navegador e no celular (PWA instalado). Notificações enviadas:</p>
+      <ul>
+        <li>Vencimentos nos próximos 7 dias (parcelas e recorrentes)</li>
+        <li>Orçamento de categoria excedido</li>
+        <li>Resumo semanal (toda segunda-feira)</li>
+        <li>Meta financeira atingida</li>
+      </ul>
 
-      {/* 18. Atalhos */}
+      <h3>18.4 Backup e restauração</h3>
+      <ul>
+        <li><strong>Exportar backup:</strong> baixa um arquivo JSON com todos os dados do casal</li>
+        <li><strong>Importar backup:</strong> restaura dados a partir de um arquivo de backup anterior</li>
+      </ul>
+
+      <h3>18.5 Zona de perigo (somente proprietário)</h3>
+      <p style={{ color: '#dc2626' }}>Permite excluir permanentemente todos os dados do casal. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
+
+      {/* 19. Atalhos */}
       <div className="page-break" />
-      <h2 id="atalhos">18. Atalhos de teclado e dicas</h2>
+      <h2 id="atalhos">19. Atalhos de teclado e dicas</h2>
 
-      <h3>18.1 Atalhos de teclado</h3>
+      <h3>19.1 Atalhos de navegação</h3>
       <table>
         <thead><tr><th>Tecla</th><th>Ação</th></tr></thead>
         <tbody>
           <tr><td><span className="shortcut">N</span></td><td>Abre o formulário de nova transação (de qualquer página)</td></tr>
-          <tr><td><span className="shortcut">?</span></td><td>Exibe a lista de atalhos disponíveis</td></tr>
+          <tr><td><span className="shortcut">/</span></td><td>Abre a busca global</td></tr>
+          <tr><td><span className="shortcut">D</span></td><td>Ir para Dashboard</td></tr>
+          <tr><td><span className="shortcut">T</span></td><td>Ir para Transações</td></tr>
+          <tr><td><span className="shortcut">A</span></td><td>Ir para Contas</td></tr>
+          <tr><td><span className="shortcut">G</span></td><td>Ir para Metas</td></tr>
+          <tr><td><span className="shortcut">B</span></td><td>Ir para Orçamentos <span className="badge-new">NOVO</span></td></tr>
+          <tr><td><span className="shortcut">P</span></td><td>Ir para Projeção <span className="badge-new">NOVO</span></td></tr>
+          <tr><td><span className="shortcut">R</span></td><td>Ir para Relatórios</td></tr>
+          <tr><td><span className="shortcut">?</span></td><td>Exibe a lista de todos os atalhos</td></tr>
           <tr><td><span className="shortcut">Esc</span></td><td>Fecha modais e painéis abertos</td></tr>
         </tbody>
       </table>
 
-      <h3>18.2 Fluxo de trabalho recomendado</h3>
-      <div className="flow-step"><div className="flow-num">1</div><p><strong>Início do mês:</strong> acesse Planejamento e defina o orçamento de cada categoria com base na sua receita esperada.</p></div>
-      <div className="flow-step"><div className="flow-num">2</div><p><strong>Primeiro dia útil:</strong> use <em>Gerar transações do mês</em> em Recorrentes para lançar automaticamente assinaturas e contas fixas.</p></div>
-      <div className="flow-step"><div className="flow-num">3</div><p><strong>Ao longo do mês:</strong> lance transações diariamente (atalho <span className="shortcut">N</span>). Marque parcelas pagas conforme vencerem.</p></div>
-      <div className="flow-step"><div className="flow-num">4</div><p><strong>Semanalmente:</strong> verifique o Dashboard para checar se algum orçamento está no limite.</p></div>
-      <div className="flow-step"><div className="flow-num">5</div><p><strong>Final do mês:</strong> concilie as transações com o extrato bancário. Faça um aporte nas metas. Revise os Relatórios.</p></div>
-      <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho do ano.</p></div>
+      <div className="info"><p>Os atalhos de navegação funcionam apenas quando o cursor não está sobre um campo de texto, select ou textarea.</p></div>
 
-      <h3>18.3 Dicas rápidas</h3>
+      <h3>19.2 Modo offline</h3>
+      <p>O sistema usa um <strong>Service Worker</strong> para funcionar mesmo sem conexão:</p>
+      <ul>
+        <li><strong>Assets estáticos</strong> (JS, CSS, ícones): carregados do cache instantaneamente</li>
+        <li><strong>Páginas já visitadas:</strong> disponíveis offline com os últimos dados carregados</li>
+        <li><strong>Dados de API:</strong> o último resultado é salvo em cache e exibido quando offline</li>
+      </ul>
+      <div className="tip"><p>Instale o app como PWA (<strong>Adicionar à tela inicial</strong> no celular ou <strong>Instalar</strong> no Chrome desktop) para a melhor experiência offline.</p></div>
+
+      <h3>19.3 Fluxo de trabalho recomendado</h3>
+      <div className="flow-step"><div className="flow-num">1</div><p><strong>Início do mês:</strong> acesse Planejamento e defina o orçamento de cada categoria. O sistema também gera automaticamente as recorrentes ao abrir a página Recorrentes.</p></div>
+      <div className="flow-step"><div className="flow-num">2</div><p><strong>Ao longo do mês:</strong> lance transações diariamente (atalho <span className="shortcut">N</span>). Use o Dashboard para monitorar orçamentos e o Calendário de Compromissos para não perder vencimentos.</p></div>
+      <div className="flow-step"><div className="flow-num">3</div><p><strong>Semanalmente:</strong> cheque o Dashboard. Marque parcelas pagas na página de Parcelamentos. Consulte a Projeção para ver se o ritmo atual é sustentável.</p></div>
+      <div className="flow-step"><div className="flow-num">4</div><p><strong>Final do mês:</strong> concilie as transações com o extrato bancário. Faça um aporte nas metas. Revise os Relatórios com a visão <em>Comparar</em> vs. mês anterior.</p></div>
+      <div className="flow-step"><div className="flow-num">5</div><p><strong>Planejando uma viagem:</strong> crie a viagem no módulo Viagens, vincule a uma meta de poupança e use o simulador de Projeção para calcular em quantos meses atinge o orçamento necessário.</p></div>
+      <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho. Salve um snapshot do Patrimônio Líquido para comparação futura.</p></div>
+
+      <h3>19.4 Dicas rápidas</h3>
       <div className="two-col">
         <ul>
           <li>Use <strong>tags</strong> para agrupar gastos por evento (ex.: &ldquo;viagem-bahia&rdquo;)</li>
@@ -457,19 +605,21 @@ export default function ManualPage() {
           <li>Use <strong>templates</strong> para transações que se repetem com valores variáveis</li>
           <li>Ative o <strong>modo privacidade</strong> ao mostrar a tela para alguém</li>
           <li>Instale como <strong>app (PWA)</strong> para acesso mais rápido no celular</li>
+          <li>Use <strong>Orçamento → Rollover</strong> para acumular saldo não gasto no próximo mês</li>
         </ul>
         <ul>
           <li>Importe extratos <strong>OFX</strong> para lançar todas as transações de uma vez</li>
           <li>Use <strong>Conciliação</strong> para detectar divergências entre o sistema e o banco</li>
           <li>A <strong>Lista de Desejos</strong> evita compras impulsivas — vote antes de comprar</li>
-          <li>O <strong>Rollover de orçamento</strong> recompensa quem economiza no mês</li>
-          <li>Consulte a <strong>Projeção</strong> antes de assumir novos compromissos financeiros</li>
+          <li>O simulador de <strong>Projeção</strong> mostra o impacto de mudanças de renda/gasto</li>
+          <li>O <strong>Calendário de compromissos</strong> no Dashboard evita surpresas no fluxo de caixa</li>
+          <li>Use <span className="shortcut">B</span> para acessar Orçamentos rapidamente durante o mês</li>
         </ul>
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: '3rem', borderTop: '2px solid #dcfce7', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v1.0</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.0</p>
         <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Abril 2026</p>
       </div>
     </div>

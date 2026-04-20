@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.0 · Abril 2026</div>
+        <div className="version">Versão 3.1 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -83,9 +83,12 @@ export default function ManualPage() {
             <li style={{ marginBottom: '0.35rem' }}><a href="#wishlist">14. Lista de Desejos</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#relatorios">15. Relatórios</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#viagens">16. Viagens</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">17. Atividade</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">18. Configurações</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">19. Atalhos e dicas</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#shopping">17. Lista de Compras <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#precos">18. Histórico de Preços <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#insights">19. Insights <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">20. Atividade</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">21. Configurações</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">22. Atalhos e dicas</a></li>
           </ol>
         </div>
       </div>
@@ -110,6 +113,9 @@ export default function ManualPage() {
             <li>Controle de patrimônio líquido</li>
             <li>Lista de desejos compartilhada</li>
             <li>Planejamento completo de viagens</li>
+            <li>Lista de compras colaborativa com controle de gastos</li>
+            <li>Histórico de preços de produtos com análise de variação</li>
+            <li>Insights automáticos com análise mensal do comportamento financeiro</li>
           </ul>
         </div>
         <div className="section-card">
@@ -508,9 +514,126 @@ export default function ManualPage() {
       <h3>16.4 Painel de estatísticas</h3>
       <p>Clique em <strong>Estatísticas</strong> no topo da página para ver um resumo de todas as suas viagens: total de viagens, orçamento total, destinos mais visitados e lista de países. Clique em um destino para filtrar apenas as viagens para aquele lugar.</p>
 
-      {/* 17. Atividade */}
+      {/* 17. Lista de Compras */}
       <div className="page-break" />
-      <h2 id="atividade">17. Atividade</h2>
+      <h2 id="shopping">17. Lista de Compras <span className="badge-new">NOVO</span></h2>
+      <p>Crie listas de compras colaborativas com preços estimados, controle do que já foi pego e comparação com o que foi gasto de verdade.</p>
+
+      <h3>17.1 Criando uma lista</h3>
+      <p>Clique em <strong>Nova lista</strong> e informe o nome (ex.: &ldquo;Mercado semana&rdquo;) e, opcionalmente, um orçamento total. Você pode ter várias listas ativas simultaneamente.</p>
+
+      <h3>17.2 Adicionando itens</h3>
+      <p>Dentro de cada lista, clique em <strong>Adicionar item</strong> e preencha:</p>
+      <table>
+        <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Item</td><td>Nome do produto (ex.: Arroz 5kg)</td></tr>
+          <tr><td>Quantidade</td><td>Quantas unidades levar</td></tr>
+          <tr><td>Unidade</td><td>kg, L, un, cx… (opcional)</td></tr>
+          <tr><td>Preço estimado</td><td>Valor esperado — usado para calcular o total da lista</td></tr>
+          <tr><td>Categoria</td><td>Hortifruti, Limpeza, Carnes… — agrupa itens na lista</td></tr>
+        </tbody>
+      </table>
+      <p>Os itens são exibidos agrupados por categoria para facilitar a navegação no mercado.</p>
+
+      <h3>17.3 Durante as compras</h3>
+      <ul>
+        <li>Toque no <strong>círculo</strong> ao lado do item para marcá-lo como pego</li>
+        <li>Um campo aparece pedindo o <strong>preço real pago</strong> — preencha para registrar o gasto exato</li>
+        <li>A <strong>barra de progresso</strong> no topo da lista mostra quantos % dos itens já foram marcados</li>
+        <li>O total de <strong>gasto real</strong> (verde) é exibido ao lado do estimado para comparação imediata</li>
+        <li>Se você definiu orçamento, o sistema alerta quando o gasto real o ultrapassa</li>
+      </ul>
+
+      <h3>17.4 Finalizando a lista</h3>
+      <p>Clique em <strong>Finalizar</strong> para arquivar a lista concluída. Listas finalizadas ficam no histórico com o total gasto. Clique em <strong>Reabrir</strong> se precisar continuar.</p>
+      <div className="tip"><p><strong>Dica:</strong> use a Lista de Compras junto com o Histórico de Preços — após finalizar uma compra, registre os preços dos itens principais para acompanhar a evolução ao longo dos meses.</p></div>
+
+      {/* 18. Histórico de Preços */}
+      <h2 id="precos">18. Histórico de Preços <span className="badge-new">NOVO</span></h2>
+      <p>Monitore como os preços dos produtos que você compra regularmente evoluem ao longo do tempo. Detecte aumentos e encontre o melhor estabelecimento para cada item.</p>
+
+      <h3>18.1 Registrando um preço</h3>
+      <p>Clique em <strong>Registrar preço</strong> e preencha:</p>
+      <table>
+        <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Item</td><td>Nome do produto. O campo sugere itens já registrados automaticamente.</td></tr>
+          <tr><td>Preço</td><td>Valor total pago</td></tr>
+          <tr><td>Qtd / unidade</td><td>Ex.: 5 kg, 1 L — permite calcular preço por unidade para comparação</td></tr>
+          <tr><td>Estabelecimento</td><td>Nome do mercado ou posto (opcional)</td></tr>
+          <tr><td>Categoria</td><td>Combustível, Mercado, Farmácia… (opcional)</td></tr>
+          <tr><td>Data</td><td>Data da compra (padrão: hoje)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>18.2 Cards de resumo</h3>
+      <p>Cada produto monitorado exibe um card com:</p>
+      <ul>
+        <li>Último preço registrado e data</li>
+        <li>Variação percentual em relação ao registro anterior (<span style={{ color: '#dc2626' }}>↑ vermelho</span> = aumento, <span style={{ color: '#16a34a' }}>↓ verde</span> = queda)</li>
+        <li>Preço por unidade quando a quantidade é maior que 1</li>
+        <li>Total de registros históricos daquele item</li>
+      </ul>
+
+      <h3>18.3 Histórico completo</h3>
+      <p>Abaixo dos cards, a tabela completa exibe todos os registros em ordem cronológica decrescente com produto, estabelecimento, data e valor. Ideal para responder: &ldquo;o combustível subiu mesmo ou é impressão?&rdquo;</p>
+      <div className="info"><p>Dica de uso: registre o preço do combustível e do mercado mensalmente para ter uma visão clara do impacto da inflação no seu orçamento doméstico.</p></div>
+
+      {/* 19. Insights */}
+      <h2 id="insights">19. Insights <span className="badge-new">NOVO</span></h2>
+      <p>Análises automáticas geradas pelo sistema com base nas suas transações dos últimos 6 meses — sem nenhuma configuração necessária.</p>
+
+      <h3>19.1 Análises geradas automaticamente</h3>
+      <div className="two-col">
+        <div className="section-card">
+          <h4>Comparação mensal</h4>
+          <ul>
+            <li>Gastos X% acima ou abaixo do mês anterior</li>
+            <li>Taxa de poupança melhorou ou caiu</li>
+            <li>Gastos acima da média dos últimos 3 meses</li>
+          </ul>
+        </div>
+        <div className="section-card">
+          <h4>Categorias</h4>
+          <ul>
+            <li>Maior categoria de gasto do mês com % da receita</li>
+            <li>Categoria que mais aumentou vs. mês anterior</li>
+            <li>Breakdown com barra e variação % de cada categoria</li>
+          </ul>
+        </div>
+        <div className="section-card">
+          <h4>Conquistas e alertas</h4>
+          <ul>
+            <li>Melhor mês dos últimos 6 (maior poupança)</li>
+            <li>Sequência de meses consecutivos no positivo</li>
+            <li>Possível assinatura não cadastrada como recorrente</li>
+          </ul>
+        </div>
+        <div className="section-card">
+          <h4>Visão histórica</h4>
+          <ul>
+            <li>Tabela mensal: receita, despesa, saldo e barra visual</li>
+            <li>Últimos 6 meses lado a lado para identificar tendências</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>19.2 Cores dos insights</h3>
+      <table>
+        <thead><tr><th>Cor</th><th>Significado</th></tr></thead>
+        <tbody>
+          <tr><td>🟢 Verde</td><td>Boas notícias — poupança aumentou, gastos caíram</td></tr>
+          <tr><td>🟡 Amarelo</td><td>Alerta — gastos subiram, taxa de poupança caiu</td></tr>
+          <tr><td>🔵 Azul</td><td>Informativo — fatos sobre o mês sem conotação positiva/negativa</td></tr>
+          <tr><td>🟣 Roxo</td><td>Recorde — melhor resultado histórico</td></tr>
+        </tbody>
+      </table>
+      <div className="tip"><p><strong>Dica:</strong> os Insights são mais ricos quanto mais meses de dados você tiver. A partir de 2 meses de transações já começam a aparecer as primeiras análises comparativas.</p></div>
+
+      {/* 20. Atividade */}
+      <div className="page-break" />
+      <h2 id="atividade">20. Atividade</h2>
       <p>Feed cronológico de todas as ações realizadas pelo casal no sistema.</p>
       <ul>
         <li>Exibe transações, aportes em metas e pagamentos de parcelas</li>
@@ -519,8 +642,8 @@ export default function ManualPage() {
         <li>Ícones coloridos: verde = entrada, vermelho = saída, azul = transferência</li>
       </ul>
 
-      {/* 18. Configurações */}
-      <h2 id="configuracoes">18. Configurações</h2>
+      {/* 21. Configurações */}
+      <h2 id="configuracoes">21. Configurações</h2>
       <h3>18.1 Perfil pessoal</h3>
       <ul>
         <li>Alterar nome de exibição</li>
@@ -556,9 +679,9 @@ export default function ManualPage() {
       <h3>18.5 Zona de perigo (somente proprietário)</h3>
       <p style={{ color: '#dc2626' }}>Permite excluir permanentemente todos os dados do casal. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
 
-      {/* 19. Atalhos */}
+      {/* 22. Atalhos */}
       <div className="page-break" />
-      <h2 id="atalhos">19. Atalhos de teclado e dicas</h2>
+      <h2 id="atalhos">22. Atalhos de teclado e dicas</h2>
 
       <h3>19.1 Atalhos de navegação</h3>
       <table>

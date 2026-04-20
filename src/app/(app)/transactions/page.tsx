@@ -33,7 +33,8 @@ export default async function TransactionsPage({
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 

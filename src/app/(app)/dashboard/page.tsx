@@ -16,7 +16,8 @@ export default async function DashboardPage() {
     .from('couple_members')
     .select('couple_id, couples(currency, daily_limit)')
     .eq('user_id', user!.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   const memberData = memberRes.data as any
   const coupleId: string | null = memberData?.couple_id ?? null

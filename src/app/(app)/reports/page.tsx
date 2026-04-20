@@ -29,7 +29,8 @@ export default async function ReportsPage({
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user!.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const view = params.view === 'annual' ? 'annual' : params.view === 'compare' ? 'compare' : 'monthly'

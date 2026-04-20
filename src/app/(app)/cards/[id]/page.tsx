@@ -21,7 +21,7 @@ export default async function CardPage({
   const { id } = await params
   const sp = await searchParams
 
-  const memberRes = await supabase.from('couple_members').select('couple_id').eq('user_id', user!.id).single()
+  const memberRes = await supabase.from('couple_members').select('couple_id').eq('user_id', user!.id).limit(1).maybeSingle()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const accountRes = await supabase.from('accounts').select('*').eq('id', id).single()

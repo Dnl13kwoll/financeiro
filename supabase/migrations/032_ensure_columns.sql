@@ -58,3 +58,7 @@ END $$;
 
 -- Garante coluna alert_threshold na tabela budgets (migration 021)
 ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS alert_threshold integer DEFAULT 80;
+
+-- Colunas adicionais em recurring_accounts (category_id e end_date não estavam na migration 007)
+ALTER TABLE public.recurring_accounts ADD COLUMN IF NOT EXISTS category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL;
+ALTER TABLE public.recurring_accounts ADD COLUMN IF NOT EXISTS end_date date;

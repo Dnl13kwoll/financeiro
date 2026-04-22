@@ -30,6 +30,8 @@ import {
   Tag,
   Lightbulb,
   CalendarCheck,
+  Sliders,
+  Calculator,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -52,12 +54,14 @@ const navItems = [
   { href: '/wishlist', label: 'Lista de Desejos', icon: Heart },
   { href: '/travel', label: 'Viagens', icon: Plane },
   { href: '/investments', label: 'Investimentos', icon: LineChart },
+  { href: '/simulator', label: 'Simulador', icon: Calculator },
   { href: '/shopping', label: 'Lista de Compras', icon: ShoppingCart },
   { href: '/price-history', label: 'Histórico de Preços', icon: Tag },
   { href: '/insights', label: 'Insights', icon: Lightbulb },
   { href: '/monthly-close', label: 'Fechamento Mensal', icon: CalendarCheck },
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/activity', label: 'Atividade', icon: Activity },
+  { href: '/categories', label: 'Categorias', icon: Sliders },
   { href: '/settings', label: 'Configurações', icon: Settings },
   { href: '/help', label: 'Ajuda', icon: HelpCircle },
 ]

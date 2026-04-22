@@ -644,7 +644,7 @@ export default function ManualPage() {
 
       {/* 21. Configurações */}
       <h2 id="configuracoes">21. Configurações</h2>
-      <h3>18.1 Perfil pessoal</h3>
+      <h3>21.1 Perfil pessoal</h3>
       <ul>
         <li>Alterar nome de exibição</li>
         <li>Ativar/desativar modo privacidade (oculta todos os valores financeiros)</li>
@@ -652,7 +652,7 @@ export default function ManualPage() {
         <li>Escolher tema de cor (verde, azul, roxo, etc.)</li>
       </ul>
 
-      <h3>18.2 Configurações do casal</h3>
+      <h3>21.2 Configurações do casal</h3>
       <ul>
         <li>Alterar nome do casal</li>
         <li>Definir moeda padrão (BRL, USD, EUR...)</li>
@@ -661,7 +661,7 @@ export default function ManualPage() {
         <li>Gerar link de convite com validade de 7 dias</li>
       </ul>
 
-      <h3>18.3 Notificações</h3>
+      <h3>21.3 Notificações</h3>
       <p>Ative as <strong>notificações push</strong> para receber alertas no navegador e no celular (PWA instalado). Notificações enviadas:</p>
       <ul>
         <li>Vencimentos nos próximos 7 dias (parcelas e recorrentes)</li>
@@ -670,20 +670,20 @@ export default function ManualPage() {
         <li>Meta financeira atingida</li>
       </ul>
 
-      <h3>18.4 Backup e restauração</h3>
+      <h3>21.4 Backup e restauração</h3>
       <ul>
         <li><strong>Exportar backup:</strong> baixa um arquivo JSON com todos os dados do casal</li>
         <li><strong>Importar backup:</strong> restaura dados a partir de um arquivo de backup anterior</li>
       </ul>
 
-      <h3>18.5 Zona de perigo (somente proprietário)</h3>
+      <h3>21.5 Zona de perigo (somente proprietário)</h3>
       <p style={{ color: '#dc2626' }}>Permite excluir permanentemente todos os dados do casal. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
 
       {/* 22. Atalhos */}
       <div className="page-break" />
       <h2 id="atalhos">22. Atalhos de teclado e dicas</h2>
 
-      <h3>19.1 Atalhos de navegação</h3>
+      <h3>22.1 Atalhos de navegação</h3>
       <table>
         <thead><tr><th>Tecla</th><th>Ação</th></tr></thead>
         <tbody>
@@ -703,7 +703,7 @@ export default function ManualPage() {
 
       <div className="info"><p>Os atalhos de navegação funcionam apenas quando o cursor não está sobre um campo de texto, select ou textarea.</p></div>
 
-      <h3>19.2 Modo offline</h3>
+      <h3>22.2 Modo offline</h3>
       <p>O sistema usa um <strong>Service Worker</strong> para funcionar mesmo sem conexão:</p>
       <ul>
         <li><strong>Assets estáticos</strong> (JS, CSS, ícones): carregados do cache instantaneamente</li>
@@ -712,7 +712,7 @@ export default function ManualPage() {
       </ul>
       <div className="tip"><p>Instale o app como PWA (<strong>Adicionar à tela inicial</strong> no celular ou <strong>Instalar</strong> no Chrome desktop) para a melhor experiência offline.</p></div>
 
-      <h3>19.3 Fluxo de trabalho recomendado</h3>
+      <h3>22.3 Fluxo de trabalho recomendado</h3>
       <div className="flow-step"><div className="flow-num">1</div><p><strong>Início do mês:</strong> acesse Planejamento e defina o orçamento de cada categoria. O sistema também gera automaticamente as recorrentes ao abrir a página Recorrentes.</p></div>
       <div className="flow-step"><div className="flow-num">2</div><p><strong>Ao longo do mês:</strong> lance transações diariamente (atalho <span className="shortcut">N</span>). Use o Dashboard para monitorar orçamentos e o Calendário de Compromissos para não perder vencimentos.</p></div>
       <div className="flow-step"><div className="flow-num">3</div><p><strong>Semanalmente:</strong> cheque o Dashboard. Marque parcelas pagas na página de Parcelamentos. Consulte a Projeção para ver se o ritmo atual é sustentável.</p></div>
@@ -720,7 +720,7 @@ export default function ManualPage() {
       <div className="flow-step"><div className="flow-num">5</div><p><strong>Planejando uma viagem:</strong> crie a viagem no módulo Viagens, vincule a uma meta de poupança e use o simulador de Projeção para calcular em quantos meses atinge o orçamento necessário.</p></div>
       <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho. Salve um snapshot do Patrimônio Líquido para comparação futura.</p></div>
 
-      <h3>19.4 Dicas rápidas</h3>
+      <h3>22.4 Dicas rápidas</h3>
       <div className="two-col">
         <ul>
           <li>Use <strong>tags</strong> para agrupar gastos por evento (ex.: &ldquo;viagem-bahia&rdquo;)</li>

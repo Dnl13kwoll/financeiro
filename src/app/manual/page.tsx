@@ -737,12 +737,15 @@ export default function ManualPage() {
           <li>O simulador de <strong>Projeção</strong> mostra o impacto de mudanças de renda/gasto</li>
           <li>O <strong>Calendário de compromissos</strong> no Dashboard evita surpresas no fluxo de caixa</li>
           <li>Use <span className="shortcut">B</span> para acessar Orçamentos rapidamente durante o mês</li>
+          <li>Use os <strong>Insights</strong> mensalmente para identificar tendências antes de virar hábito</li>
+          <li>Registre preços no <strong>Histórico</strong> após cada ida ao mercado ou posto</li>
+          <li>Crie a lista de compras antes de sair de casa para não esquecer itens e controlar o gasto</li>
         </ul>
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: '3rem', borderTop: '2px solid #dcfce7', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.0</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.1</p>
         <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Abril 2026</p>
       </div>
     </div>

@@ -678,7 +678,7 @@ export default function ManualPage() {
         <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
         <tbody>
           <tr><td>Tipo</td><td>Categoria do investimento (CDB, Tesouro SELIC, FII…)</td></tr>
-          <tr><td>Nome</td><td>Identificação livre (ex.: "CDB Nubank 102% CDI")</td></tr>
+          <tr><td>Nome</td><td>Identificação livre (ex.: &ldquo;CDB Nubank 102% CDI&rdquo;)</td></tr>
           <tr><td>Banco / Corretora</td><td>Onde o investimento está custodiado</td></tr>
           <tr><td>Valor investido</td><td>Total aportado até o momento</td></tr>
           <tr><td>Valor atual</td><td>Saldo atual — deixe em branco para usar estimativa automática</td></tr>

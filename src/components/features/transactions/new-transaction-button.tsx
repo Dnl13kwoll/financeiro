@@ -121,7 +121,7 @@ export function NewTransactionButton({
     skipDupCheck.current = false
 
     if (n > 1 && type === 'expense') {
-      const { data: installGroup } = await (supabase.from('installments') as any).insert({
+      const { data: installGroup, error: installError } = await (supabase.from('installments') as any).insert({
         description,
         total_amount: totalAmount,
         installment_count: n,
@@ -129,6 +129,12 @@ export function NewTransactionButton({
         user_id: userId,
         start_date: baseDate.toISOString().slice(0, 10),
       }).select('id').single()
+
+      if (installError) {
+        showToast('Erro ao criar parcelamento: ' + installError.message, 'error')
+        setLoading(false)
+        return
+      }
 
       if (installGroup) {
         const items = Array.from({ length: n }, (_, i) => {
@@ -141,7 +147,12 @@ export function NewTransactionButton({
             paid: false,
           }
         })
-        await (supabase.from('installment_items') as any).insert(items)
+        const { error: itemsError } = await (supabase.from('installment_items') as any).insert(items)
+        if (itemsError) {
+          showToast('Erro ao criar parcelas: ' + itemsError.message, 'error')
+          setLoading(false)
+          return
+        }
       }
     } else {
       const payload: any = {
@@ -160,7 +171,12 @@ export function NewTransactionButton({
         comment: (data.get('comment') as string) || null,
         receipt_url: (data.get('receipt_url') as string) || null,
       }
-      await (supabase.from('transactions') as any).insert(payload)
+      const { error: txError } = await (supabase.from('transactions') as any).insert(payload)
+      if (txError) {
+        showToast('Erro ao salvar transação: ' + txError.message, 'error')
+        setLoading(false)
+        return
+      }
     }
 
     setLoading(false)

@@ -145,10 +145,17 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const value = parseFloat(data.get('value') as string)
     const note = (data.get('note') as string) || null
     const supabase = createClient()
-    await Promise.all([
+    const [updateRes, histRes] = await Promise.all([
       (supabase.from('goals') as any).update({ current_amount: goal.current_amount + value }).eq('id', goal.id),
       (supabase.from('goal_history') as any).insert({ goal_id: goal.id, amount: value, note }),
     ])
+    if (updateRes.error || histRes.error) {
+      const msg = (updateRes.error || histRes.error).message
+      showToast('Erro: ' + msg, 'error')
+      setLoading(false)
+      return
+    }
+    showToast('Valor adicionado à meta!')
     setLoading(false)
     setAddOpen(false)
     form.reset()
@@ -161,11 +168,17 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
-    await (supabase.from('goals') as any).update({
+    const { error } = await (supabase.from('goals') as any).update({
       name: data.get('name') as string,
       target_amount: parseFloat(data.get('target_amount') as string),
       deadline: (data.get('deadline') as string) || null,
     }).eq('id', goal.id)
+    if (error) {
+      showToast('Erro: ' + error.message, 'error')
+      setLoading(false)
+      return
+    }
+    showToast('Meta atualizada!')
     setLoading(false)
     setEditOpen(false)
     router.refresh()
@@ -174,7 +187,9 @@ export function GoalActions({ goal }: { goal: Goal }) {
   async function handleDelete() {
     if (!confirm(`Excluir a meta "${goal.name}"?`)) return
     const supabase = createClient()
-    await (supabase.from('goals') as any).delete().eq('id', goal.id)
+    const { error } = await (supabase.from('goals') as any).delete().eq('id', goal.id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Meta excluída.', 'error')
     router.refresh()
   }
 

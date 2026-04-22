@@ -29,6 +29,7 @@ import {
   ShoppingCart,
   Tag,
   Lightbulb,
+  CalendarCheck,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -54,6 +55,7 @@ const navItems = [
   { href: '/shopping', label: 'Lista de Compras', icon: ShoppingCart },
   { href: '/price-history', label: 'Histórico de Preços', icon: Tag },
   { href: '/insights', label: 'Insights', icon: Lightbulb },
+  { href: '/monthly-close', label: 'Fechamento Mensal', icon: CalendarCheck },
   { href: '/reports', label: 'Relatórios', icon: BarChart2 },
   { href: '/activity', label: 'Atividade', icon: Activity },
   { href: '/settings', label: 'Configurações', icon: Settings },

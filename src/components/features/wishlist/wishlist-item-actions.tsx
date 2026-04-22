@@ -12,11 +12,12 @@ export function WishlistItemActions({ id, purchased }: { id: string; purchased: 
   async function togglePurchased() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('wishlist_items') as any).update({
+    const { error } = await (supabase.from('wishlist_items') as any).update({
       purchased: !purchased,
       purchased_at: !purchased ? new Date().toISOString() : null,
     }).eq('id', id)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast(purchased ? 'Marcado como desejado.' : 'Marcado como comprado!')
     router.refresh()
   }
@@ -24,7 +25,8 @@ export function WishlistItemActions({ id, purchased }: { id: string; purchased: 
   async function handleDelete() {
     if (!confirm('Remover este item da lista?')) return
     const supabase = createClient()
-    await (supabase.from('wishlist_items') as any).delete().eq('id', id)
+    const { error } = await (supabase.from('wishlist_items') as any).delete().eq('id', id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast('Item removido.', 'error')
     router.refresh()
   }

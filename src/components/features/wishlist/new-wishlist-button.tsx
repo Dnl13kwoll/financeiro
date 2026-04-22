@@ -18,7 +18,7 @@ export function NewWishlistButton({ coupleId, userId }: { coupleId: string; user
     const data = new FormData(form)
     const supabase = createClient()
     const priceRaw = data.get('price') as string
-    await (supabase.from('wishlist_items') as any).insert({
+    const { error } = await (supabase.from('wishlist_items') as any).insert({
       name: data.get('name') as string,
       description: (data.get('description') as string) || null,
       url: (data.get('url') as string) || null,
@@ -27,6 +27,11 @@ export function NewWishlistButton({ coupleId, userId }: { coupleId: string; user
       couple_id: coupleId,
       user_id: userId,
     })
+    if (error) {
+      showToast('Erro: ' + error.message, 'error')
+      setLoading(false)
+      return
+    }
     setLoading(false)
     setOpen(false)
     form.reset()

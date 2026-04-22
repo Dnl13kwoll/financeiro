@@ -10,11 +10,12 @@ import {
   InvestmentMenuButton,
 } from '@/components/features/investments/investment-actions'
 import {
-  TYPE_LABELS, TYPE_COLORS, RATE_LABELS, REFERENCE_RATES,
+  TYPE_LABELS, TYPE_COLORS, REFERENCE_RATES,
   getTypeGroup, calcEstimatedYield,
-  type InvestmentType, type RateType,
+  type InvestmentType,
 } from '@/components/features/investments/investment-constants'
-import { TrendingUp, TrendingDown, AlertCircle, CalendarClock, Archive } from 'lucide-react'
+import { InvestmentExportButton } from '@/components/features/investments/investment-export-button'
+import { TrendingUp, AlertCircle, CalendarClock, Archive } from 'lucide-react'
 
 function pct(v: number) { return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` }
 function days(d: string) {
@@ -27,6 +28,15 @@ function daysUntil(d: string) {
   return Math.ceil((new Date(d + 'T12:00:00').getTime() - Date.now()) / 86400000)
 }
 
+async function fetchMarketRates() {
+  try {
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const res = await fetch(`${base}/api/market-rates`, { next: { revalidate: 86400 } })
+    if (res.ok) return await res.json()
+  } catch {}
+  return REFERENCE_RATES
+}
+
 export default async function InvestmentsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -36,7 +46,7 @@ export default async function InvestmentsPage() {
     .eq('user_id', user!.id).limit(1).maybeSingle()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const [invRes, goalsRes] = await Promise.all([
+  const [invRes, goalsRes, rates] = await Promise.all([
     coupleId
       ? (supabase.from('investments') as any)
           .select('*, goals(name)')
@@ -46,19 +56,35 @@ export default async function InvestmentsPage() {
     coupleId
       ? supabase.from('goals').select('id, name').eq('couple_id', coupleId)
       : null,
+    fetchMarketRates(),
   ])
+
+  const liveRates = { selic: rates?.selic ?? REFERENCE_RATES.selic, cdi: rates?.cdi ?? REFERENCE_RATES.cdi, ipca_12m: rates?.ipca_12m ?? REFERENCE_RATES.ipca_12m }
+  const ratesSource: string = rates?.source ?? 'fallback'
 
   const all: any[] = invRes?.data ?? []
   const goals: { id: string; name: string }[] = (goalsRes?.data ?? []) as any[]
   const active = all.filter((i: any) => i.active)
   const archived = all.filter((i: any) => !i.active)
 
+  function calcYieldLive(invested: number, rateType: string | null, rateValue: number | null, startDate: string) {
+    if (!rateType || rateValue === null) return null
+    const d = Math.max(1, Math.floor((Date.now() - new Date(startDate + 'T12:00:00').getTime()) / 86400000))
+    let annualRate = 0
+    if (rateType === 'pct_cdi') annualRate = (rateValue / 100) * (liveRates.cdi / 100)
+    else if (rateType === 'selic') annualRate = (rateValue / 100) * (liveRates.selic / 100)
+    else if (rateType === 'fixed') annualRate = rateValue / 100
+    else if (rateType === 'ipca_plus') annualRate = (liveRates.ipca_12m + rateValue) / 100
+    else return null
+    return Math.max(0, invested * (Math.pow(1 + annualRate, d / 365) - 1))
+  }
+
   // ── Totais ────────────────────────────────────────────────────────────────
   const totalInvested = active.reduce((s: number, i: any) => s + Number(i.invested_amount), 0)
 
   const totalCurrent = active.reduce((s: number, i: any) => {
     if (i.current_value != null) return s + Number(i.current_value)
-    const est = calcEstimatedYield(Number(i.invested_amount), i.rate_type, i.rate_value, i.start_date)
+    const est = calcYieldLive(Number(i.invested_amount), i.rate_type, i.rate_value, i.start_date)
     return s + Number(i.invested_amount) + (est ?? 0)
   }, 0)
 
@@ -70,10 +96,10 @@ export default async function InvestmentsPage() {
     if (!i.rate_type || i.rate_type === 'other') return s
     let annualRate = 0
     const rv = Number(i.rate_value ?? 0)
-    if (i.rate_type === 'pct_cdi') annualRate = (rv / 100) * (REFERENCE_RATES.cdi / 100)
-    else if (i.rate_type === 'selic') annualRate = (rv / 100) * (REFERENCE_RATES.selic / 100)
+    if (i.rate_type === 'pct_cdi') annualRate = (rv / 100) * (liveRates.cdi / 100)
+    else if (i.rate_type === 'selic') annualRate = (rv / 100) * (liveRates.selic / 100)
     else if (i.rate_type === 'fixed') annualRate = rv / 100
-    else if (i.rate_type === 'ipca_plus') annualRate = (REFERENCE_RATES.ipca_12m + rv) / 100
+    else if (i.rate_type === 'ipca_plus') annualRate = (liveRates.ipca_12m + rv) / 100
     const monthly = Number(i.invested_amount) * (Math.pow(1 + annualRate, 1 / 12) - 1)
     return s + monthly
   }, 0)
@@ -97,11 +123,16 @@ export default async function InvestmentsPage() {
       <div className="p-4 md:p-6 space-y-6">
 
         {/* Header action */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="text-sm text-gray-500">
             {active.length} {active.length === 1 ? 'investimento ativo' : 'investimentos ativos'}
           </div>
-          {coupleId && <NewInvestmentButton coupleId={coupleId} userId={user!.id} goals={goals} />}
+          <div className="flex items-center gap-2">
+            {active.length > 0 && (
+              <InvestmentExportButton investments={active} typeLabels={TYPE_LABELS} />
+            )}
+            {coupleId && <NewInvestmentButton coupleId={coupleId} userId={user!.id} goals={goals} />}
+          </div>
         </div>
 
         {/* ── Summary cards ───────────────────────────────────────────────── */}
@@ -133,11 +164,11 @@ export default async function InvestmentsPage() {
         {/* ── Taxas de referência ─────────────────────────────────────────── */}
         {active.length > 0 && (
           <div className="bg-gray-50 rounded-xl border border-gray-100 px-4 py-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
-            <span>Referência (abr/2026):</span>
-            <span><strong className="text-gray-700">SELIC</strong> {REFERENCE_RATES.selic}% a.a.</span>
-            <span><strong className="text-gray-700">CDI</strong> {REFERENCE_RATES.cdi}% a.a.</span>
-            <span><strong className="text-gray-700">IPCA 12m</strong> {REFERENCE_RATES.ipca_12m}%</span>
-            <span className="text-gray-400 ml-auto">Atualize as taxas em investment-constants.ts conforme o mercado</span>
+            <span className="font-medium text-gray-600">Taxas {ratesSource === 'bcb' ? '(Banco Central)' : '(referência)'}:</span>
+            <span><strong className="text-gray-700">SELIC</strong> {liveRates.selic.toFixed(2)}% a.a.</span>
+            <span><strong className="text-gray-700">CDI</strong> {liveRates.cdi.toFixed(2)}% a.a.</span>
+            <span><strong className="text-gray-700">IPCA 12m</strong> {liveRates.ipca_12m.toFixed(2)}%</span>
+            {ratesSource === 'bcb' && <span className="text-green-600 ml-auto">● Dados em tempo real</span>}
           </div>
         )}
 
@@ -212,7 +243,7 @@ export default async function InvestmentsPage() {
                 const color = TYPE_COLORS[group] ?? '#6b7280'
                 const invested = Number(inv.invested_amount)
 
-                const estYield = calcEstimatedYield(invested, inv.rate_type, inv.rate_value, inv.start_date)
+                const estYield = calcYieldLive(invested, inv.rate_type, inv.rate_value, inv.start_date)
                 const currentVal = inv.current_value != null
                   ? Number(inv.current_value)
                   : invested + (estYield ?? 0)

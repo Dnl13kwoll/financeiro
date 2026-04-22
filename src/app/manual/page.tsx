@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.1 · Abril 2026</div>
+        <div className="version">Versão 3.2 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -83,12 +83,13 @@ export default function ManualPage() {
             <li style={{ marginBottom: '0.35rem' }}><a href="#wishlist">14. Lista de Desejos</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#relatorios">15. Relatórios</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#viagens">16. Viagens</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#shopping">17. Lista de Compras <span className="badge-new">NOVO</span></a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#precos">18. Histórico de Preços <span className="badge-new">NOVO</span></a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#insights">19. Insights <span className="badge-new">NOVO</span></a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">20. Atividade</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">21. Configurações</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">22. Atalhos e dicas</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#shopping">17. Lista de Compras</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#precos">18. Histórico de Preços</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#insights">19. Insights</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#investments">20. Investimentos <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">21. Atividade</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">22. Configurações</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">23. Atalhos e dicas</a></li>
           </ol>
         </div>
       </div>
@@ -116,6 +117,7 @@ export default function ManualPage() {
             <li>Lista de compras colaborativa com controle de gastos</li>
             <li>Histórico de preços de produtos com análise de variação</li>
             <li>Insights automáticos com análise mensal do comportamento financeiro</li>
+            <li>Carteira de investimentos com rentabilidade estimada automática</li>
           </ul>
         </div>
         <div className="section-card">
@@ -631,9 +633,101 @@ export default function ManualPage() {
       </table>
       <div className="tip"><p><strong>Dica:</strong> os Insights são mais ricos quanto mais meses de dados você tiver. A partir de 2 meses de transações já começam a aparecer as primeiras análises comparativas.</p></div>
 
-      {/* 20. Atividade */}
+      {/* 20. Investimentos */}
       <div className="page-break" />
-      <h2 id="atividade">20. Atividade</h2>
+      <h2 id="investments">20. Investimentos <span className="badge-new">NOVO</span></h2>
+      <p>Cadastre e acompanhe toda a carteira de investimentos do casal com rentabilidade estimada automática e alertas de vencimento.</p>
+
+      <h3>20.1 Tipos de investimento suportados</h3>
+      <div className="three-col">
+        <div className="section-card">
+          <h4>Renda Fixa</h4>
+          <ul>
+            <li>CDB</li>
+            <li>LCI / LCA</li>
+            <li>Poupança</li>
+            <li>Tesouro SELIC</li>
+            <li>Tesouro IPCA+</li>
+            <li>Tesouro Prefixado</li>
+          </ul>
+        </div>
+        <div className="section-card">
+          <h4>Renda Variável / Fundos</h4>
+          <ul>
+            <li>Ações</li>
+            <li>FIIs</li>
+            <li>ETFs / BDRs</li>
+            <li>Fundo DI</li>
+            <li>Fundo Multimercado</li>
+            <li>Fundo de Ações</li>
+          </ul>
+        </div>
+        <div className="section-card">
+          <h4>Outros</h4>
+          <ul>
+            <li>PGBL / VGBL</li>
+            <li>Criptomoedas</li>
+            <li>Outro (livre)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>20.2 Cadastrando um investimento</h3>
+      <p>Clique em <strong>Novo investimento</strong> e preencha:</p>
+      <table>
+        <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo</td><td>Categoria do investimento (CDB, Tesouro SELIC, FII…)</td></tr>
+          <tr><td>Nome</td><td>Identificação livre (ex.: "CDB Nubank 102% CDI")</td></tr>
+          <tr><td>Banco / Corretora</td><td>Onde o investimento está custodiado</td></tr>
+          <tr><td>Valor investido</td><td>Total aportado até o momento</td></tr>
+          <tr><td>Valor atual</td><td>Saldo atual — deixe em branco para usar estimativa automática</td></tr>
+          <tr><td>Tipo de rentabilidade</td><td>% CDI, % SELIC, IPCA+, taxa fixa % a.a.</td></tr>
+          <tr><td>Taxa</td><td>Ex.: 102 (para 102% CDI) ou 5,5 (para IPCA+5,5%)</td></tr>
+          <tr><td>Data de início</td><td>Quando o aporte foi feito</td></tr>
+          <tr><td>Vencimento</td><td>Data de resgate obrigatório (renda fixa)</td></tr>
+          <tr><td>Liquidez</td><td>Diária, D+30, no vencimento, etc.</td></tr>
+          <tr><td>Meta vinculada</td><td>Associa o investimento a uma meta financeira</td></tr>
+        </tbody>
+      </table>
+
+      <h3>20.3 Rentabilidade estimada automática</h3>
+      <p>Para investimentos de renda fixa com taxa informada, o sistema calcula automaticamente o rendimento estimado com base nas taxas de referência (SELIC, CDI e IPCA). As taxas usadas são:</p>
+      <table>
+        <thead><tr><th>Índice</th><th>Valor usado</th><th>Onde se aplica</th></tr></thead>
+        <tbody>
+          <tr><td>SELIC</td><td>13,75% a.a.</td><td>Tesouro SELIC, % SELIC</td></tr>
+          <tr><td>CDI</td><td>13,65% a.a.</td><td>CDB, LCI, LCA, Fundo DI</td></tr>
+          <tr><td>IPCA 12m</td><td>4,83%</td><td>Tesouro IPCA+</td></tr>
+        </tbody>
+      </table>
+      <div className="tip"><p><strong>Atualize as taxas:</strong> conforme o Banco Central alterar a SELIC, atualize os valores no arquivo <code>src/components/features/investments/investment-constants.ts</code>. Todos os cálculos são atualizados automaticamente.</p></div>
+      <div className="info"><p>Investimentos de renda variável (ações, FIIs, cripto) não têm estimativa automática — atualize o valor atual manualmente pelo botão <strong>↺</strong> de cada item.</p></div>
+
+      <h3>20.4 Painel de resumo</h3>
+      <ul>
+        <li><strong>Total investido:</strong> soma de todos os aportes ativos</li>
+        <li><strong>Valor atual (est.):</strong> soma de valores atuais informados + estimativas de renda fixa</li>
+        <li><strong>Rendimento total:</strong> diferença em R$ e % desde o início</li>
+        <li><strong>Rendimento/mês:</strong> estimativa de quanto a renda fixa rende mensalmente</li>
+      </ul>
+
+      <h3>20.5 Alocação por categoria</h3>
+      <p>Barras coloridas mostram a proporção de cada grupo (Renda Fixa, Renda Variável, Fundos, Previdência) em relação ao total investido. Útil para verificar se a carteira está diversificada conforme o planejado.</p>
+
+      <h3>20.6 Alertas de vencimento</h3>
+      <p>Investimentos de renda fixa com vencimento nos próximos <strong>60 dias</strong> aparecem em um painel amarelo de destaque. Cada item mostra quantos dias faltam para ajudar a planejar o reinvestimento.</p>
+
+      <h3>20.7 Atualizar valor e arquivar</h3>
+      <ul>
+        <li>Clique no botão <strong>↺</strong> ao lado de qualquer investimento para informar o valor atual e registrar a data da atualização</li>
+        <li>Use o botão <strong>📦</strong> para arquivar investimentos encerrados sem perder o histórico</li>
+        <li>Investimentos arquivados ficam visíveis numa seção colapsada no final da página</li>
+      </ul>
+
+      {/* 21. Atividade */}
+      <div className="page-break" />
+      <h2 id="atividade">21. Atividade</h2>
       <p>Feed cronológico de todas as ações realizadas pelo casal no sistema.</p>
       <ul>
         <li>Exibe transações, aportes em metas e pagamentos de parcelas</li>
@@ -642,9 +736,9 @@ export default function ManualPage() {
         <li>Ícones coloridos: verde = entrada, vermelho = saída, azul = transferência</li>
       </ul>
 
-      {/* 21. Configurações */}
-      <h2 id="configuracoes">21. Configurações</h2>
-      <h3>21.1 Perfil pessoal</h3>
+      {/* 22. Configurações */}
+      <h2 id="configuracoes">22. Configurações</h2>
+      <h3>22.1 Perfil pessoal</h3>
       <ul>
         <li>Alterar nome de exibição</li>
         <li>Ativar/desativar modo privacidade (oculta todos os valores financeiros)</li>
@@ -652,7 +746,7 @@ export default function ManualPage() {
         <li>Escolher tema de cor (verde, azul, roxo, etc.)</li>
       </ul>
 
-      <h3>21.2 Configurações do casal</h3>
+      <h3>22.2 Configurações do casal</h3>
       <ul>
         <li>Alterar nome do casal</li>
         <li>Definir moeda padrão (BRL, USD, EUR...)</li>
@@ -661,7 +755,7 @@ export default function ManualPage() {
         <li>Gerar link de convite com validade de 7 dias</li>
       </ul>
 
-      <h3>21.3 Notificações</h3>
+      <h3>22.3 Notificações</h3>
       <p>Ative as <strong>notificações push</strong> para receber alertas no navegador e no celular (PWA instalado). Notificações enviadas:</p>
       <ul>
         <li>Vencimentos nos próximos 7 dias (parcelas e recorrentes)</li>
@@ -670,20 +764,20 @@ export default function ManualPage() {
         <li>Meta financeira atingida</li>
       </ul>
 
-      <h3>21.4 Backup e restauração</h3>
+      <h3>22.4 Backup e restauração</h3>
       <ul>
         <li><strong>Exportar backup:</strong> baixa um arquivo JSON com todos os dados do casal</li>
         <li><strong>Importar backup:</strong> restaura dados a partir de um arquivo de backup anterior</li>
       </ul>
 
-      <h3>21.5 Zona de perigo (somente proprietário)</h3>
+      <h3>22.5 Zona de perigo (somente proprietário)</h3>
       <p style={{ color: '#dc2626' }}>Permite excluir permanentemente todos os dados do casal. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
 
-      {/* 22. Atalhos */}
+      {/* 23. Atalhos */}
       <div className="page-break" />
-      <h2 id="atalhos">22. Atalhos de teclado e dicas</h2>
+      <h2 id="atalhos">23. Atalhos de teclado e dicas</h2>
 
-      <h3>22.1 Atalhos de navegação</h3>
+      <h3>23.1 Atalhos de navegação</h3>
       <table>
         <thead><tr><th>Tecla</th><th>Ação</th></tr></thead>
         <tbody>
@@ -703,7 +797,7 @@ export default function ManualPage() {
 
       <div className="info"><p>Os atalhos de navegação funcionam apenas quando o cursor não está sobre um campo de texto, select ou textarea.</p></div>
 
-      <h3>22.2 Modo offline</h3>
+      <h3>23.2 Modo offline</h3>
       <p>O sistema usa um <strong>Service Worker</strong> para funcionar mesmo sem conexão:</p>
       <ul>
         <li><strong>Assets estáticos</strong> (JS, CSS, ícones): carregados do cache instantaneamente</li>
@@ -712,7 +806,7 @@ export default function ManualPage() {
       </ul>
       <div className="tip"><p>Instale o app como PWA (<strong>Adicionar à tela inicial</strong> no celular ou <strong>Instalar</strong> no Chrome desktop) para a melhor experiência offline.</p></div>
 
-      <h3>22.3 Fluxo de trabalho recomendado</h3>
+      <h3>23.3 Fluxo de trabalho recomendado</h3>
       <div className="flow-step"><div className="flow-num">1</div><p><strong>Início do mês:</strong> acesse Planejamento e defina o orçamento de cada categoria. O sistema também gera automaticamente as recorrentes ao abrir a página Recorrentes.</p></div>
       <div className="flow-step"><div className="flow-num">2</div><p><strong>Ao longo do mês:</strong> lance transações diariamente (atalho <span className="shortcut">N</span>). Use o Dashboard para monitorar orçamentos e o Calendário de Compromissos para não perder vencimentos.</p></div>
       <div className="flow-step"><div className="flow-num">3</div><p><strong>Semanalmente:</strong> cheque o Dashboard. Marque parcelas pagas na página de Parcelamentos. Consulte a Projeção para ver se o ritmo atual é sustentável.</p></div>
@@ -720,7 +814,7 @@ export default function ManualPage() {
       <div className="flow-step"><div className="flow-num">5</div><p><strong>Planejando uma viagem:</strong> crie a viagem no módulo Viagens, vincule a uma meta de poupança e use o simulador de Projeção para calcular em quantos meses atinge o orçamento necessário.</p></div>
       <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho. Salve um snapshot do Patrimônio Líquido para comparação futura.</p></div>
 
-      <h3>22.4 Dicas rápidas</h3>
+      <h3>23.4 Dicas rápidas</h3>
       <div className="two-col">
         <ul>
           <li>Use <strong>tags</strong> para agrupar gastos por evento (ex.: &ldquo;viagem-bahia&rdquo;)</li>
@@ -740,12 +834,14 @@ export default function ManualPage() {
           <li>Use os <strong>Insights</strong> mensalmente para identificar tendências antes de virar hábito</li>
           <li>Registre preços no <strong>Histórico</strong> após cada ida ao mercado ou posto</li>
           <li>Crie a lista de compras antes de sair de casa para não esquecer itens e controlar o gasto</li>
+          <li>Mantenha os <strong>Investimentos</strong> atualizados mensalmente — clique em ↺ após ver o extrato da corretora</li>
+          <li>Vincule cada investimento a uma <strong>meta</strong> para visualizar o progresso de poupança no mesmo lugar</li>
         </ul>
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: '3rem', borderTop: '2px solid #dcfce7', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.1</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.2</p>
         <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Abril 2026</p>
       </div>
     </div>

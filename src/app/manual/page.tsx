@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.2 · Abril 2026</div>
+        <div className="version">Versão 3.3 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -86,10 +86,14 @@ export default function ManualPage() {
             <li style={{ marginBottom: '0.35rem' }}><a href="#shopping">17. Lista de Compras</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#precos">18. Histórico de Preços</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#insights">19. Insights</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#investments">20. Investimentos <span className="badge-new">NOVO</span></a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">21. Atividade</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">22. Configurações</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">23. Atalhos e dicas</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#investments">20. Investimentos</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#fechamento">21. Fechamento Mensal <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#busca">22. Busca Global <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#categorias">23. Categorias <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#simulador">24. Simulador de Investimentos <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">25. Atividade</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">26. Configurações</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">27. Atalhos e dicas</a></li>
           </ol>
         </div>
       </div>
@@ -118,6 +122,10 @@ export default function ManualPage() {
             <li>Histórico de preços de produtos com análise de variação</li>
             <li>Insights automáticos com análise mensal do comportamento financeiro</li>
             <li>Carteira de investimentos com rentabilidade estimada automática</li>
+            <li>Simulador de investimentos com projeção de crescimento e cálculo de aportes</li>
+            <li>Busca global unificada em transações, metas, investimentos e orçamentos</li>
+            <li>Categorias personalizadas além das categorias padrão</li>
+            <li>Fechamento mensal guiado com checklist e aportes em metas</li>
           </ul>
         </div>
         <div className="section-card">
@@ -692,16 +700,16 @@ export default function ManualPage() {
       </table>
 
       <h3>20.3 Rentabilidade estimada automática</h3>
-      <p>Para investimentos de renda fixa com taxa informada, o sistema calcula automaticamente o rendimento estimado com base nas taxas de referência (SELIC, CDI e IPCA). As taxas usadas são:</p>
+      <p>Para investimentos de renda fixa com taxa informada, o sistema calcula automaticamente o rendimento estimado usando taxas em tempo real obtidas do <strong>Banco Central do Brasil</strong> (API pública). O painel exibe o badge <em>&ldquo;● Dados em tempo real&rdquo;</em> quando a consulta é bem-sucedida.</p>
       <table>
-        <thead><tr><th>Índice</th><th>Valor usado</th><th>Onde se aplica</th></tr></thead>
+        <thead><tr><th>Índice</th><th>Fonte</th><th>Onde se aplica</th></tr></thead>
         <tbody>
-          <tr><td>SELIC</td><td>13,75% a.a.</td><td>Tesouro SELIC, % SELIC</td></tr>
-          <tr><td>CDI</td><td>13,65% a.a.</td><td>CDB, LCI, LCA, Fundo DI</td></tr>
-          <tr><td>IPCA 12m</td><td>4,83%</td><td>Tesouro IPCA+</td></tr>
+          <tr><td>SELIC</td><td>BCB série 432 (atualizada diariamente)</td><td>Tesouro SELIC, % SELIC</td></tr>
+          <tr><td>CDI</td><td>BCB série 4391 (atualizada diariamente)</td><td>CDB, LCI, LCA, Fundo DI</td></tr>
+          <tr><td>IPCA 12m</td><td>BCB série 13522 (atualizada mensalmente)</td><td>Tesouro IPCA+</td></tr>
         </tbody>
       </table>
-      <div className="tip"><p><strong>Atualize as taxas:</strong> conforme o Banco Central alterar a SELIC, atualize os valores no arquivo <code>src/components/features/investments/investment-constants.ts</code>. Todos os cálculos são atualizados automaticamente.</p></div>
+      <div className="info"><p>As taxas são cacheadas por 24 horas. Se a API do BCB estiver indisponível, o sistema usa os últimos valores conhecidos como fallback.</p></div>
       <div className="info"><p>Investimentos de renda variável (ações, FIIs, cripto) não têm estimativa automática — atualize o valor atual manualmente pelo botão <strong>↺</strong> de cada item.</p></div>
 
       <h3>20.4 Painel de resumo</h3>
@@ -725,9 +733,129 @@ export default function ManualPage() {
         <li>Investimentos arquivados ficam visíveis numa seção colapsada no final da página</li>
       </ul>
 
-      {/* 21. Atividade */}
+      {/* 21. Fechamento Mensal */}
       <div className="page-break" />
-      <h2 id="atividade">21. Atividade</h2>
+      <h2 id="fechamento">21. Fechamento Mensal <span className="badge-new">NOVO</span></h2>
+      <p>Página guiada para encerrar o mês de forma organizada. Acesse em <strong>/monthly-close</strong> (link no sidebar). O sistema sempre exibe os dados do mês anterior.</p>
+
+      <h3>21.1 Resumo financeiro</h3>
+      <p>Cards com os números consolidados do mês: receitas, despesas, saldo e taxa de poupança. A taxa de poupança é destacada em verde (≥ 20%), azul (≥ 10%) ou vermelho (&lt; 10%).</p>
+
+      <h3>21.2 Checklist de fechamento</h3>
+      <p>Lista de verificações automáticas que o sistema executa para indicar se o mês foi gerido bem:</p>
+      <table>
+        <thead><tr><th>Item</th><th>Condição para ✅</th></tr></thead>
+        <tbody>
+          <tr><td>Transações registradas</td><td>Pelo menos 1 transação lançada no mês</td></tr>
+          <tr><td>Saldo positivo</td><td>Receitas &gt; Despesas</td></tr>
+          <tr><td>Taxa de poupança saudável</td><td>Taxa ≥ 10%</td></tr>
+          <tr><td>Orçamentos respeitados</td><td>Nenhuma categoria acima do limite</td></tr>
+          <tr><td>Parcelas do mês pagas</td><td>Nenhuma parcela vencida em aberto</td></tr>
+        </tbody>
+      </table>
+      <div className="tip"><p><strong>Dica:</strong> quando todos os itens estão marcados, aparece uma mensagem de parabéns confirmando o fechamento com sucesso.</p></div>
+
+      <h3>21.3 Aportes rápidos em metas</h3>
+      <p>Clique em <strong>Registrar aportes nas metas</strong> para expandir o painel. Para cada meta em andamento você pode digitar o valor e clicar em <strong>Aportar</strong> — o sistema atualiza o saldo da meta e registra no histórico sem sair da página.</p>
+
+      <h3>21.4 Visão de orçamentos e categorias</h3>
+      <ul>
+        <li>Barras coloridas mostrando as 5 maiores categorias de despesa do mês</li>
+        <li>Orçamentos excedidos destacados em vermelho com o valor extrapolado</li>
+        <li>Orçamentos respeitados listados com barra de progresso</li>
+        <li>Parcelas vencidas não pagas listadas por nome e valor</li>
+      </ul>
+
+      {/* 22. Busca Global */}
+      <h2 id="busca">22. Busca Global <span className="badge-new">NOVO</span></h2>
+      <p>Encontre qualquer registro do sistema sem precisar navegar página por página.</p>
+
+      <h3>22.1 Como acessar</h3>
+      <ul>
+        <li>Pressione <span className="shortcut">⌘K</span> (Mac) ou <span className="shortcut">Ctrl+K</span> (Windows) de qualquer página</li>
+        <li>Clique no ícone de lupa no cabeçalho</li>
+      </ul>
+
+      <h3>22.2 O que é buscado</h3>
+      <table>
+        <thead><tr><th>Tipo</th><th>Campo pesquisado</th><th>Informação exibida</th></tr></thead>
+        <tbody>
+          <tr><td>Transação</td><td>Descrição</td><td>Tipo · Data · Categoria · Valor</td></tr>
+          <tr><td>Meta</td><td>Nome</td><td>% concluída · Valor alvo</td></tr>
+          <tr><td>Investimento</td><td>Nome</td><td>Tipo · Status (ativo/arquivado) · Valor investido</td></tr>
+          <tr><td>Orçamento</td><td>Categoria</td><td>Mês de referência · Valor orçado</td></tr>
+        </tbody>
+      </table>
+
+      <h3>22.3 Navegação por teclado</h3>
+      <ul>
+        <li><span className="shortcut">↑ ↓</span> — navegar pelos resultados</li>
+        <li><span className="shortcut">Enter</span> — abrir a página do resultado selecionado</li>
+        <li><span className="shortcut">Esc</span> — fechar a busca</li>
+      </ul>
+      <div className="info"><p>A busca tem debounce de 300ms e retorna até 8 transações, 5 metas, 5 investimentos e 4 orçamentos por consulta.</p></div>
+
+      {/* 23. Categorias */}
+      <h2 id="categorias">23. Categorias <span className="badge-new">NOVO</span></h2>
+      <p>O sistema inclui categorias padrão (Alimentação, Transporte, Saúde, etc.) e permite criar categorias personalizadas para o casal.</p>
+
+      <h3>23.1 Acessando</h3>
+      <p>Acesse pelo sidebar em <strong>Categorias</strong>, ou pelo botão <strong>Categorias</strong> na página de Transações.</p>
+
+      <h3>23.2 Criando uma categoria personalizada</h3>
+      <div className="flow-step"><div className="flow-num">1</div><p>Clique em <strong>Gerenciar Categorias</strong></p></div>
+      <div className="flow-step"><div className="flow-num">2</div><p>Digite o nome (ex.: &ldquo;Pets&rdquo;, &ldquo;Academia do João&rdquo;)</p></div>
+      <div className="flow-step"><div className="flow-num">3</div><p>Escolha uma cor e se é <strong>Saída</strong> (despesa) ou <strong>Entrada</strong> (receita)</p></div>
+      <div className="flow-step"><div className="flow-num">4</div><p>Clique no botão <strong>+</strong> — a categoria aparece imediatamente nas listas de transações</p></div>
+
+      <h3>23.3 Funcionalidades da página</h3>
+      <ul>
+        <li>Exibe quantas transações cada categoria já tem (&ldquo;12 usos&rdquo;)</li>
+        <li>Categorias sem uso aparecem como &ldquo;Não usada&rdquo;</li>
+        <li>Use as setas ↑↓ no modal para reordenar categorias personalizadas</li>
+        <li>Categorias padrão não podem ser excluídas, mas personalizadas sim</li>
+      </ul>
+      <div className="tip"><p><strong>Dica:</strong> use categorias personalizadas para despesas específicas do seu estilo de vida que não estão nas categorias padrão, como &ldquo;Curso de Inglês&rdquo;, &ldquo;Veterinário&rdquo; ou &ldquo;Clube&rdquo;.</p></div>
+
+      {/* 24. Simulador de Investimentos */}
+      <div className="page-break" />
+      <h2 id="simulador">24. Simulador de Investimentos <span className="badge-new">NOVO</span></h2>
+      <p>Ferramenta de planejamento para projetar crescimento de investimentos ou descobrir quanto precisa investir mensalmente para atingir uma meta. Acesse em <strong>/simulator</strong> pelo sidebar.</p>
+
+      <h3>24.1 Modo &ldquo;Quanto terei?&rdquo;</h3>
+      <p>Informe os parâmetros e o simulador calcula o valor futuro com juros compostos mensais:</p>
+      <table>
+        <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Valor inicial</td><td>Quanto você já tem ou vai investir agora</td></tr>
+          <tr><td>Aporte mensal</td><td>Quanto vai acrescentar todo mês</td></tr>
+          <tr><td>Taxa de juros</td><td>Selecione um preset (CDI, SELIC, IPCA+) ou informe manualmente</td></tr>
+          <tr><td>Período</td><td>Em quantos anos quer ver o resultado</td></tr>
+        </tbody>
+      </table>
+      <p>O resultado exibe total investido, rendimento acumulado e valor final. A tabela de evolução anual mostra o crescimento ano a ano com barra visual.</p>
+
+      <h3>24.2 Modo &ldquo;Quanto investir?&rdquo;</h3>
+      <p>Informe o objetivo e o simulador calcula o aporte mensal necessário:</p>
+      <table>
+        <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Objetivo</td><td>Valor que deseja atingir</td></tr>
+          <tr><td>Já tenho</td><td>Valor já acumulado para este objetivo</td></tr>
+          <tr><td>Taxa de juros</td><td>Preset ou personalizada</td></tr>
+          <tr><td>Em quantos anos</td><td>Prazo para atingir o objetivo</td></tr>
+        </tbody>
+      </table>
+      <p>Além do resultado principal, o modo exibe uma <strong>tabela comparativa</strong> com o aporte necessário em 6 diferentes taxas (Poupança, CDI 100%, CDI 110%, SELIC, IPCA+5%, IPCA+6%) para facilitar a escolha do investimento.</p>
+
+      <h3>24.3 Taxas de referência</h3>
+      <p>Os presets usam as mesmas taxas ao vivo do Banco Central usadas na página de Investimentos (SELIC, CDI, IPCA 12m). A taxa personalizada permite simular qualquer cenário.</p>
+
+      <div className="tip"><p><strong>Dica:</strong> use o modo &ldquo;Quanto investir?&rdquo; junto com a página de Metas — calcule no simulador o aporte necessário e depois registre esse valor como aporte recorrente mensal na meta correspondente.</p></div>
+
+      {/* 25. Atividade */}
+      <div className="page-break" />
+      <h2 id="atividade">25. Atividade</h2>
       <p>Feed cronológico de todas as ações realizadas pelo casal no sistema.</p>
       <ul>
         <li>Exibe transações, aportes em metas e pagamentos de parcelas</li>
@@ -736,9 +864,9 @@ export default function ManualPage() {
         <li>Ícones coloridos: verde = entrada, vermelho = saída, azul = transferência</li>
       </ul>
 
-      {/* 22. Configurações */}
-      <h2 id="configuracoes">22. Configurações</h2>
-      <h3>22.1 Perfil pessoal</h3>
+      {/* 26. Configurações */}
+      <h2 id="configuracoes">26. Configurações</h2>
+      <h3>26.1 Perfil pessoal</h3>
       <ul>
         <li>Alterar nome de exibição</li>
         <li>Ativar/desativar modo privacidade (oculta todos os valores financeiros)</li>
@@ -746,7 +874,7 @@ export default function ManualPage() {
         <li>Escolher tema de cor (verde, azul, roxo, etc.)</li>
       </ul>
 
-      <h3>22.2 Configurações do casal</h3>
+      <h3>26.2 Configurações do casal</h3>
       <ul>
         <li>Alterar nome do casal</li>
         <li>Definir moeda padrão (BRL, USD, EUR...)</li>
@@ -755,7 +883,7 @@ export default function ManualPage() {
         <li>Gerar link de convite com validade de 7 dias</li>
       </ul>
 
-      <h3>22.3 Notificações</h3>
+      <h3>26.3 Notificações</h3>
       <p>Ative as <strong>notificações push</strong> para receber alertas no navegador e no celular (PWA instalado). Notificações enviadas:</p>
       <ul>
         <li>Vencimentos nos próximos 7 dias (parcelas e recorrentes)</li>
@@ -764,25 +892,25 @@ export default function ManualPage() {
         <li>Meta financeira atingida</li>
       </ul>
 
-      <h3>22.4 Backup e restauração</h3>
+      <h3>26.4 Backup e restauração</h3>
       <ul>
         <li><strong>Exportar backup:</strong> baixa um arquivo JSON com todos os dados do casal</li>
         <li><strong>Importar backup:</strong> restaura dados a partir de um arquivo de backup anterior</li>
       </ul>
 
-      <h3>22.5 Zona de perigo (somente proprietário)</h3>
+      <h3>26.5 Zona de perigo (somente proprietário)</h3>
       <p style={{ color: '#dc2626' }}>Permite excluir permanentemente todos os dados do casal. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
 
-      {/* 23. Atalhos */}
+      {/* 27. Atalhos */}
       <div className="page-break" />
-      <h2 id="atalhos">23. Atalhos de teclado e dicas</h2>
+      <h2 id="atalhos">27. Atalhos de teclado e dicas</h2>
 
-      <h3>23.1 Atalhos de navegação</h3>
+      <h3>27.1 Atalhos de navegação</h3>
       <table>
         <thead><tr><th>Tecla</th><th>Ação</th></tr></thead>
         <tbody>
           <tr><td><span className="shortcut">N</span></td><td>Abre o formulário de nova transação (de qualquer página)</td></tr>
-          <tr><td><span className="shortcut">/</span></td><td>Abre a busca global</td></tr>
+          <tr><td><span className="shortcut">⌘K</span> / <span className="shortcut">Ctrl+K</span></td><td>Abre a busca global</td></tr>
           <tr><td><span className="shortcut">D</span></td><td>Ir para Dashboard</td></tr>
           <tr><td><span className="shortcut">T</span></td><td>Ir para Transações</td></tr>
           <tr><td><span className="shortcut">A</span></td><td>Ir para Contas</td></tr>
@@ -797,7 +925,7 @@ export default function ManualPage() {
 
       <div className="info"><p>Os atalhos de navegação funcionam apenas quando o cursor não está sobre um campo de texto, select ou textarea.</p></div>
 
-      <h3>23.2 Modo offline</h3>
+      <h3>27.2 Modo offline</h3>
       <p>O sistema usa um <strong>Service Worker</strong> para funcionar mesmo sem conexão:</p>
       <ul>
         <li><strong>Assets estáticos</strong> (JS, CSS, ícones): carregados do cache instantaneamente</li>
@@ -806,15 +934,15 @@ export default function ManualPage() {
       </ul>
       <div className="tip"><p>Instale o app como PWA (<strong>Adicionar à tela inicial</strong> no celular ou <strong>Instalar</strong> no Chrome desktop) para a melhor experiência offline.</p></div>
 
-      <h3>23.3 Fluxo de trabalho recomendado</h3>
+      <h3>27.3 Fluxo de trabalho recomendado</h3>
       <div className="flow-step"><div className="flow-num">1</div><p><strong>Início do mês:</strong> acesse Planejamento e defina o orçamento de cada categoria. O sistema também gera automaticamente as recorrentes ao abrir a página Recorrentes.</p></div>
       <div className="flow-step"><div className="flow-num">2</div><p><strong>Ao longo do mês:</strong> lance transações diariamente (atalho <span className="shortcut">N</span>). Use o Dashboard para monitorar orçamentos e o Calendário de Compromissos para não perder vencimentos.</p></div>
       <div className="flow-step"><div className="flow-num">3</div><p><strong>Semanalmente:</strong> cheque o Dashboard. Marque parcelas pagas na página de Parcelamentos. Consulte a Projeção para ver se o ritmo atual é sustentável.</p></div>
-      <div className="flow-step"><div className="flow-num">4</div><p><strong>Final do mês:</strong> concilie as transações com o extrato bancário. Faça um aporte nas metas. Revise os Relatórios com a visão <em>Comparar</em> vs. mês anterior.</p></div>
+      <div className="flow-step"><div className="flow-num">4</div><p><strong>Final do mês:</strong> acesse <strong>Fechamento Mensal</strong> para o checklist guiado — concilie transações, faça aportes nas metas diretamente na página e revise os orçamentos excedidos.</p></div>
       <div className="flow-step"><div className="flow-num">5</div><p><strong>Planejando uma viagem:</strong> crie a viagem no módulo Viagens, vincule a uma meta de poupança e use o simulador de Projeção para calcular em quantos meses atinge o orçamento necessário.</p></div>
       <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho. Salve um snapshot do Patrimônio Líquido para comparação futura.</p></div>
 
-      <h3>23.4 Dicas rápidas</h3>
+      <h3>27.4 Dicas rápidas</h3>
       <div className="two-col">
         <ul>
           <li>Use <strong>tags</strong> para agrupar gastos por evento (ex.: &ldquo;viagem-bahia&rdquo;)</li>
@@ -836,12 +964,16 @@ export default function ManualPage() {
           <li>Crie a lista de compras antes de sair de casa para não esquecer itens e controlar o gasto</li>
           <li>Mantenha os <strong>Investimentos</strong> atualizados mensalmente — clique em ↺ após ver o extrato da corretora</li>
           <li>Vincule cada investimento a uma <strong>meta</strong> para visualizar o progresso de poupança no mesmo lugar</li>
+          <li>Use <span className="shortcut">⌘K</span> para buscar qualquer lançamento sem navegar até a página</li>
+          <li>Use o <strong>Simulador</strong> antes de tomar decisões de investimento — compare CDI vs. IPCA+ no modo &ldquo;Quanto investir?&rdquo;</li>
+          <li>Crie <strong>categorias personalizadas</strong> para despesas específicas do seu estilo de vida (pets, cursos, hobby)</li>
+          <li>Use o <strong>Fechamento Mensal</strong> para um ritual mensal rápido — leva menos de 5 minutos e mantém as metas em dia</li>
         </ul>
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: '3rem', borderTop: '2px solid #dcfce7', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.2</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.3</p>
         <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Abril 2026</p>
       </div>
     </div>

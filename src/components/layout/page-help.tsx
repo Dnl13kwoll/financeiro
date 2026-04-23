@@ -490,6 +490,34 @@ const HELP: Record<string, PageHelpContent> = {
     ],
   },
 
+  '/vehicles': {
+    title: 'Veículos & Manutenções',
+    description: 'Controle os custos e manutenções de cada veículo do casal.',
+    sections: [
+      {
+        icon: 'info',
+        title: 'O que você pode fazer',
+        items: [
+          'Cadastrar carros e motos com marca, modelo, ano, placa e combustível',
+          'Registrar cada manutenção: tipo, data, KM, valor e oficina',
+          'Definir próxima manutenção por KM ou por data para receber alertas',
+          'Atualizar o KM atual clicando no contador do veículo',
+          'Ver histórico completo e total gasto em cada veículo',
+        ],
+      },
+      {
+        icon: 'tip',
+        title: 'Dicas',
+        items: [
+          'Preencha "Próximo KM" na troca de óleo para ser avisado antes de vencer',
+          'O card fica vermelho quando alguma manutenção está atrasada',
+          'Clique em ↓ no card para expandir o histórico completo de manutenções',
+          'Registre também IPVA, licenciamento e seguro para ver o custo anual real do veículo',
+        ],
+      },
+    ],
+  },
+
   '/insights': {
     title: 'Insights',
     description: 'Análises automáticas do seu comportamento financeiro dos últimos meses.',

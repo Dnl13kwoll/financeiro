@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.4 · Abril 2026</div>
+        <div className="version">Versão 3.5 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -91,9 +91,11 @@ export default function ManualPage() {
             <li style={{ marginBottom: '0.35rem' }}><a href="#busca">22. Busca Global <span className="badge-new">NOVO</span></a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#categorias">23. Categorias <span className="badge-new">NOVO</span></a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#simulador">24. Simulador de Investimentos <span className="badge-new">NOVO</span></a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">25. Atividade</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">26. Configurações</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">27. Atalhos e dicas <span className="badge-new">+2</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#vehicles">25. Veículos <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#imoveis">26. Imóveis <span className="badge-new">NOVO</span></a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">27. Atividade</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">28. Configurações</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">29. Atalhos e dicas</a></li>
           </ol>
         </div>
       </div>
@@ -853,9 +855,116 @@ export default function ManualPage() {
 
       <div className="tip"><p><strong>Dica:</strong> use o modo &ldquo;Quanto investir?&rdquo; junto com a página de Metas — calcule no simulador o aporte necessário e depois registre esse valor como aporte recorrente mensal na meta correspondente.</p></div>
 
-      {/* 25. Atividade */}
+      {/* 25. Veículos */}
       <div className="page-break" />
-      <h2 id="atividade">25. Atividade</h2>
+      <h2 id="vehicles">25. Veículos <span className="badge-new">NOVO</span></h2>
+      <p>Controle manutenções, custos e histórico de cada carro ou moto do casal. Alertas automáticos por KM e por data.</p>
+
+      <h3>25.1 Cadastro de veículo</h3>
+      <ul>
+        <li><strong>Nome / Apelido:</strong> identificação livre (ex.: &ldquo;Meu HB20&rdquo;, &ldquo;Moto da Maria&rdquo;)</li>
+        <li><strong>Dados:</strong> marca, modelo, ano, placa, combustível (gasolina, etanol, flex, diesel, GNV, elétrico, híbrido)</li>
+        <li><strong>KM atual:</strong> hodômetro atual — atualizado clicando no contador no card</li>
+        <li><strong>Cor:</strong> seletor visual com 14 cores para identificação rápida</li>
+      </ul>
+
+      <h3>25.2 Registro de manutenção</h3>
+      <p>25 tipos predefinidos, incluindo:</p>
+      <div className="two-col">
+        <ul>
+          <li>Troca de Óleo / Filtros</li>
+          <li>Alinhamento e Balanceamento</li>
+          <li>Pastilha / Disco de Freio</li>
+          <li>Correia Dentada</li>
+          <li>Pneus</li>
+          <li>Bateria / Velas</li>
+        </ul>
+        <ul>
+          <li>Amortecedor / Suspensão</li>
+          <li>Ar-condicionado</li>
+          <li>IPVA / Licenciamento</li>
+          <li>Seguro</li>
+          <li>Abastecimento</li>
+          <li>Outro (campo livre)</li>
+        </ul>
+      </div>
+      <p>Campos de cada manutenção: data, KM no serviço, valor, oficina/local, <strong>próximo KM</strong> e <strong>próxima data</strong> para retorno.</p>
+
+      <h3>25.3 Alertas automáticos</h3>
+      <div className="two-col">
+        <div className="section-card">
+          <h4>🟡 Em breve</h4>
+          <p>Próxima manutenção em até 30 dias ou dentro de 1.000 km do KM atual. Card com borda amarela.</p>
+        </div>
+        <div className="section-card">
+          <h4>🔴 Atrasada</h4>
+          <p>Data ou KM de retorno já ultrapassados. Card com borda vermelha e badge &ldquo;Manutenção atrasada&rdquo;.</p>
+        </div>
+      </div>
+      <div className="tip"><p><strong>Dica:</strong> registre IPVA, licenciamento e seguro como manutenções para ter o custo anual real de cada veículo e receber alertas de vencimento.</p></div>
+
+      {/* 26. Imóveis */}
+      <div className="page-break" />
+      <h2 id="imoveis">26. Imóveis <span className="badge-new">NOVO</span></h2>
+      <p>Gerencie imóveis do casal — manutenções residenciais, reformas, IPTU, garantias e valorização patrimonial.</p>
+
+      <h3>26.1 Cadastro de imóvel</h3>
+      <ul>
+        <li><strong>Tipos:</strong> Casa, Apartamento, Terreno, Comercial, Sítio, Chácara, Outro</li>
+        <li><strong>Dados financeiros:</strong> valor de compra, valor atual estimado (calcula % de valorização), IPTU anual, condomínio mensal</li>
+        <li><strong>Localização:</strong> endereço livre e área em m²</li>
+      </ul>
+
+      <h3>26.2 Manutenções residenciais</h3>
+      <p>22 tipos predefinidos, incluindo:</p>
+      <div className="two-col">
+        <ul>
+          <li>Pintura interna / externa</li>
+          <li>Hidráulica / Encanamento</li>
+          <li>Elétrica</li>
+          <li>Telhado / Impermeabilização</li>
+          <li>Piso / Revestimento</li>
+          <li>Jardim / Área externa</li>
+        </ul>
+        <ul>
+          <li>Dedetização</li>
+          <li>Ar-condicionado</li>
+          <li>Portão / Interfone</li>
+          <li>IPTU / Condomínio</li>
+          <li>Seguro Residencial</li>
+          <li>Reforma / Ampliação</li>
+        </ul>
+      </div>
+
+      <h3>26.3 Status e prioridade</h3>
+      <table>
+        <thead><tr><th>Status</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>Concluído</td><td>Serviço já realizado — entra no total de gastos</td></tr>
+          <tr><td>Agendado</td><td>Serviço marcado para data futura</td></tr>
+          <tr><td>Em orçamento</td><td>Cotação em andamento, ainda sem data</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Prioridade</th><th>Efeito</th></tr></thead>
+        <tbody>
+          <tr><td>Baixa / Média</td><td>Indicadores visuais sutis</td></tr>
+          <tr><td>Alta</td><td>Destaque amarelo no histórico</td></tr>
+          <tr><td>Urgente</td><td>Card fica vermelho imediatamente, independente de datas</td></tr>
+        </tbody>
+      </table>
+
+      <h3>26.4 Garantia de serviço</h3>
+      <p>Registre a data de garantia de reformas e serviços. Enquanto dentro do prazo, aparece o badge <strong>Garantia</strong> no histórico — útil para saber quando acionar o prestador em caso de defeito.</p>
+
+      <h3>26.5 Patrimônio imobiliário</h3>
+      <p>O card de resumo no topo da página soma o valor atual de todos os imóveis cadastrados. Combine com a página <strong>Patrimônio</strong> para ter uma visão unificada de ativos imobiliários e financeiros.</p>
+
+      <div className="tip"><p><strong>Dica:</strong> use status &ldquo;Em orçamento&rdquo; para registrar cotações antes de contratar — assim você mantém o histórico de preços recebidos sem poluir o histórico de manutenções concluídas.</p></div>
+
+      {/* 27. Atividade */}
+      <div className="page-break" />
+      <h2 id="atividade">27. Atividade</h2>
       <p>Feed cronológico de todas as ações realizadas pelo casal no sistema.</p>
       <ul>
         <li>Exibe transações, aportes em metas e pagamentos de parcelas</li>
@@ -864,9 +973,9 @@ export default function ManualPage() {
         <li>Ícones coloridos: verde = entrada, vermelho = saída, azul = transferência</li>
       </ul>
 
-      {/* 26. Configurações */}
-      <h2 id="configuracoes">26. Configurações</h2>
-      <h3>26.1 Perfil pessoal</h3>
+      {/* 28. Configurações */}
+      <h2 id="configuracoes">28. Configurações</h2>
+      <h3>28.1 Perfil pessoal</h3>
       <ul>
         <li>Alterar nome de exibição</li>
         <li>Ativar/desativar modo privacidade (oculta todos os valores financeiros)</li>
@@ -874,7 +983,7 @@ export default function ManualPage() {
         <li>Escolher tema de cor (verde, azul, roxo, etc.)</li>
       </ul>
 
-      <h3>26.2 Configurações do casal</h3>
+      <h3>28.2 Configurações do casal</h3>
       <ul>
         <li>Alterar nome do casal</li>
         <li>Definir moeda padrão (BRL, USD, EUR...)</li>
@@ -883,7 +992,7 @@ export default function ManualPage() {
         <li>Gerar link de convite com validade de 7 dias</li>
       </ul>
 
-      <h3>26.3 Notificações</h3>
+      <h3>28.3 Notificações</h3>
       <p>Ative as <strong>notificações push</strong> para receber alertas no navegador e no celular (PWA instalado). Notificações enviadas:</p>
       <ul>
         <li>Vencimentos nos próximos 7 dias (parcelas e recorrentes)</li>
@@ -892,20 +1001,20 @@ export default function ManualPage() {
         <li>Meta financeira atingida</li>
       </ul>
 
-      <h3>26.4 Backup e restauração</h3>
+      <h3>28.4 Backup e restauração</h3>
       <ul>
         <li><strong>Exportar backup:</strong> baixa um arquivo JSON com todos os dados do casal</li>
         <li><strong>Importar backup:</strong> restaura dados a partir de um arquivo de backup anterior</li>
       </ul>
 
-      <h3>26.5 Zona de perigo (somente proprietário)</h3>
+      <h3>28.5 Zona de perigo (somente proprietário)</h3>
       <p style={{ color: '#dc2626' }}>Permite excluir permanentemente todos os dados do casal. A ação é irreversível e exige a confirmação digitando &ldquo;EXCLUIR TUDO&rdquo;.</p>
 
-      {/* 27. Atalhos */}
+      {/* 29. Atalhos */}
       <div className="page-break" />
-      <h2 id="atalhos">27. Atalhos de teclado e dicas</h2>
+      <h2 id="atalhos">29. Atalhos de teclado e dicas</h2>
 
-      <h3>27.1 Atalhos de navegação</h3>
+      <h3>29.1 Atalhos de navegação</h3>
       <table>
         <thead><tr><th>Tecla</th><th>Ação</th></tr></thead>
         <tbody>
@@ -925,7 +1034,7 @@ export default function ManualPage() {
 
       <div className="info"><p>Os atalhos de navegação funcionam apenas quando o cursor não está sobre um campo de texto, select ou textarea.</p></div>
 
-      <h3>27.2 Modo offline</h3>
+      <h3>29.2 Modo offline</h3>
       <p>O sistema usa um <strong>Service Worker</strong> para funcionar mesmo sem conexão:</p>
       <ul>
         <li><strong>Assets estáticos</strong> (JS, CSS, ícones): carregados do cache instantaneamente</li>
@@ -934,7 +1043,7 @@ export default function ManualPage() {
       </ul>
       <div className="tip"><p>Instale o app como PWA (<strong>Adicionar à tela inicial</strong> no celular ou <strong>Instalar</strong> no Chrome desktop) para a melhor experiência offline.</p></div>
 
-      <h3>27.3 Fluxo de trabalho recomendado</h3>
+      <h3>29.3 Fluxo de trabalho recomendado</h3>
       <div className="flow-step"><div className="flow-num">1</div><p><strong>Início do mês:</strong> acesse Planejamento e defina o orçamento de cada categoria. O sistema também gera automaticamente as recorrentes ao abrir a página Recorrentes.</p></div>
       <div className="flow-step"><div className="flow-num">2</div><p><strong>Ao longo do mês:</strong> lance transações diariamente (atalho <span className="shortcut">N</span>). Use o Dashboard para monitorar orçamentos e o Calendário de Compromissos para não perder vencimentos.</p></div>
       <div className="flow-step"><div className="flow-num">3</div><p><strong>Semanalmente:</strong> cheque o Dashboard. Marque parcelas pagas na página de Parcelamentos. Consulte a Projeção para ver se o ritmo atual é sustentável.</p></div>
@@ -942,7 +1051,7 @@ export default function ManualPage() {
       <div className="flow-step"><div className="flow-num">5</div><p><strong>Planejando uma viagem:</strong> crie a viagem no módulo Viagens, vincule a uma meta de poupança e use o simulador de Projeção para calcular em quantos meses atinge o orçamento necessário.</p></div>
       <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho. Salve um snapshot do Patrimônio Líquido para comparação futura.</p></div>
 
-      <h3>27.4 Ajuda contextual por página <span className="badge-new">NOVO</span></h3>
+      <h3>29.4 Ajuda contextual por página</h3>
       <p>
         Cada página do sistema possui um botão <strong>?</strong> no cabeçalho (header). Ao clicar, um painel lateral
         desliza da direita exibindo:
@@ -958,7 +1067,7 @@ export default function ManualPage() {
       </p>
       <div className="tip"><p><strong>Dica:</strong> Use o botão <strong>?</strong> sempre que tiver dúvida sobre uma tela específica — é mais rápido do que procurar no manual completo.</p></div>
 
-      <h3>27.5 Personalizar menu (sidebar)</h3>
+      <h3>29.5 Personalizar menu (sidebar)</h3>
       <p>
         No rodapé da sidebar há o botão <strong>Personalizar menu</strong>. Ao clicar, um modal lista todos os itens
         de navegação organizados por grupo. Você pode:
@@ -975,7 +1084,7 @@ export default function ManualPage() {
       </p>
       <div className="info"><p>O badge no botão &ldquo;Personalizar menu&rdquo; mostra quantos itens estão ocultos no momento.</p></div>
 
-      <h3>27.6 Dicas rápidas</h3>
+      <h3>29.6 Dicas rápidas</h3>
       <div className="two-col">
         <ul>
           <li>Use <strong>tags</strong> para agrupar gastos por evento (ex.: &ldquo;viagem-bahia&rdquo;)</li>
@@ -1006,7 +1115,7 @@ export default function ManualPage() {
 
       {/* Footer */}
       <div style={{ marginTop: '3rem', borderTop: '2px solid #dcfce7', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.4</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.5</p>
         <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Abril 2026</p>
       </div>
     </div>

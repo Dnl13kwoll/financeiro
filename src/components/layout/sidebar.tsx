@@ -8,7 +8,7 @@ import {
   PieChart, Settings, LogOut, BarChart2, Target, Menu, X,
   CalendarClock, TrendingUp, LineChart, Activity, Heart, ClipboardList,
   Landmark, HelpCircle, Star, Plane, ShoppingCart, Tag, Lightbulb,
-  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car,
+  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car, Home,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -63,6 +63,7 @@ const NAV_GROUPS = [
       { href: '/shopping',     label: 'Lista de Compras',    icon: ShoppingCart },
       { href: '/price-history',label: 'Histórico de Preços', icon: Tag },
       { href: '/vehicles',     label: 'Veículos',            icon: Car },
+      { href: '/imoveis',      label: 'Imóveis',             icon: Home },
     ],
   },
   {

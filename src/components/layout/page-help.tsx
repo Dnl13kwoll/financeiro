@@ -490,6 +490,36 @@ const HELP: Record<string, PageHelpContent> = {
     ],
   },
 
+  '/imoveis': {
+    title: 'Imóveis & Manutenção',
+    description: 'Gerencie seus imóveis e todo o histórico de manutenções, reformas e custos residenciais.',
+    sections: [
+      {
+        icon: 'info',
+        title: 'O que você pode fazer',
+        items: [
+          'Cadastrar casas, apartamentos, terrenos e outros imóveis com área, endereço e valores',
+          'Registrar manutenções com tipo, status (concluído/agendado/orçamento) e prioridade',
+          'Controlar datas de garantia de serviços realizados',
+          'Definir próxima manutenção para receber alertas antes de vencer',
+          'Acompanhar a valorização do imóvel (valor de compra vs. valor atual)',
+          'Ver total gasto em manutenção por imóvel e o patrimônio imobiliário total',
+        ],
+      },
+      {
+        icon: 'tip',
+        title: 'Dicas',
+        items: [
+          'Registre IPTU e condomínio mensalmente para ter o custo real do imóvel',
+          'Use prioridade "Urgente" para problemas que precisam de atenção imediata — o card fica vermelho',
+          'Salve a data de garantia de reformas para saber quando acionar o prestador em caso de defeito',
+          'Filtre por "Agendado" para ver apenas os serviços ainda não realizados',
+          'O campo "Valor atual estimado" alimenta o total de patrimônio imobiliário no topo da página',
+        ],
+      },
+    ],
+  },
+
   '/vehicles': {
     title: 'Veículos & Manutenções',
     description: 'Controle os custos e manutenções de cada veículo do casal.',

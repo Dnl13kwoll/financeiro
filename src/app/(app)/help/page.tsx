@@ -10,6 +10,7 @@ import {
   AlertTriangle, History, Copy, Pencil, Trash2, RefreshCcw,
   ChevronRight, HelpCircle, SlidersHorizontal, LineChart,
   ShoppingCart, Tag, Lightbulb, CalendarCheck, Plane, Calculator,
+  Car, Home, Wrench, Building2,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -442,6 +443,49 @@ const sections: Section[] = [
     ],
     tips: [
       'Registre o preço de produtos recorrentes (leite, gasolina, plano de saúde) para acompanhar a inflação real do seu orçamento.',
+    ],
+  },
+  {
+    id: 'vehicles',
+    icon: <Car className="w-5 h-5" />,
+    title: 'Veículos',
+    href: '/vehicles',
+    color: 'bg-blue-50 text-blue-600 border-blue-100',
+    description: 'Controle manutenções, custos e histórico de cada carro ou moto do casal.',
+    features: [
+      { label: 'Cadastrar veículo', detail: 'Informe nome, marca, modelo, ano, placa, combustível e KM atual.' },
+      { label: 'Registrar manutenção', detail: '25 tipos predefinidos (troca de óleo, pneu, freio, IPVA...) + tipo personalizado. Informe data, KM no serviço, valor e oficina.' },
+      { label: 'Próxima manutenção', detail: 'Configure o próximo KM ou data de retorno. O card fica amarelo (em breve) ou vermelho (atrasado) automaticamente.' },
+      { label: 'Atualizar KM', detail: 'Clique no contador de KM no card para atualizar o hodômetro rapidamente.' },
+      { label: 'Histórico expansível', detail: 'Clique em ↓ no card para ver todas as manutenções registradas com status e alertas.' },
+      { label: 'Total gasto', detail: 'Cada veículo mostra o custo total acumulado em manutenções.' },
+    ],
+    tips: [
+      'Registre também IPVA, licenciamento e seguro para ver o custo anual real do veículo.',
+      'Use "Próximo KM" na troca de óleo para ser avisado antes de vencer — o sistema alerta quando o KM atual se aproximar.',
+    ],
+  },
+  {
+    id: 'imoveis',
+    icon: <Home className="w-5 h-5" />,
+    title: 'Imóveis',
+    href: '/imoveis',
+    color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    description: 'Gerencie imóveis do casal: manutenções, reformas, IPTU, garantias e valorização patrimonial.',
+    features: [
+      { label: 'Cadastrar imóvel', detail: 'Tipos: casa, apartamento, terreno, comercial, sítio. Informe área m², endereço, valor de compra e valor atual estimado.' },
+      { label: 'Valorização', detail: 'O sistema calcula automaticamente o percentual de valorização entre o valor de compra e o atual.' },
+      { label: 'IPTU e condomínio', detail: 'Registre o IPTU anual e a taxa de condomínio mensal para controle de custos fixos do imóvel.' },
+      { label: 'Registrar manutenção', detail: '22 tipos predefinidos (pintura, hidráulica, elétrica, telhado, dedetização...). Status: Concluído / Agendado / Em orçamento. Prioridade: Baixa / Média / Alta / Urgente.' },
+      { label: 'Garantia de serviço', detail: 'Registre a data de garantia de cada reforma. Badge "Garantia ativa" aparece enquanto o prazo não expirar.' },
+      { label: 'Próxima manutenção', detail: 'Configure quando determinada manutenção deve ser repetida (dedetização anual, revisão do telhado etc.).' },
+      { label: 'Filtro por status', detail: 'Dentro do histórico, filtre entre Todos / Concluído / Agendado / Em orçamento.' },
+      { label: 'Patrimônio total', detail: 'O card de resumo soma o valor atual de todos os imóveis para visão do patrimônio imobiliário.' },
+    ],
+    tips: [
+      'Use prioridade "Urgente" para vazamentos ou problemas estruturais — o card fica vermelho imediatamente.',
+      'Registre orçamentos antes de contratar: use status "Em orçamento" para comparar preços sem perder o histórico.',
+      'Combine com a página Patrimônio para ter uma visão completa de ativos imobiliários e financeiros.',
     ],
   },
   {

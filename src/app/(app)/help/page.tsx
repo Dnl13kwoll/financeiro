@@ -8,7 +8,8 @@ import {
   CheckCircle2, FileInput, Bookmark, Download, Search,
   Bell, Palette, EyeOff, Scissors, Zap, FileText,
   AlertTriangle, History, Copy, Pencil, Trash2, RefreshCcw,
-  ChevronRight,
+  ChevronRight, HelpCircle, SlidersHorizontal, LineChart,
+  ShoppingCart, Tag, Lightbulb, CalendarCheck, Plane, Calculator,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -304,6 +305,146 @@ const sections: Section[] = [
     ],
   },
   {
+    id: 'investments',
+    icon: <LineChart className="w-5 h-5" />,
+    title: 'Investimentos',
+    href: '/investments',
+    color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    description: 'Carteira de investimentos do casal: acompanhe rendimentos, compare com índices e exporte relatórios.',
+    features: [
+      { label: 'Cadastrar investimento', detail: 'Informe nome, tipo (Renda Fixa, Ações, FII, Cripto etc.), valor investido, data e indexador (CDI, SELIC, IPCA).' },
+      { label: 'Rendimento ao vivo', detail: 'Para investimentos indexados, o app busca as taxas atuais do Banco Central (BCB) e calcula o rendimento estimado em tempo real.' },
+      { label: 'Taxas BCB', detail: 'Banner com SELIC, CDI e IPCA atualizados diariamente via API pública do Banco Central.' },
+      { label: 'Total da carteira', detail: 'Soma do valor atual de todos os investimentos, com variação percentual.' },
+      { icon: <Download className="w-3.5 h-3.5" />, label: 'Exportar CSV', detail: 'Exporta toda a carteira em CSV compatível com Excel (UTF-8 BOM).' },
+    ],
+    tips: [
+      'As taxas BCB são atualizadas a cada 24h. O rendimento exibido é uma estimativa com base no indexador configurado.',
+      'Use o Simulador para comparar quanto cada aplicação renderia em diferentes cenários.',
+    ],
+  },
+  {
+    id: 'simulator',
+    icon: <Calculator className="w-5 h-5" />,
+    title: 'Simulador',
+    href: '/simulator',
+    color: 'bg-blue-50 text-blue-600 border-blue-100',
+    description: 'Simulador de investimentos com taxas ao vivo do Banco Central. Calcule crescimento de capital ou quanto poupar para atingir uma meta.',
+    features: [
+      { label: 'Modo Crescimento', detail: 'Informe capital inicial, aporte mensal, taxa e prazo. O simulador projeta o valor futuro com tabela anual de evolução.' },
+      { label: 'Modo Meta', detail: 'Informe o valor que deseja atingir, prazo e capital inicial. O simulador calcula o aporte mensal necessário para cada indexador.' },
+      { label: 'Presets de taxa', detail: 'Poupança, CDI 100%, CDI 110%, SELIC, IPCA+5%, IPCA+6% e taxa personalizada. Valores ao vivo do BCB.' },
+      { label: 'Tabela comparativa', detail: 'No modo Meta, compare lado a lado os aportes necessários para cada opção de investimento.' },
+    ],
+    tips: [
+      'Use o modo Meta para descobrir quanto guardar por mês para realizar um objetivo (carro, viagem, imóvel).',
+      'Combine com a página Investimentos para ver quanto sua carteira atual renderia no simulador.',
+    ],
+  },
+  {
+    id: 'insights',
+    icon: <Lightbulb className="w-5 h-5" />,
+    title: 'Insights',
+    href: '/insights',
+    color: 'bg-yellow-50 text-yellow-600 border-yellow-100',
+    description: 'Análises automáticas das suas finanças: padrões de gasto, tendências e sugestões personalizadas.',
+    features: [
+      { label: 'Análise de categorias', detail: 'Identifica categorias com gasto crescente mês a mês e alerta sobre desvios do padrão.' },
+      { label: 'Taxa de poupança', detail: 'Percentual de receita que está sendo poupado, com meta recomendada de 10-20%.' },
+      { label: 'Comparativo histórico', detail: 'Compara o mês atual com a média histórica por categoria.' },
+      { label: 'Sugestões', detail: 'Dicas personalizadas baseadas nos padrões de gasto do casal.' },
+    ],
+    tips: [
+      'Acesse Insights mensalmente para detectar categorias que estão aumentando progressivamente.',
+    ],
+  },
+  {
+    id: 'monthly-close',
+    icon: <CalendarCheck className="w-5 h-5" />,
+    title: 'Fechamento Mensal',
+    href: '/monthly-close',
+    color: 'bg-teal-50 text-teal-600 border-teal-100',
+    description: 'Checklist guiado para fechar o mês financeiro: conciliação, metas, orçamentos e saldo.',
+    features: [
+      { label: 'Checklist de fechamento', detail: 'Itens verificados automaticamente: transações registradas, saldo positivo, taxa de poupança ≥10%, orçamentos respeitados, parcelas pagas.' },
+      { label: 'Contribuição para metas', detail: 'Painel colapsável com todas as metas ativas. Registre aportes direto do fechamento sem sair da página.' },
+      { label: 'Status visual', detail: 'Cada item do checklist fica verde (OK) ou amarelo (atenção) com base nos dados reais do mês.' },
+    ],
+    tips: [
+      'Faça o fechamento no último dia de cada mês antes de salvar o snapshot de Patrimônio.',
+      'Se algum item do checklist estiver em atenção, clique no link para ir direto à página relevante.',
+    ],
+  },
+  {
+    id: 'categories',
+    icon: <SlidersHorizontal className="w-5 h-5" />,
+    title: 'Categorias',
+    href: '/categories',
+    color: 'bg-violet-50 text-violet-600 border-violet-100',
+    description: 'Gerencie as categorias usadas nas transações: veja as padrão e crie categorias personalizadas.',
+    features: [
+      { label: 'Categorias padrão', detail: 'Grade com todas as categorias do sistema (Alimentação, Moradia, Transporte etc.) exibidas para referência.' },
+      { label: 'Categorias personalizadas', detail: 'Crie suas próprias categorias com nome e ícone personalizado.' },
+      { label: 'Contagem de uso', detail: 'Cada categoria mostra quantas transações já foram classificadas com ela.' },
+      { label: 'Editar e excluir', detail: 'Renomeie ou remova categorias personalizadas (categorias padrão não podem ser removidas).' },
+    ],
+    tips: [
+      'Crie categorias específicas para o casal (ex: "Presente parceiro", "Viagem Japão 2026").',
+      'Categorias com muitas transações aparecem em destaque nos Relatórios e Insights.',
+    ],
+  },
+  {
+    id: 'travel',
+    icon: <Plane className="w-5 h-5" />,
+    title: 'Viagens',
+    href: '/travel',
+    color: 'bg-sky-50 text-sky-600 border-sky-100',
+    description: 'Planeje e acompanhe viagens do casal: orçamento, gastos por destino e lista de tarefas.',
+    features: [
+      { label: 'Criar viagem', detail: 'Informe destino, datas, orçamento total e moeda.' },
+      { label: 'Controle de gastos', detail: 'Registre despesas de viagem vinculadas ao destino.' },
+      { label: 'Lista de tarefas', detail: 'Checklist de preparativos (passaporte, seguro, reservas).' },
+      { label: 'Progresso', detail: 'Barra de orçamento utilizado vs total planejado.' },
+    ],
+    tips: [
+      'Use a Lista de Desejos para planejar viagens futuras e acumular o valor via Metas.',
+    ],
+  },
+  {
+    id: 'shopping',
+    icon: <ShoppingCart className="w-5 h-5" />,
+    title: 'Lista de Compras',
+    href: '/shopping',
+    color: 'bg-lime-50 text-lime-600 border-lime-100',
+    description: 'Lista de compras compartilhada entre o casal: mercado, farmácia, itens de casa.',
+    features: [
+      { label: 'Adicionar item', detail: 'Informe nome, quantidade e categoria (Mercado, Farmácia, Casa etc.).' },
+      { label: 'Marcar como comprado', detail: 'Toque no item para marcá-lo como adquirido. Itens comprados ficam riscados.' },
+      { label: 'Listas por categoria', detail: 'Filtre por categoria para facilitar a compra em diferentes lojas.' },
+      { label: 'Compartilhada', detail: 'Ambos do casal veem e editam a mesma lista em tempo real.' },
+    ],
+    tips: [
+      'Deixe a lista aberta no celular durante as compras para marcar itens conforme adiciona ao carrinho.',
+    ],
+  },
+  {
+    id: 'price-history',
+    icon: <Tag className="w-5 h-5" />,
+    title: 'Histórico de Preços',
+    href: '/price-history',
+    color: 'bg-orange-50 text-orange-600 border-orange-100',
+    description: 'Acompanhe a variação de preço de produtos ao longo do tempo para identificar o melhor momento de compra.',
+    features: [
+      { label: 'Registrar preço', detail: 'Informe produto, preço, data e loja. O histórico acumula registros ao longo do tempo.' },
+      { label: 'Gráfico de variação', detail: 'Linha do tempo com o preço do produto mês a mês.' },
+      { label: 'Preço médio e mínimo', detail: 'Estatísticas: menor preço registrado, preço médio e último preço.' },
+      { label: 'Alertas de preço', detail: 'Configure um preço-alvo e receba notificação quando o preço atingir o valor desejado.' },
+    ],
+    tips: [
+      'Registre o preço de produtos recorrentes (leite, gasolina, plano de saúde) para acompanhar a inflação real do seu orçamento.',
+    ],
+  },
+  {
     id: 'settings',
     icon: <Settings className="w-5 h-5" />,
     title: 'Configurações',
@@ -328,11 +469,13 @@ const sections: Section[] = [
 ]
 
 const globalFeatures = [
-  { icon: <Search className="w-4 h-4" />, label: 'Busca global', detail: 'Ícone de lupa no header (ou Ctrl+K). Busca em transações, parcelamentos e recorrentes.' },
+  { icon: <Search className="w-4 h-4" />, label: 'Busca global', detail: 'Ícone de lupa no header (ou Ctrl+K / Cmd+K). Busca em tempo real: transações, metas, investimentos e orçamentos.' },
+  { icon: <HelpCircle className="w-4 h-4" />, label: 'Ajuda contextual (?)', detail: 'Botão "?" no cabeçalho de cada página. Abre painel lateral com funcionalidades, dicas e atalhos específicos daquela tela — sem precisar abrir o manual inteiro.' },
   { icon: <Bell className="w-4 h-4" />, label: 'Notificações', detail: 'Sino no header com badge de não lidas. Alertas de orçamento, metas e vencimentos.' },
   { icon: <Palette className="w-4 h-4" />, label: 'Temas', detail: 'Ícone de paleta no rodapé da sidebar. Temas: Verde, Rosa, Azul e Escuro (dark mode).' },
   { icon: <EyeOff className="w-4 h-4" />, label: 'Modo privado', detail: 'Ícone de olho na sidebar. Oculta todos os valores financeiros com blur (útil em locais públicos).' },
-  { icon: <Settings className="w-4 h-4" />, label: 'Atalhos de teclado', detail: '? abre lista de atalhos. Navegação rápida entre páginas via teclado.' },
+  { icon: <SlidersHorizontal className="w-4 h-4" />, label: 'Personalizar menu', detail: 'Botão "Personalizar menu" no rodapé da sidebar. Escolha quais seções aparecem no menu. Itens ocultos não são excluídos — só ficam escondidos. Preferências salvas no navegador.' },
+  { icon: <Settings className="w-4 h-4" />, label: 'Atalhos de teclado', detail: 'Ctrl+K (ou Cmd+K) abre a busca global. Navegação rápida entre páginas via teclado.' },
 ]
 
 export default function HelpPage() {
@@ -439,12 +582,12 @@ export default function HelpPage() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Fluxo de uso recomendado</h2>
           <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-5 space-y-3">
             {[
-              { step: '1ª vez', action: 'Configurações → criar casal → convidar parceiro → cadastrar contas' },
+              { step: '1ª vez', action: 'Configurações → criar casal → convidar parceiro → cadastrar contas · Sidebar → Personalizar menu (ocultar seções não usadas)' },
               { step: 'Início do mês', action: 'Recorrentes → "Gerar este mês" · Orçamentos → Copiar / Rollover · Planejamento → Copiar mês anterior' },
-              { step: 'Dia a dia', action: 'Transações → Nova transação (ou tecla N) para cada movimentação' },
-              { step: 'Semanal', action: 'Dashboard → revisar alertas · Transações → conciliar com extrato bancário' },
-              { step: 'Fim do mês', action: 'Relatórios → ver resumo mensal · Patrimônio → salvar snapshot · Metas → registrar aportes' },
-              { step: 'Revisão anual', action: 'Relatórios → Visão anual · Exportar CSV/PDF para arquivo' },
+              { step: 'Dia a dia', action: 'Transações → Nova transação para cada movimentação · Busca global (Ctrl+K) para localizar rapidamente' },
+              { step: 'Semanal', action: 'Dashboard → revisar alertas · Transações → conciliar com extrato bancário · Insights → verificar tendências' },
+              { step: 'Fim do mês', action: 'Fechamento Mensal → checklist guiado · Relatórios → resumo · Patrimônio → salvar snapshot · Metas → registrar aportes' },
+              { step: 'Revisão anual', action: 'Relatórios → Visão anual · Simulador → projetar rendimentos · Exportar CSV/PDF para arquivo' },
             ].map(({ step, action }) => (
               <div key={step} className="flex items-start gap-3 text-sm">
                 <span className="shrink-0 font-semibold text-primary-700 w-28">{step}</span>
@@ -466,6 +609,9 @@ export default function HelpPage() {
               { q: 'Como funciona o modo privado?', a: 'Clique no ícone de olho na sidebar. Todos os valores são ocultados com blur. Útil ao usar o app em locais públicos. A configuração é local por dispositivo.' },
               { q: 'Posso exportar todos os meus dados?', a: 'Sim. Configurações → Backup de dados → botão "Exportar backup". Gera um arquivo JSON com todos os dados do casal.' },
               { q: 'Como desfazer uma exclusão?', a: 'Ao excluir uma transação, uma notificação com botão "Desfazer" aparece por 4 segundos. Após isso, a exclusão é confirmada e não pode ser revertida pela interface.' },
+              { q: 'Para que serve o botão "?" no cabeçalho?', a: 'O botão "?" abre um painel de ajuda contextual específico para a página em que você está. Mostra funcionalidades, dicas e atalhos relevantes àquela tela, sem precisar abrir o manual completo.' },
+              { q: 'Como ocultar seções do menu que não uso?', a: 'Clique em "Personalizar menu" no rodapé da sidebar. Marque ou desmarque as seções desejadas. Seções fixas (Essencial e Sistema) não podem ser ocultadas. As preferências são salvas no navegador.' },
+              { q: 'As taxas do Simulador são reais?', a: 'Sim. O Simulador busca SELIC, CDI e IPCA diretamente da API pública do Banco Central do Brasil, atualizadas a cada 24 horas.' },
             ].map(({ q, a }) => (
               <div key={q} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
                 <p className="text-sm font-semibold text-gray-800 mb-1">{q}</p>

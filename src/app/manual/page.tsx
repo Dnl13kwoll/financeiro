@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.3 · Abril 2026</div>
+        <div className="version">Versão 3.4 · Abril 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -93,7 +93,7 @@ export default function ManualPage() {
             <li style={{ marginBottom: '0.35rem' }}><a href="#simulador">24. Simulador de Investimentos <span className="badge-new">NOVO</span></a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#atividade">25. Atividade</a></li>
             <li style={{ marginBottom: '0.35rem' }}><a href="#configuracoes">26. Configurações</a></li>
-            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">27. Atalhos e dicas</a></li>
+            <li style={{ marginBottom: '0.35rem' }}><a href="#atalhos">27. Atalhos e dicas <span className="badge-new">+2</span></a></li>
           </ol>
         </div>
       </div>
@@ -942,7 +942,40 @@ export default function ManualPage() {
       <div className="flow-step"><div className="flow-num">5</div><p><strong>Planejando uma viagem:</strong> crie a viagem no módulo Viagens, vincule a uma meta de poupança e use o simulador de Projeção para calcular em quantos meses atinge o orçamento necessário.</p></div>
       <div className="flow-step"><div className="flow-num">6</div><p><strong>Fim do ano:</strong> use a visão Anual nos Relatórios e no Planejamento para avaliar o desempenho. Salve um snapshot do Patrimônio Líquido para comparação futura.</p></div>
 
-      <h3>27.4 Dicas rápidas</h3>
+      <h3>27.4 Ajuda contextual por página <span className="badge-new">NOVO</span></h3>
+      <p>
+        Cada página do sistema possui um botão <strong>?</strong> no cabeçalho (header). Ao clicar, um painel lateral
+        desliza da direita exibindo:
+      </p>
+      <ul>
+        <li><strong>Funcionalidades</strong> — o que cada elemento da tela faz</li>
+        <li><strong>Dicas</strong> — sugestões de uso específicas para aquela página</li>
+        <li><strong>Atalhos</strong> — teclas de atalho disponíveis naquele contexto</li>
+      </ul>
+      <p>
+        Clique em qualquer área fora do painel, ou no <strong>×</strong>, para fechá-lo. No rodapé do painel há um link
+        direto para este manual.
+      </p>
+      <div className="tip"><p><strong>Dica:</strong> Use o botão <strong>?</strong> sempre que tiver dúvida sobre uma tela específica — é mais rápido do que procurar no manual completo.</p></div>
+
+      <h3>27.5 Personalizar menu (sidebar)</h3>
+      <p>
+        No rodapé da sidebar há o botão <strong>Personalizar menu</strong>. Ao clicar, um modal lista todos os itens
+        de navegação organizados por grupo. Você pode:
+      </p>
+      <ul>
+        <li><strong>Ocultar</strong> seções que não usa (ex.: Viagens, Histórico de Preços)</li>
+        <li><strong>Mostrar</strong> novamente qualquer item oculto a qualquer momento</li>
+        <li>Usar <strong>Resetar</strong> para restaurar o menu padrão</li>
+      </ul>
+      <p>
+        Grupos marcados como <em>fixo</em> (Essencial e Sistema) não podem ser ocultados. Itens ocultos também são
+        removidos dos Favoritos automaticamente. As preferências são salvas no navegador (localStorage) — cada
+        dispositivo tem sua própria configuração.
+      </p>
+      <div className="info"><p>O badge no botão &ldquo;Personalizar menu&rdquo; mostra quantos itens estão ocultos no momento.</p></div>
+
+      <h3>27.6 Dicas rápidas</h3>
       <div className="two-col">
         <ul>
           <li>Use <strong>tags</strong> para agrupar gastos por evento (ex.: &ldquo;viagem-bahia&rdquo;)</li>
@@ -973,7 +1006,7 @@ export default function ManualPage() {
 
       {/* Footer */}
       <div style={{ marginTop: '3rem', borderTop: '2px solid #dcfce7', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.3</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Financeiro para Casais — Manual do Sistema v3.4</p>
         <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: 0 }}>Abril 2026</p>
       </div>
     </div>

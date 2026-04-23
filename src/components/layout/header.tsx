@@ -3,6 +3,7 @@ import { ThemeSwitcher } from './theme-switcher'
 import { GlobalSearch } from './global-search'
 import { NotificationBell } from './notification-bell'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
+import { PageHelp } from './page-help'
 
 export async function Header({ title }: { title: string }) {
   const supabase = await createClient()
@@ -15,6 +16,7 @@ export async function Header({ title }: { title: string }) {
     <header className="h-16 bg-white border-b border-gray-100 px-4 md:px-6 flex items-center justify-between shrink-0">
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       <div className="flex items-center gap-2 md:gap-3">
+        <PageHelp />
         <GlobalSearch />
         <NotificationBell coupleId={coupleId} />
         <PrivacyToggle />

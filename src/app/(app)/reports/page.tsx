@@ -33,7 +33,7 @@ export default async function ReportsPage({
     .maybeSingle()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const view = params.view === 'annual' ? 'annual' : params.view === 'compare' ? 'compare' : 'monthly'
+  const view = params.view === 'annual' ? 'annual' : params.view === 'compare' ? 'compare' : params.view === 'assets' ? 'assets' : 'monthly'
   const now = new Date()
 
   // ── ANNUAL VIEW ──────────────────────────────────────────────────────────────
@@ -380,6 +380,172 @@ export default async function ReportsPage({
                 </table>
               </div>
             </section>
+          )}
+
+          {!coupleId && (
+            <div className="text-center py-16 text-gray-400">Crie um casal em Configurações para começar.</div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── ASSETS VIEW ──────────────────────────────────────────────────────────────
+  if (view === 'assets') {
+    const db = supabase as any
+
+    const [vehiclesRes, vehicleMaintsRes, propertiesRes, propMaintsRes] = await Promise.all([
+      coupleId ? db.from('vehicles').select('id, name, make, model, year, current_value, current_km').eq('couple_id', coupleId).eq('active', true) : Promise.resolve(null),
+      coupleId ? db.from('vehicle_maintenances').select('vehicle_id, type, cost, date').eq('couple_id', coupleId).not('cost', 'is', null).order('date', { ascending: false }) : Promise.resolve(null),
+      coupleId ? db.from('properties').select('id, name, type, current_value').eq('couple_id', coupleId).eq('active', true) : Promise.resolve(null),
+      coupleId ? db.from('property_maintenances').select('property_id, type, cost, completed_date, status').eq('couple_id', coupleId).not('cost', 'is', null).eq('status', 'concluido') : Promise.resolve(null),
+    ])
+
+    const vehicles: any[] = vehiclesRes?.data ?? []
+    const vehicleMaints: any[] = vehicleMaintsRes?.data ?? []
+    const properties: any[] = propertiesRes?.data ?? []
+    const propMaints: any[] = propMaintsRes?.data ?? []
+
+    // Cost per vehicle
+    const vehicleCostMap = new Map<string, { name: string; total: number; count: number }>()
+    vehicles.forEach(v => vehicleCostMap.set(v.id, { name: v.name || `${v.make} ${v.model}`, total: 0, count: 0 }))
+    vehicleMaints.forEach(m => {
+      const entry = vehicleCostMap.get(m.vehicle_id)
+      if (entry) { entry.total += m.cost ?? 0; entry.count += 1 }
+    })
+    const vehicleCosts = Array.from(vehicleCostMap.values()).sort((a, b) => b.total - a.total)
+
+    // Cost per property
+    const propCostMap = new Map<string, { name: string; total: number; count: number }>()
+    properties.forEach(p => propCostMap.set(p.id, { name: p.name, total: 0, count: 0 }))
+    propMaints.forEach(m => {
+      const entry = propCostMap.get(m.property_id)
+      if (entry) { entry.total += m.cost ?? 0; entry.count += 1 }
+    })
+    const propCosts = Array.from(propCostMap.values()).sort((a, b) => b.total - a.total)
+
+    const totalVehicleCost = vehicleCosts.reduce((s, v) => s + v.total, 0)
+    const totalPropCost = propCosts.reduce((s, p) => s + p.total, 0)
+    const totalAssetCost = totalVehicleCost + totalPropCost
+
+    // Vehicle maintenance type breakdown
+    const vTypeMap = new Map<string, number>()
+    vehicleMaints.forEach(m => vTypeMap.set(m.type, (vTypeMap.get(m.type) ?? 0) + (m.cost ?? 0)))
+    const vTypeBreakdown = Array.from(vTypeMap.entries()).map(([type, total]) => ({ type, total })).sort((a, b) => b.total - a.total)
+
+    // Property maintenance type breakdown
+    const pTypeMap = new Map<string, number>()
+    propMaints.forEach(m => pTypeMap.set(m.type, (pTypeMap.get(m.type) ?? 0) + (m.cost ?? 0)))
+    const pTypeBreakdown = Array.from(pTypeMap.entries()).map(([type, total]) => ({ type, total })).sort((a, b) => b.total - a.total)
+
+    return (
+      <div className="flex flex-col flex-1">
+        <Header title="Relatórios" />
+        <div className="p-4 md:p-6 space-y-6 max-w-3xl">
+          <div className="flex items-center gap-3">
+            <Suspense><ReportViewToggle view={view} /></Suspense>
+          </div>
+
+          {/* Summary */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <p className="text-xs text-gray-500">Total gasto (veículos)</p>
+              <p className="text-xl font-bold text-red-600 mt-1 financial-value">{formatCurrency(totalVehicleCost)}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <p className="text-xs text-gray-500">Total gasto (imóveis)</p>
+              <p className="text-xl font-bold text-red-600 mt-1 financial-value">{formatCurrency(totalPropCost)}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <p className="text-xs text-gray-500">Total em manutenções</p>
+              <p className="text-xl font-bold text-gray-900 mt-1 financial-value">{formatCurrency(totalAssetCost)}</p>
+            </div>
+          </div>
+
+          {/* Per vehicle */}
+          {vehicleCosts.length > 0 && (
+            <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4">Custo de manutenção por veículo</h3>
+              <div className="space-y-3">
+                {vehicleCosts.map(v => (
+                  <div key={v.name}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-700">{v.name}</span>
+                      <span className="text-gray-500">
+                        <span className="font-medium text-gray-900 financial-value">{formatCurrency(v.total)}</span>
+                        <span className="text-xs text-gray-400 ml-2">({v.count} serviço{v.count !== 1 ? 's' : ''})</span>
+                      </span>
+                    </div>
+                    {totalVehicleCost > 0 && (
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (v.total / totalVehicleCost) * 100)}%` }} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Vehicle type breakdown */}
+          {vTypeBreakdown.length > 0 && (
+            <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4">Tipos de manutenção — veículos</h3>
+              <div className="space-y-2">
+                {vTypeBreakdown.map(v => (
+                  <div key={v.type} className="flex justify-between text-sm">
+                    <span className="text-gray-700">{v.type}</span>
+                    <span className="font-medium text-gray-900 financial-value">{formatCurrency(v.total)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Per property */}
+          {propCosts.length > 0 && (
+            <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4">Custo de manutenção por imóvel</h3>
+              <div className="space-y-3">
+                {propCosts.map(p => (
+                  <div key={p.name}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-700">{p.name}</span>
+                      <span className="text-gray-500">
+                        <span className="font-medium text-gray-900 financial-value">{formatCurrency(p.total)}</span>
+                        <span className="text-xs text-gray-400 ml-2">({p.count} serviço{p.count !== 1 ? 's' : ''})</span>
+                      </span>
+                    </div>
+                    {totalPropCost > 0 && (
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (p.total / totalPropCost) * 100)}%` }} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Property type breakdown */}
+          {pTypeBreakdown.length > 0 && (
+            <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4">Tipos de manutenção — imóveis</h3>
+              <div className="space-y-2">
+                {pTypeBreakdown.map(p => (
+                  <div key={p.type} className="flex justify-between text-sm">
+                    <span className="text-gray-700">{p.type}</span>
+                    <span className="font-medium text-gray-900 financial-value">{formatCurrency(p.total)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {coupleId && vehicleCosts.length === 0 && propCosts.length === 0 && (
+            <div className="text-center py-16 text-gray-400">
+              Nenhuma manutenção com custo registrada ainda.
+            </div>
           )}
 
           {!coupleId && (

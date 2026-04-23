@@ -7,8 +7,9 @@ import {
   Home, Plus, Pencil, Trash2, Wrench, AlertTriangle,
   ChevronDown, ChevronUp, X, Calendar, DollarSign,
   Clock, CheckCircle2, Circle, AlertCircle, Maximize2,
-  Building2, TreePine, MapPin, ShieldCheck, Receipt,
+  Building2, TreePine, MapPin, ShieldCheck, Receipt, Download,
 } from 'lucide-react'
+import { MaintenanceAlertChecker } from '@/components/features/vehicles/maintenance-alert-checker'
 import { format, parseISO, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -776,6 +777,31 @@ function PropertyCard({ property, maintenances, onEdit, onDelete, onAddMaintenan
 
 // ── Main Client ───────────────────────────────────────────────────────────────
 
+function exportPropertiesCSV(properties: Property[], maintenances: Maintenance[]) {
+  const rows = [
+    ['Imóvel', 'Tipo', 'Endereço', 'Área (m²)', 'Valor Atual', 'Tipo Manutenção', 'Status', 'Prioridade', 'Data', 'Valor (R$)', 'Prestador', 'Próxima Data', 'Garantia Até'],
+  ]
+  for (const p of properties) {
+    const ms = maintenances.filter(m => m.property_id === p.id)
+    if (ms.length === 0) {
+      rows.push([p.name, p.type, p.address ?? '', p.area_m2?.toString() ?? '', p.current_value?.toFixed(2) ?? '', '', '', '', '', '', '', '', ''])
+    } else {
+      for (const m of ms) {
+        rows.push([
+          p.name, p.type, p.address ?? '', p.area_m2?.toString() ?? '', p.current_value?.toFixed(2) ?? '',
+          m.type, m.status, m.priority, m.date, m.cost?.toFixed(2) ?? '',
+          m.contractor ?? '', m.next_date ?? '', m.warranty_until ?? '',
+        ])
+      }
+    }
+  }
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  a.download = `imoveis_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+}
+
 export function ImovelClient({ coupleId, initialProperties, initialMaintenances }: {
   coupleId: string
   initialProperties: Property[]
@@ -863,6 +889,8 @@ export function ImovelClient({ coupleId, initialProperties, initialMaintenances 
         />
       )}
 
+      <MaintenanceAlertChecker />
+
       <div className="p-4 md:p-6 space-y-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -872,10 +900,18 @@ export function ImovelClient({ coupleId, initialProperties, initialMaintenances 
               {properties.length} imóvel{properties.length !== 1 ? 'is' : ''} · {maintenances.length} manutenções registradas
             </p>
           </div>
-          <button onClick={() => setPropertyModal('new')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors">
-            <Plus className="w-4 h-4" /> Novo Imóvel
-          </button>
+          <div className="flex items-center gap-2">
+            {maintenances.length > 0 && (
+              <button onClick={() => exportPropertiesCSV(properties, maintenances)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                <Download className="w-4 h-4" /> CSV
+              </button>
+            )}
+            <button onClick={() => setPropertyModal('new')}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors">
+              <Plus className="w-4 h-4" /> Novo Imóvel
+            </button>
+          </div>
         </div>
 
         {/* Summary */}

@@ -14,7 +14,7 @@ export function ReportViewToggle({ view }: { view: string }) {
   }
 
   return (
-    <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+    <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm flex-wrap">
       <button
         onClick={() => setView('monthly')}
         className={`px-4 py-1.5 transition-colors ${view === 'monthly' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
@@ -32,6 +32,12 @@ export function ReportViewToggle({ view }: { view: string }) {
         className={`px-4 py-1.5 transition-colors ${view === 'compare' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
       >
         Comparar
+      </button>
+      <button
+        onClick={() => setView('assets')}
+        className={`px-4 py-1.5 transition-colors ${view === 'assets' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+      >
+        Ativos
       </button>
     </div>
   )

@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils'
 import {
   Car, Bike, Plus, Pencil, Trash2, Wrench, AlertTriangle,
   CheckCircle2, ChevronDown, ChevronUp, X, Fuel, Calendar,
-  Gauge, MapPin, DollarSign, Clock, ChevronRight,
+  Gauge, MapPin, DollarSign, Clock, ChevronRight, Download,
 } from 'lucide-react'
+import { MaintenanceAlertChecker } from './maintenance-alert-checker'
 import { format, parseISO, differenceInDays, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -957,6 +958,33 @@ function VehicleCard({
   )
 }
 
+// ── CSV Export ────────────────────────────────────────────────────────────────
+
+function exportAllCSV(vehicles: Vehicle[], maintenances: Maintenance[]) {
+  const rows = [
+    ['Veículo', 'Marca', 'Modelo', 'Ano', 'Placa', 'KM Atual', 'Tipo', 'Data', 'KM Serviço', 'Valor (R$)', 'Oficina', 'Próx. KM', 'Próx. Data'],
+  ]
+  for (const v of vehicles) {
+    const ms = maintenances.filter(m => m.vehicle_id === v.id)
+    if (ms.length === 0) {
+      rows.push([v.name, v.make ?? '', v.model ?? '', v.year?.toString() ?? '', v.plate ?? '', v.current_km.toString(), '', '', '', '', '', '', ''])
+    } else {
+      for (const m of ms) {
+        rows.push([
+          v.name, v.make ?? '', v.model ?? '', v.year?.toString() ?? '', v.plate ?? '', v.current_km.toString(),
+          m.type, m.date, m.km_at_service?.toString() ?? '', m.cost?.toFixed(2) ?? '',
+          m.shop ?? '', m.next_km?.toString() ?? '', m.next_date ?? '',
+        ])
+      }
+    }
+  }
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  a.download = `veiculos_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+}
+
 // ── Main Client ───────────────────────────────────────────────────────────────
 
 export function VehiclesClient({
@@ -1074,6 +1102,8 @@ export function VehiclesClient({
         />
       )}
 
+      <MaintenanceAlertChecker />
+
       <div className="p-4 md:p-6 space-y-6 max-w-4xl">
         {/* Header row */}
         <div className="flex items-center justify-between">
@@ -1083,13 +1113,22 @@ export function VehiclesClient({
               {totalVehicles} veículo{totalVehicles !== 1 ? 's' : ''} · {maintenances.length} manutenções registradas
             </p>
           </div>
-          <button
-            onClick={() => setVehicleModal('new')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Veículo
-          </button>
+          <div className="flex items-center gap-2">
+            {maintenances.length > 0 && (
+              <button
+                onClick={() => exportAllCSV(vehicles, maintenances)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <Download className="w-4 h-4" /> CSV
+              </button>
+            )}
+            <button
+              onClick={() => setVehicleModal('new')}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Novo Veículo
+            </button>
+          </div>
         </div>
 
         {/* Summary cards */}

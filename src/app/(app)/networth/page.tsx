@@ -37,7 +37,7 @@ export default async function NetWorthPage({
 
   const monthStart = new Date(year, month - 1, 1).toISOString().slice(0, 10)
 
-  const [accountsRes, balancesRes, goalsRes, snapshotsRes] = await Promise.all([
+  const [accountsRes, balancesRes, goalsRes, snapshotsRes, vehiclesRes, propertiesRes] = await Promise.all([
     coupleId
       ? supabase.from('accounts').select('id, name, type, limit_amount').eq('couple_id', coupleId).is('deleted_at', null).order('sort_order').order('created_at')
       : Promise.resolve(null),
@@ -50,12 +50,20 @@ export default async function NetWorthPage({
     coupleId
       ? (supabase.from('networth_snapshots') as any).select('*').eq('couple_id', coupleId).order('month', { ascending: true }).limit(12)
       : Promise.resolve(null),
+    coupleId
+      ? (supabase as any).from('vehicles').select('id, name, make, model, year, current_value').eq('couple_id', coupleId).eq('active', true).not('current_value', 'is', null)
+      : Promise.resolve(null),
+    coupleId
+      ? (supabase as any).from('properties').select('id, name, type, current_value').eq('couple_id', coupleId).eq('active', true).not('current_value', 'is', null)
+      : Promise.resolve(null),
   ])
 
   const accounts: any[] = accountsRes?.data ?? []
   const balances: any[] = balancesRes?.data ?? []
   const goals: any[] = goalsRes?.data ?? []
   const snapshots: any[] = snapshotsRes?.data ?? []
+  const vehiclesWithValue: any[] = vehiclesRes?.data ?? []
+  const propertiesWithValue: any[] = propertiesRes?.data ?? []
   const balanceMap = new Map(balances.map((b) => [b.id, b.balance]))
 
   // Assets: positive-balance accounts
@@ -77,7 +85,10 @@ export default async function NetWorthPage({
   const totalCCDebt = creditCards.reduce((s, a) => s + Math.max(0, -(a.balance)), 0)
   const totalNegative = negativeAccounts.reduce((s, a) => s + Math.abs(a.balance), 0)
   const totalLiabilities = totalCCDebt + totalNegative
-  const netWorth = totalAssets - totalLiabilities
+  const totalVehiclesValue = vehiclesWithValue.reduce((s: number, v: any) => s + (v.current_value ?? 0), 0)
+  const totalPropertiesValue = propertiesWithValue.reduce((s: number, p: any) => s + (p.current_value ?? 0), 0)
+  const totalRealAssets = totalVehiclesValue + totalPropertiesValue
+  const netWorth = totalAssets + totalRealAssets - totalLiabilities
   const totalGoalsSaved = goals.reduce((s: number, g: any) => s + g.current_amount, 0)
 
   // Last 6 months placeholder history (static view of current networth)
@@ -186,6 +197,35 @@ export default async function NetWorthPage({
             <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between">
               <span className="text-sm font-semibold text-gray-600">Total</span>
               <span className="text-sm font-bold text-green-600 financial-value">{formatCurrency(totalAssets)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Real Assets (vehicles + properties) */}
+        {totalRealAssets > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 text-sm mb-3">Ativos Reais</h3>
+            <div className="space-y-2">
+              {propertiesWithValue.map((p: any) => (
+                <div key={p.id} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">{p.name} <span className="text-xs text-gray-400">(imóvel)</span></span>
+                  <span className="text-sm font-semibold text-gray-900 financial-value">{formatCurrency(p.current_value)}</span>
+                </div>
+              ))}
+              {vehiclesWithValue.map((v: any) => (
+                <div key={v.id} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">
+                    {v.name}
+                    {(v.make || v.model) && <span className="text-xs text-gray-400 ml-1">({[v.make, v.model].filter(Boolean).join(' ')})</span>}
+                    <span className="text-xs text-gray-400 ml-1">(veículo)</span>
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 financial-value">{formatCurrency(v.current_value)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between">
+              <span className="text-sm font-semibold text-gray-600">Total</span>
+              <span className="text-sm font-bold text-green-600 financial-value">{formatCurrency(totalRealAssets)}</span>
             </div>
           </div>
         )}

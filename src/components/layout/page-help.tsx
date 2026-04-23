@@ -548,6 +548,60 @@ const HELP: Record<string, PageHelpContent> = {
     ],
   },
 
+  '/subscriptions': {
+    title: 'Assinaturas',
+    description: 'Controle todos os serviços recorrentes do casal com custo mensal consolidado.',
+    sections: [
+      {
+        icon: 'info',
+        title: 'O que você pode fazer',
+        items: [
+          'Cadastrar assinaturas com ciclo de cobrança (mensal, anual, semanal...)',
+          'Escolher de 22 presets populares: Netflix, Spotify, Disney+, iCloud e mais',
+          'Ver custo mensal equivalente de cada serviço e o total consolidado',
+          'Receber alerta de renovação próxima (≤7 dias)',
+          'Pausar ou encerrar assinaturas sem excluir o histórico',
+        ],
+      },
+      {
+        icon: 'tip',
+        title: 'Dicas',
+        items: [
+          'A diferença para Recorrentes: aqui o foco é em assinaturas digitais com ciclos variados',
+          'Use para auditar o total mensal de serviços — muitas vezes surpreende',
+          'Marque como inativa em vez de excluir — facilita reativar depois',
+        ],
+      },
+    ],
+  },
+
+  '/reminders': {
+    title: 'Lembretes Financeiros',
+    description: 'Lembretes pontuais para tarefas financeiras que precisam de atenção.',
+    sections: [
+      {
+        icon: 'info',
+        title: 'O que você pode fazer',
+        items: [
+          'Criar lembretes com data de vencimento, valor e prioridade',
+          'Ver lembretes pendentes ordenados por urgência',
+          'Marcar como concluído com um clique',
+          'Lembretes atrasados aparecem em destaque vermelho',
+          'Os mais urgentes aparecem no Dashboard automaticamente',
+        ],
+      },
+      {
+        icon: 'tip',
+        title: 'Dicas',
+        items: [
+          'Use para tarefas únicas que não se repetem (ex: renovar CNH, declarar IR)',
+          'Para gastos mensais fixos, prefira Recorrentes; para assinaturas, use Assinaturas',
+          'Prioridade "Alta" aparece com destaque extra no card do Dashboard',
+        ],
+      },
+    ],
+  },
+
   '/insights': {
     title: 'Insights',
     description: 'Análises automáticas do seu comportamento financeiro dos últimos meses.',

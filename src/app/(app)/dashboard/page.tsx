@@ -11,6 +11,7 @@ import { CommitmentsCalendar } from '@/components/features/dashboard/commitments
 import { DashboardHider } from '@/components/features/dashboard/hidable-widget'
 import { DashboardCustomizeButton } from '@/components/features/dashboard/dashboard-customize'
 import { DueInstallmentsChecker } from '@/components/features/dashboard/due-installments-checker'
+import { RemindersDashboardCard } from '@/components/features/reminders/reminders-dashboard-card'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -171,6 +172,12 @@ export default async function DashboardPage() {
     ? await (supabase.from('goals') as any).select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
     : null
   const goals: any[] = (goalsRes?.data ?? []).filter((g: any) => g.current_amount < g.target_amount).slice(0, 3)
+
+  // Lembretes financeiros
+  const remindersRes = coupleId
+    ? await (supabase as any).from('financial_reminders').select('id, title, due_date, amount, priority, status').eq('couple_id', coupleId).order('due_date', { ascending: true })
+    : null
+  const reminders: any[] = remindersRes?.data ?? []
 
   // Evolução do saldo (back-calculated from current balance)
   const balanceHistory: number[] = []
@@ -575,6 +582,11 @@ export default async function DashboardPage() {
               </p>
             )}
           </section>
+        )}
+
+        {/* Lembretes financeiros */}
+        {reminders.length > 0 && (
+          <RemindersDashboardCard reminders={reminders} />
         )}
 
         {/* Últimas transações */}

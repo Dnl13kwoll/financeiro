@@ -8,7 +8,7 @@ import {
   PieChart, Settings, LogOut, BarChart2, Target, Menu, X,
   CalendarClock, TrendingUp, LineChart, Activity, Heart, ClipboardList,
   Landmark, HelpCircle, Star, Plane, ShoppingCart, Tag, Lightbulb,
-  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car, Home,
+  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car, Home, Tv, Bell,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -30,10 +30,12 @@ const NAV_GROUPS = [
   {
     label: 'Controle',
     items: [
-      { href: '/installments', label: 'Parcelamentos',   icon: Layers },
-      { href: '/recurring',    label: 'Recorrentes',     icon: RefreshCw },
-      { href: '/budgets',      label: 'Orçamentos',      icon: PieChart },
-      { href: '/goals',        label: 'Metas',           icon: Target },
+      { href: '/installments',   label: 'Parcelamentos',   icon: Layers },
+      { href: '/recurring',      label: 'Recorrentes',     icon: RefreshCw },
+      { href: '/subscriptions',  label: 'Assinaturas',     icon: Tv },
+      { href: '/reminders',      label: 'Lembretes',       icon: Bell },
+      { href: '/budgets',        label: 'Orçamentos',      icon: PieChart },
+      { href: '/goals',          label: 'Metas',           icon: Target },
     ],
   },
   {

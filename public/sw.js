@@ -1,10 +1,16 @@
-const CACHE_STATIC = 'financeiro-static-v2'
-const CACHE_PAGES  = 'financeiro-pages-v2'
-const CACHE_DATA   = 'financeiro-data-v2'
+const CACHE_STATIC = 'financeiro-static-v3'
+const CACHE_PAGES  = 'financeiro-pages-v3'
+const CACHE_DATA   = 'financeiro-data-v3'
 const ALL_CACHES   = [CACHE_STATIC, CACHE_PAGES, CACHE_DATA]
 
 // Static assets to pre-cache on install
-const STATIC_PRECACHE = ['/icon.svg', '/manifest.json']
+const STATIC_PRECACHE = [
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/manifest.webmanifest',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -102,8 +108,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: '/icon-192.png',
+      badge: '/apple-touch-icon.png',
       tag: 'financeiro-notification',
       renotify: true,
       data: { url: data.url },

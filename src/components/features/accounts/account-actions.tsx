@@ -19,7 +19,7 @@ const ACCOUNT_COLORS = [
 type Account = {
   id: string
   name: string
-  type: 'cash' | 'bank' | 'credit_card'
+  type: string
   limit_amount?: number | null
   closing_day?: number | null
   due_day?: number | null

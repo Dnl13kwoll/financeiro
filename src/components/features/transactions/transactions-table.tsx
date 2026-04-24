@@ -8,7 +8,8 @@ import { ReconcileToggle } from './reconcile-toggle'
 import Link from 'next/link'
 import type { Transaction } from '@/types/database'
 
-const typeConfig: Record<Transaction['type'], { label: string; color: string; icon: React.ReactNode }> = {
+type TxType = 'income' | 'expense' | 'transfer'
+const typeConfig: Record<TxType, { label: string; color: string; icon: React.ReactNode }> = {
   income: { label: 'Entrada', color: 'text-green-600', icon: <ArrowUpCircle className="w-4 h-4 text-green-500" /> },
   expense: { label: 'Saída', color: 'text-red-600', icon: <ArrowDownCircle className="w-4 h-4 text-red-500" /> },
   transfer: { label: 'Transferência', color: 'text-blue-600', icon: <ArrowLeftRight className="w-4 h-4 text-blue-500" /> },
@@ -16,7 +17,7 @@ const typeConfig: Record<Transaction['type'], { label: string; color: string; ic
 
 type TxRow = {
   id: string
-  type: Transaction['type']
+  type: TxType
   amount: number
   description?: string | null
   category_id?: string | null
@@ -96,7 +97,7 @@ export function TransactionsTable({
           </thead>
           <tbody>
             {transactions.map((t) => {
-              const config = typeConfig[t.type as Transaction['type']]
+              const config = typeConfig[t.type as TxType]
               const isSelected = selectedIds.includes(t.id)
               return (
                 <tr

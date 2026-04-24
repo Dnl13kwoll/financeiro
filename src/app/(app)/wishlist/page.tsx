@@ -31,17 +31,24 @@ export default async function WishlistPage() {
 
   const itemsRes = coupleId
     ? await (supabase.from('wishlist_items') as any)
-        .select('*, profiles(name), wishlist_votes(*)')
+        .select('*')
         .eq('couple_id', coupleId)
         .order('priority')
         .order('created_at', { ascending: false })
     : null
 
-  if (itemsRes?.error) {
-    console.error('[Wishlist] Erro na query:', itemsRes.error)
-  }
+  const votesRes = coupleId
+    ? await (supabase.from('wishlist_votes') as any)
+        .select('*')
+        .eq('couple_id', coupleId)
+    : null
 
-  const items: any[] = itemsRes?.data ?? []
+  const queryError = itemsRes?.error ?? null
+
+  const items: any[] = (itemsRes?.data ?? []).map((item: any) => ({
+    ...item,
+    wishlist_votes: (votesRes?.data ?? []).filter((v: any) => v.item_id === item.id),
+  }))
   const currentUserId = user!.id
   const pending = items.filter((i) => !i.purchased)
   const purchased = items.filter((i) => i.purchased)
@@ -52,6 +59,11 @@ export default async function WishlistPage() {
       <Header title="Lista de Desejos" />
 
       <div className="p-4 md:p-6 space-y-4">
+        {queryError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar lista:</strong> {(queryError as any).message ?? JSON.stringify(queryError)}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           {totalPending > 0 && (
             <p className="text-sm text-gray-500">
@@ -92,7 +104,6 @@ export default async function WishlistPage() {
                           <ExternalLink className="w-3 h-3" /> Ver link
                         </a>
                       )}
-                      <span className="text-xs text-gray-300">{(item.profiles as any)?.name}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 relative z-10">

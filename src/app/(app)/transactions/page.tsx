@@ -58,7 +58,7 @@ export default async function TransactionsPage({
   let query = coupleId
     ? supabase
         .from('transactions')
-        .select('*, categories(*), accounts(*)')
+        .select('*, categories(id, name, color), accounts!account_id(id, name, color)')
         .eq('couple_id', coupleId)
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)

@@ -16,9 +16,7 @@ import { ExportButton } from '@/components/features/transactions/export-button'
 import { TransactionSummary } from '@/components/features/transactions/transaction-summary'
 import { CategoryTotals } from '@/components/features/transactions/category-totals'
 import { Suspense } from 'react'
-import { SortHeader } from '@/components/features/transactions/sort-header'
 import Link from 'next/link'
-// SortHeader/Link kept for pagination below
 
 const PAGE_SIZE = 50
 
@@ -60,7 +58,7 @@ export default async function TransactionsPage({
   let query = coupleId
     ? supabase
         .from('transactions')
-        .select('*, categories(name, color), accounts(name, color)')
+        .select('*, categories(*), accounts(*)')
         .eq('couple_id', coupleId)
         .gte('competence_date', monthStart)
         .lte('competence_date', monthEnd)
@@ -77,6 +75,10 @@ export default async function TransactionsPage({
   if (query && params.amount_max) query = (query as any).lte('amount', parseFloat(params.amount_max))
 
   const transactionsRes = query ? await query : null
+  const queryError = transactionsRes?.error ?? null
+  if (queryError) {
+    console.error('[Transações] Erro na query principal:', queryError)
+  }
 
   const accountsRes = coupleId
     ? await supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)
@@ -190,6 +192,13 @@ export default async function TransactionsPage({
             )}
           </div>
         </div>
+
+        {/* Query error */}
+        {queryError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar transações:</strong> {(queryError as any).message ?? JSON.stringify(queryError)}
+          </div>
+        )}
 
         {/* Summary cards */}
         {transactions.length > 0 && (

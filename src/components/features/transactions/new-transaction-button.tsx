@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -36,6 +36,7 @@ export function NewTransactionButton({
   const skipDupCheck = useRef(false)
   const formRef = useRef<HTMLFormElement>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   // Keyboard shortcut: press 'n' to open new transaction
   useEffect(() => {
@@ -183,7 +184,7 @@ export function NewTransactionButton({
     setOpen(false)
     resetForm()
     showToast(n > 1 ? `Parcelamento em ${n}x criado!` : 'Transação salva!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   function resetForm() {

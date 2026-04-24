@@ -31,11 +31,15 @@ export default async function WishlistPage() {
 
   const itemsRes = coupleId
     ? await (supabase.from('wishlist_items') as any)
-        .select('*, profiles(full_name), wishlist_votes(*)')
+        .select('*, profiles(name), wishlist_votes(*)')
         .eq('couple_id', coupleId)
         .order('priority')
         .order('created_at', { ascending: false })
     : null
+
+  if (itemsRes?.error) {
+    console.error('[Wishlist] Erro na query:', itemsRes.error)
+  }
 
   const items: any[] = itemsRes?.data ?? []
   const currentUserId = user!.id
@@ -88,7 +92,7 @@ export default async function WishlistPage() {
                           <ExternalLink className="w-3 h-3" /> Ver link
                         </a>
                       )}
-                      <span className="text-xs text-gray-300">{(item.profiles as any)?.full_name}</span>
+                      <span className="text-xs text-gray-300">{(item.profiles as any)?.name}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 relative z-10">

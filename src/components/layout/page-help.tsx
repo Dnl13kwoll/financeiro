@@ -548,6 +548,33 @@ const HELP: Record<string, PageHelpContent> = {
     ],
   },
 
+  '/commitments': {
+    title: 'Compromissos Fixos',
+    description: 'Visão unificada de todas as saídas fixas mensais: recorrentes e assinaturas.',
+    sections: [
+      {
+        icon: 'info',
+        title: 'O que você vê aqui',
+        items: [
+          'Contas recorrentes (aluguel, energia, internet...) e assinaturas digitais em uma só tela',
+          'Total mensal consolidado e equivalente anual',
+          'Filtro por tipo: todos, só recorrentes, só assinaturas',
+          'Busca rápida por nome',
+          'Alerta de renovações de assinatura nos próximos 7 dias',
+        ],
+      },
+      {
+        icon: 'tip',
+        title: 'Dicas',
+        items: [
+          'Use esta tela para auditar o total fixo mensal antes de planejar o orçamento',
+          'Clique em "Gerenciar" para editar cada item em sua página original',
+          'Marque "Mostrar inativos" para ver assinaturas canceladas',
+        ],
+      },
+    ],
+  },
+
   '/subscriptions': {
     title: 'Assinaturas',
     description: 'Controle todos os serviços recorrentes do casal com custo mensal consolidado.',

@@ -49,7 +49,7 @@ export default async function AccountDetailPage({
     .from('account_balances')
     .select('*')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   const balance: number = (balanceRes.data as any)?.balance ?? 0
 
   const txRes = await supabase

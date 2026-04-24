@@ -5,13 +5,34 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { showToast } from '@/components/ui/toast'
 
+type BudgetCategory = { id: string; name: string; amount: number }
+
 // ── New List ──────────────────────────────────────────────────────────────────
-export function NewShoppingListButton({ coupleId, userId }: { coupleId: string; userId: string }) {
+export function NewShoppingListButton({
+  coupleId,
+  userId,
+  budgetCategories = [],
+}: {
+  coupleId: string
+  userId: string
+  budgetCategories?: BudgetCategory[]
+}) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [budget, setBudget] = useState('')
+  const [budgetCategoryId, setBudgetCategoryId] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  function handleCategoryChange(id: string) {
+    setBudgetCategoryId(id)
+    if (id) {
+      const cat = budgetCategories.find(c => c.id === id)
+      if (cat) setBudget(String(cat.amount))
+    } else {
+      setBudget('')
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -21,6 +42,7 @@ export function NewShoppingListButton({ coupleId, userId }: { coupleId: string; 
       couple_id: coupleId,
       name: name.trim() || 'Lista de compras',
       budget: budget ? parseFloat(budget) : null,
+      budget_category_id: budgetCategoryId || null,
       created_by: userId,
     })
     setLoading(false)
@@ -28,6 +50,7 @@ export function NewShoppingListButton({ coupleId, userId }: { coupleId: string; 
     setOpen(false)
     setName('')
     setBudget('')
+    setBudgetCategoryId('')
     router.refresh()
   }
 
@@ -60,8 +83,27 @@ export function NewShoppingListButton({ coupleId, userId }: { coupleId: string; 
                   className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
                 />
               </div>
+
+              {budgetCategories.length > 0 && (
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Vincular ao orçamento (opcional)</label>
+                  <select
+                    value={budgetCategoryId}
+                    onChange={e => handleCategoryChange(e.target.value)}
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                  >
+                    <option value="">Sem vínculo</option>
+                    {budgetCategories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
-                <label className="text-xs text-gray-500 font-medium">Orçamento (opcional)</label>
+                <label className="text-xs text-gray-500 font-medium">
+                  {budgetCategoryId ? 'Limite do orçamento' : 'Orçamento manual (opcional)'}
+                </label>
                 <input
                   type="number"
                   value={budget}

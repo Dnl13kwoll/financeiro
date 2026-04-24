@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Lista de Compras' }
 import { Header } from '@/components/layout/header'
@@ -11,7 +13,7 @@ import {
   DeleteShoppingList,
   CompleteShoppingList,
 } from '@/components/features/shopping/shopping-actions'
-import { ShoppingCart, CheckCircle2 } from 'lucide-react'
+import { ShoppingCart, CheckCircle2, Tag } from 'lucide-react'
 
 export default async function ShoppingPage() {
   const supabase = await createClient()
@@ -33,6 +35,22 @@ export default async function ShoppingPage() {
         .order('created_at', { ascending: false })
     : null
 
+  // Fetch current month budgets for linking
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const budgetsRes = coupleId
+    ? await (supabase.from('budgets') as any)
+        .select('id, amount, category_id, categories(id, name)')
+        .eq('couple_id', coupleId)
+        .eq('month', monthStart)
+    : null
+  const budgetCategories: { id: string; name: string; amount: number }[] =
+    (budgetsRes?.data ?? []).map((b: any) => ({
+      id: b.categories?.id ?? b.category_id,
+      name: b.categories?.name ?? '—',
+      amount: b.amount,
+    }))
+
   const allLists: any[] = listsRes?.data ?? []
   const activeLists = allLists.filter((l: any) => !l.completed)
   const doneLists = allLists.filter((l: any) => l.completed)
@@ -46,7 +64,7 @@ export default async function ShoppingPage() {
           <p className="text-sm text-gray-500">
             {activeLists.length} {activeLists.length === 1 ? 'lista ativa' : 'listas ativas'}
           </p>
-          {coupleId && <NewShoppingListButton coupleId={coupleId} userId={user!.id} />}
+          {coupleId && <NewShoppingListButton coupleId={coupleId} userId={user!.id} budgetCategories={budgetCategories} />}
         </div>
 
         {activeLists.length === 0 && doneLists.length === 0 && (
@@ -64,6 +82,15 @@ export default async function ShoppingPage() {
           const actualTotal = items.filter((i: any) => i.checked && i.actual_price != null)
             .reduce((s: number, i: any) => s + ((i.actual_price ?? 0) * (i.quantity ?? 1)), 0)
           const progress = items.length > 0 ? Math.round((checked.length / items.length) * 100) : 0
+
+          // Budget category link
+          const linkedBudgetCat = list.budget_category_id
+            ? budgetCategories.find(c => c.id === list.budget_category_id)
+            : null
+          const budgetLimit = list.budget ?? linkedBudgetCat?.amount ?? null
+          const budgetUsed = actualTotal > 0 ? actualTotal : estimatedTotal
+          const budgetOver = budgetLimit != null && budgetUsed > budgetLimit
+          const budgetPct = budgetLimit ? Math.min(Math.round((budgetUsed / budgetLimit) * 100), 100) : 0
 
           // Group pending by category
           const byCategory: Record<string, any[]> = {}
@@ -86,19 +113,24 @@ export default async function ShoppingPage() {
                           {checked.length}/{items.length} itens
                         </span>
                       )}
-                      {estimatedTotal > 0 && (
+                      {linkedBudgetCat && (
+                        <span className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                          <Tag className="w-3 h-3" />{linkedBudgetCat.name}
+                        </span>
+                      )}
+                      {estimatedTotal > 0 && actualTotal === 0 && (
                         <span className="text-xs text-gray-400 financial-value">
                           Estimado: {formatCurrency(estimatedTotal)}
                         </span>
                       )}
                       {actualTotal > 0 && (
-                        <span className="text-xs text-green-600 font-medium financial-value">
+                        <span className={`text-xs font-medium financial-value ${budgetOver ? 'text-red-600' : 'text-green-600'}`}>
                           Gasto: {formatCurrency(actualTotal)}
                         </span>
                       )}
-                      {list.budget && (
-                        <span className={`text-xs font-medium financial-value ${actualTotal > list.budget ? 'text-red-500' : 'text-gray-400'}`}>
-                          / orçamento {formatCurrency(list.budget)}
+                      {budgetLimit != null && (
+                        <span className={`text-xs font-medium financial-value ${budgetOver ? 'text-red-500' : 'text-gray-400'}`}>
+                          / {formatCurrency(budgetLimit)} {budgetOver ? '(acima!)' : `(${budgetPct}%)`}
                         </span>
                       )}
                     </div>
@@ -109,11 +141,21 @@ export default async function ShoppingPage() {
                 </div>
 
                 {items.length > 0 && (
-                  <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-400 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
+                  <div className="mt-2 space-y-1">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-green-400 rounded-full transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    {budgetLimit != null && (
+                      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${budgetOver ? 'bg-red-400' : 'bg-primary-400'}`}
+                          style={{ width: `${budgetPct}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

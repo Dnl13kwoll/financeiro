@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Download, ChevronDown } from 'lucide-react'
+import { Download, ChevronDown, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 function escapeCSV(v: string | number | null | undefined): string {
@@ -79,6 +79,107 @@ export function ExportButton({
     URL.revokeObjectURL(url); setLoading(false)
   }
 
+  async function handleExportPDF() {
+    setLoading(true); setMenuOpen(false)
+    const rows = await fetchRows()
+    const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    const totalIncome = rows.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const totalExpense = rows.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    const balance = totalIncome - totalExpense
+
+    const tableRows = rows.map(t => `
+      <tr>
+        <td>${t.date}</td>
+        <td>${t.description ?? '—'}</td>
+        <td>${t.categories?.name ?? '—'}</td>
+        <td>${t.accounts?.name ?? '—'}</td>
+        <td class="${t.type === 'income' ? 'income' : t.type === 'expense' ? 'expense' : 'transfer'}">
+          ${t.type === 'income' ? 'Entrada' : t.type === 'expense' ? 'Saída' : 'Transf.'}
+        </td>
+        <td class="amount ${t.type === 'income' ? 'income' : t.type === 'expense' ? 'expense' : ''}">
+          ${t.type === 'expense' ? '-' : '+'}${fmt(t.amount)}
+        </td>
+      </tr>`).join('')
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Extrato de Transações — ${filters.monthStart} a ${filters.monthEnd}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1f2937; background: white; }
+  .header { padding: 24px 32px 16px; border-bottom: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: flex-start; }
+  .logo { font-size: 20px; font-weight: 700; color: #6366f1; }
+  .subtitle { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .period { text-align: right; }
+  .period-label { font-size: 10px; color: #6b7280; }
+  .period-value { font-size: 13px; font-weight: 600; color: #374151; }
+  .summary { display: flex; gap: 0; border-bottom: 1px solid #e5e7eb; }
+  .summary-card { flex: 1; padding: 14px 32px; border-right: 1px solid #f3f4f6; }
+  .summary-card:last-child { border-right: none; }
+  .summary-label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .summary-value { font-size: 16px; font-weight: 700; }
+  .green { color: #059669; }
+  .red { color: #dc2626; }
+  .blue { color: #6366f1; }
+  table { width: 100%; border-collapse: collapse; margin: 0; }
+  thead th { background: #f9fafb; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; }
+  tbody tr { border-bottom: 1px solid #f3f4f6; }
+  tbody tr:hover { background: #fafafa; }
+  td { padding: 7px 12px; font-size: 11px; color: #374151; }
+  td.income { color: #059669; font-weight: 500; }
+  td.expense { color: #dc2626; font-weight: 500; }
+  td.transfer { color: #6366f1; font-weight: 500; }
+  td.amount { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .footer { padding: 16px 32px; border-top: 2px solid #e5e7eb; color: #9ca3af; font-size: 9px; display: flex; justify-content: space-between; }
+  @media print {
+    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    .header { padding: 16px 24px 12px; }
+    .summary-card { padding: 10px 24px; }
+    td, th { padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo">Financeiro</div>
+    <div class="subtitle">para casais — extrato de transações</div>
+  </div>
+  <div class="period">
+    <div class="period-label">Período</div>
+    <div class="period-value">${filters.monthStart} → ${filters.monthEnd}</div>
+    <div class="period-label" style="margin-top:4px">${rows.length} transação(ões)</div>
+  </div>
+</div>
+<div class="summary">
+  <div class="summary-card"><div class="summary-label">Receitas</div><div class="summary-value green">${fmt(totalIncome)}</div></div>
+  <div class="summary-card"><div class="summary-label">Despesas</div><div class="summary-value red">${fmt(totalExpense)}</div></div>
+  <div class="summary-card"><div class="summary-label">Saldo</div><div class="summary-value ${balance >= 0 ? 'green' : 'red'}">${fmt(balance)}</div></div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Data</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th>Tipo</th><th style="text-align:right">Valor</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+<div class="footer">
+  <span>Gerado em ${new Date().toLocaleDateString('pt-BR')} — Financeiro para casais</span>
+  <span>${rows.length} transações</span>
+</div>
+<script>window.onload = () => { window.print() }</script>
+</body></html>`
+
+    const win = window.open('', '_blank')
+    if (win) { win.document.write(html); win.document.close() }
+    setLoading(false)
+  }
+
   async function handleExportXLS() {
     setLoading(true); setMenuOpen(false)
     const rows = await fetchRows()
@@ -103,6 +204,7 @@ export function ExportButton({
         <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-xl shadow-lg w-36 py-1">
           <button onClick={handleExportCSV} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50">CSV (.csv)</button>
           <button onClick={handleExportXLS} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50">Excel (.xls)</button>
+          <button onClick={handleExportPDF} className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50"><FileText className="w-3.5 h-3.5 text-gray-400" />PDF</button>
         </div>
       )}
     </div>

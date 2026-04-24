@@ -138,8 +138,86 @@ export async function GET(req: Request) {
           '/goals',
           supabase
         )) sent++
-        break // one notification per user per run
+        break
       }
+    }
+
+    const db = supabase as any
+
+    // 6. Vehicle maintenance alerts (due in next 7 days or overdue)
+    const { data: vehicleMaints } = await db
+      .from('vehicle_maintenances')
+      .select('type, next_date, vehicles(name)')
+      .eq('couple_id', sub.couple_id)
+      .not('next_date', 'is', null)
+      .lte('next_date', next7)
+
+    for (const m of (vehicleMaints ?? [])) {
+      const vName = (m.vehicles as any)?.name ?? 'Veículo'
+      const diff = Math.round((new Date(m.next_date).getTime() - now.getTime()) / 86400000)
+      const body = diff < 0
+        ? `${vName} — ${m.type} venceu há ${Math.abs(diff)} dia(s)`
+        : `${vName} — ${m.type} vence em ${diff} dia(s)`
+      if (await sendPush(sub, diff < 0 ? '🔧 Manutenção atrasada' : '🔧 Manutenção próxima', body, '/vehicles', supabase)) sent++
+    }
+
+    // 7. Property maintenance alerts (due in next 14 days or urgent pending)
+    const next14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    const { data: propMaints } = await db
+      .from('property_maintenances')
+      .select('type, next_date, priority, status, properties(name)')
+      .eq('couple_id', sub.couple_id)
+
+    for (const m of (propMaints ?? [])) {
+      const pName = (m.properties as any)?.name ?? 'Imóvel'
+      if (m.priority === 'urgente' && m.status !== 'concluido') {
+        const body = `${pName} — ${m.type} com prioridade urgente pendente`
+        if (await sendPush(sub, '🏠 Manutenção urgente', body, '/imoveis', supabase)) sent++
+      } else if (m.next_date && m.status === 'concluido' && m.next_date <= next14) {
+        const diff = Math.round((new Date(m.next_date).getTime() - now.getTime()) / 86400000)
+        const body = diff < 0
+          ? `${pName} — ${m.type} venceu há ${Math.abs(diff)} dia(s)`
+          : `${pName} — ${m.type} vence em ${diff} dia(s)`
+        if (await sendPush(sub, diff < 0 ? '🏠 Manutenção residencial atrasada' : '🏠 Manutenção residencial próxima', body, '/imoveis', supabase)) sent++
+      }
+    }
+
+    // 8. Financial reminders due in next 3 days
+    const next3 = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    const { data: reminders } = await db
+      .from('financial_reminders')
+      .select('title, due_date, priority')
+      .eq('couple_id', sub.couple_id)
+      .eq('status', 'pendente')
+      .lte('due_date', next3)
+
+    if ((reminders ?? []).length > 0) {
+      const overdue = (reminders ?? []).filter((r: any) => r.due_date < today)
+      const upcoming = (reminders ?? []).filter((r: any) => r.due_date >= today)
+      if (overdue.length > 0) {
+        const body = overdue.length === 1 ? `"${overdue[0].title}" está atrasado` : `${overdue.length} lembretes em atraso`
+        if (await sendPush(sub, '🔔 Lembrete atrasado', body, '/reminders', supabase)) sent++
+      }
+      if (upcoming.length > 0) {
+        const body = upcoming.length === 1 ? `"${upcoming[0].title}" vence em breve` : `${upcoming.length} lembretes vencem em até 3 dias`
+        if (await sendPush(sub, '🔔 Lembrete próximo', body, '/reminders', supabase)) sent++
+      }
+    }
+
+    // 9. Subscription renewals in next 7 days
+    const { data: subs } = await db
+      .from('subscriptions')
+      .select('name, renewal_date')
+      .eq('couple_id', sub.couple_id)
+      .eq('active', true)
+      .not('renewal_date', 'is', null)
+      .lte('renewal_date', next7)
+      .gte('renewal_date', today)
+
+    if ((subs ?? []).length > 0) {
+      const names = (subs ?? []).slice(0, 3).map((s: any) => s.name).join(', ')
+      const body = (subs ?? []).length === 1 ? `Renovação de "${names}" nos próximos dias` : `Renovações próximas: ${names}${(subs ?? []).length > 3 ? ` e mais ${(subs ?? []).length - 3}` : ''}`
+      if (await sendPush(sub, '📦 Renovação de assinatura', body, '/subscriptions', supabase)) sent++
     }
   }
 

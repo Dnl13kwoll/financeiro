@@ -36,6 +36,78 @@ const FORMAT_PROFILES: Record<string, FormatProfile> = {
     colMap: { date: 0, description: 1, amount: 2, type_col: null },
     defaultType: 'auto',
   },
+  nubank: {
+    name: 'Nubank (fatura)',
+    // date,category,title,amount
+    separator: ',',
+    colMap: { date: 0, description: 2, amount: 3, type_col: null },
+    defaultType: 'expense',
+  },
+  nubank_conta: {
+    name: 'Nubank (conta corrente)',
+    // Data;Valor;Identificador;Descrição
+    separator: ';',
+    colMap: { date: 0, description: 3, amount: 1, type_col: null },
+    defaultType: 'auto',
+  },
+  itau: {
+    name: 'Itaú',
+    // Data;Histórico;Docto.;Crédito;Débito;Saldo
+    separator: ';',
+    colMap: { date: 0, description: 1, amount: 3, type_col: null },
+    typeMap: {},
+    defaultType: 'auto',
+  },
+  bradesco: {
+    name: 'Bradesco',
+    // Data;Histórico;Docto.;Crédito (R$);Débito (R$);Saldo (R$)
+    separator: ';',
+    colMap: { date: 0, description: 1, amount: 3, type_col: null },
+    defaultType: 'auto',
+  },
+  santander: {
+    name: 'Santander',
+    // Data;Descrição;Valor
+    separator: ';',
+    colMap: { date: 0, description: 1, amount: 2, type_col: null },
+    defaultType: 'auto',
+  },
+  bb: {
+    name: 'Banco do Brasil',
+    // Data;Dependência Origem;Histórico;Data Balancete;Número do documento;Valor
+    separator: ',',
+    colMap: { date: 0, description: 2, amount: 5, type_col: null },
+    defaultType: 'auto',
+  },
+  caixa: {
+    name: 'Caixa Econômica',
+    // Data;Histórico;Valor;Saldo
+    separator: ';',
+    colMap: { date: 0, description: 1, amount: 2, type_col: null },
+    defaultType: 'auto',
+  },
+  c6: {
+    name: 'C6 Bank',
+    // Data;Descrição;Valor
+    separator: ';',
+    colMap: { date: 0, description: 1, amount: 2, type_col: null },
+    defaultType: 'auto',
+  },
+  sicoob: {
+    name: 'Sicoob / Sicredi',
+    // Data;Histórico;Valor;Saldo
+    separator: ';',
+    colMap: { date: 0, description: 1, amount: 2, type_col: null },
+    defaultType: 'auto',
+  },
+  inter: {
+    name: 'Banco Inter',
+    // Data;Tipo Lançamento;Histórico;Valor
+    separator: ';',
+    colMap: { date: 0, description: 2, amount: 3, type_col: 1 },
+    typeMap: { 'crédito': 'income', 'credito': 'income', 'débito': 'expense', 'debito': 'expense', 'entrada': 'income', 'saída': 'expense', 'saida': 'expense' },
+    defaultType: 'auto',
+  },
   mobills: {
     name: 'Mobills',
     // Data;Categoria;Nome;Valor;Tipo;Status
@@ -52,19 +124,11 @@ const FORMAT_PROFILES: Record<string, FormatProfile> = {
     typeMap: { 'receita': 'income', 'despesa': 'expense', '-1': 'expense', '1': 'income' },
     defaultType: 'auto',
   },
-  nubank: {
-    name: 'Nubank (fatura)',
-    // date,category,title,amount
-    separator: ',',
-    colMap: { date: 0, description: 2, amount: 3, type_col: null },
-    defaultType: 'expense',
-  },
-  inter: {
-    name: 'Banco Inter',
-    // Data;Tipo Lançamento;Histórico;Valor
+  guiabolso: {
+    name: 'Guiabolso / Pluggy',
+    // date;description;amount;category
     separator: ';',
-    colMap: { date: 0, description: 2, amount: 3, type_col: 1 },
-    typeMap: { 'crédito': 'income', 'credito': 'income', 'débito': 'expense', 'debito': 'expense', 'entrada': 'income', 'saída': 'expense', 'saida': 'expense' },
+    colMap: { date: 0, description: 1, amount: 2, type_col: null },
     defaultType: 'auto',
   },
 }
@@ -79,6 +143,24 @@ function parseDate(str: string): string | null {
 
 function splitLine(line: string, separator: string | RegExp): string[] {
   return line.split(separator).map(c => c.replace(/^"|"$/g, '').trim())
+}
+
+function autoDetectBank(firstLine: string, text: string): string | null {
+  const lower = firstLine.toLowerCase()
+  if (lower.includes('nubank') || (lower.includes('date') && lower.includes('category') && lower.includes('title'))) return 'nubank'
+  if (lower.includes('itaú') || lower.includes('itau') || lower.includes('docto')) {
+    if (lower.includes('crédito') && lower.includes('débito')) return 'itau'
+  }
+  if (lower.includes('bradesco') || (lower.includes('crédito (r$)') && lower.includes('débito (r$)'))) return 'bradesco'
+  if (lower.includes('santander')) return 'santander'
+  if (lower.includes('banco do brasil') || lower.includes('dependência origem') || lower.includes('dependencia origem')) return 'bb'
+  if (lower.includes('caixa econômica') || lower.includes('caixa economica')) return 'caixa'
+  if (lower.includes('c6 bank') || lower.includes('c6bank')) return 'c6'
+  if (lower.includes('sicoob') || lower.includes('sicredi')) return 'sicoob'
+  if (lower.includes('mobills')) return 'mobills'
+  if (lower.includes('organizze')) return 'organizze'
+  if (text.toLowerCase().includes('banco inter') || lower.includes('tipo lançamento')) return 'inter'
+  return null
 }
 
 function autoDetectColumns(headers: string[]): ColumnMap {
@@ -146,11 +228,19 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
       const text = ev.target?.result as string
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
       if (lines.length < 2) { setError('Arquivo muito curto ou sem dados.'); return }
-      const profile = FORMAT_PROFILES[formatKey] ?? FORMAT_PROFILES.auto
+
+      // Auto-detect bank format from file content when in auto mode
+      let activeFormatKey = formatKey
+      if (formatKey === 'auto') {
+        const detected = autoDetectBank(lines[0], text.slice(0, 500))
+        if (detected) { activeFormatKey = detected; setFormatKey(detected) }
+      }
+
+      const profile = FORMAT_PROFILES[activeFormatKey] ?? FORMAT_PROFILES.auto
       const hdrs = splitLine(lines[0], profile.separator)
       setHeaders(hdrs)
       setRawLines(lines.slice(1))
-      if (formatKey === 'auto') {
+      if (activeFormatKey === 'auto') {
         setColMap(autoDetectColumns(hdrs))
         setDefaultType('auto')
         setStep('map')
@@ -238,11 +328,11 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
             </div>
             {formatKey === 'auto' ? (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-                Detecção automática de colunas. Na próxima etapa você poderá ajustar o mapeamento.
+                Detecção automática — o banco será identificado pelo cabeçalho do arquivo. Se não detectar, você ajusta o mapeamento manualmente.
               </div>
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
-                Formato <strong>{FORMAT_PROFILES[formatKey]?.name}</strong> selecionado — o mapeamento de colunas será aplicado automaticamente.
+                Formato <strong>{FORMAT_PROFILES[formatKey]?.name}</strong> — mapeamento aplicado automaticamente.
               </div>
             )}
             <div>

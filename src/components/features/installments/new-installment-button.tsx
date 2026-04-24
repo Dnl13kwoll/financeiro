@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
+import { showToast } from '@/components/ui/toast'
 import { Plus } from 'lucide-react'
 
 type Account = { id: string; name: string }
@@ -40,11 +41,17 @@ export function NewInstallmentButton({ coupleId, userId, accounts = [], categori
       user_id: userId,
       couple_id: coupleId,
     }
-    const { data: installment } = await supabase
+    const { data: installment, error: installError } = await supabase
       .from('installments')
       .insert(installmentPayload)
       .select()
       .single()
+
+    if (installError) {
+      showToast('Erro ao criar parcelamento: ' + installError.message, 'error')
+      setLoading(false)
+      return
+    }
 
     if (installment) {
       const items: any[] = Array.from({ length: totalParts }, (_, i) => {
@@ -57,9 +64,15 @@ export function NewInstallmentButton({ coupleId, userId, accounts = [], categori
           due_date: dueDate.toISOString().slice(0, 10),
         }
       })
-      await (supabase.from('installment_items') as any).insert(items)
+      const { error: itemsError } = await (supabase.from('installment_items') as any).insert(items)
+      if (itemsError) {
+        showToast('Parcelamento criado, mas erro nas parcelas: ' + itemsError.message, 'error')
+        setLoading(false)
+        return
+      }
     }
 
+    showToast(`Parcelamento criado com ${totalParts} parcelas!`)
     setLoading(false)
     setOpen(false)
     form.reset()

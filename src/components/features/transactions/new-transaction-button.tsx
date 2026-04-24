@@ -124,7 +124,7 @@ export function NewTransactionButton({
       const { data: installGroup, error: installError } = await (supabase.from('installments') as any).insert({
         description,
         total_amount: totalAmount,
-        installment_count: n,
+        total_parts: n,
         couple_id: coupleId,
         user_id: userId,
         start_date: baseDate.toISOString().slice(0, 10),
@@ -141,7 +141,7 @@ export function NewTransactionButton({
           const dueDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate())
           return {
             installment_id: installGroup.id,
-            installment_number: i + 1,
+            part_number: i + 1,
             amount: parseFloat((totalAmount / n).toFixed(2)),
             due_date: dueDate.toISOString().slice(0, 10),
             paid: false,

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -19,6 +19,7 @@ export function BulkActionsBar({
   const [categorizingOpen, setCategorizingOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleBulkDelete() {
     if (!confirm(`Excluir ${selectedIds.length} transação(ões)?`)) return
@@ -30,7 +31,7 @@ export function BulkActionsBar({
     setLoading(false)
     onClearSelection()
     showToast(`${selectedIds.length} transação(ões) excluída(s).`, 'error')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleBulkReconcile() {
@@ -42,7 +43,7 @@ export function BulkActionsBar({
     setLoading(false)
     onClearSelection()
     showToast(`${selectedIds.length} transação(ões) conciliada(s)!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleBulkCategorize(categoryId: string) {
@@ -55,7 +56,7 @@ export function BulkActionsBar({
     setCategorizingOpen(false)
     onClearSelection()
     showToast(`Categoria aplicada em ${selectedIds.length} transação(ões)!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (selectedIds.length === 0) return null

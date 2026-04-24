@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -16,6 +16,7 @@ export function CopyPlanButton({
 }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleCopy() {
     setLoading(true)
@@ -46,7 +47,7 @@ export function CopyPlanButton({
 
     setLoading(false)
     showToast(`${rows.length} linha(s) copiadas do mês anterior!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -16,6 +16,7 @@ export function GenerateRecurringButton({
 }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleGenerate() {
     if (!confirm('Gerar transações para todas as contas recorrentes ativas neste mês?')) return
@@ -78,7 +79,7 @@ export function GenerateRecurringButton({
         showToast('Todas as recorrentes já têm transação este mês.', 'error')
       } else {
         showToast(`${generated} transação(ões) gerada(s)!`)
-        router.refresh()
+        startTransition(() => { router.refresh() })
       }
     } catch {
       showToast('Erro ao gerar transações.', 'error')

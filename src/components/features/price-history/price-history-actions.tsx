@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { Plus, X, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -25,6 +25,7 @@ export function NewPriceRecordButton({ coupleId, userId, itemSuggestions }: {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   const filtered = itemName.length > 1
     ? itemSuggestions.filter(s => s.toLowerCase().includes(itemName.toLowerCase())).slice(0, 5)
@@ -51,7 +52,7 @@ export function NewPriceRecordButton({ coupleId, userId, itemSuggestions }: {
     setOpen(false)
     setItemName(''); setPrice(''); setQty('1'); setUnit(''); setStore(''); setCategory('')
     setDate(new Date().toISOString().slice(0, 10))
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (
@@ -183,12 +184,13 @@ export function NewPriceRecordButton({ coupleId, userId, itemSuggestions }: {
 export function DeletePriceRecord({ id }: { id: string }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
   async function del() {
     if (!confirm('Excluir registro?')) return
     setLoading(true)
     await (createClient().from('price_history') as any).delete().eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
   return (
     <button onClick={del} disabled={loading}

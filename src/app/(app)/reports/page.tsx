@@ -51,6 +51,7 @@ export default async function ReportsPage({
           .lte('competence_date', yearEnd)
           .is('deleted_at', null)
       : null
+    const pageErrors = [annualRes?.error].filter(Boolean)
     const annualTx: any[] = annualRes?.data ?? []
 
     // Per-month totals
@@ -95,6 +96,11 @@ export default async function ReportsPage({
       <div className="flex flex-col flex-1">
         <Header title="Relatórios" />
         <div className="p-4 md:p-6 space-y-6 max-w-3xl">
+          {pageErrors.length > 0 && (
+            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <Suspense><ReportViewToggle view={view} /></Suspense>
@@ -279,6 +285,7 @@ export default async function ReportsPage({
         ? supabase.from('transactions').select('type, amount, categories(name)').eq('couple_id', coupleId).gte('competence_date', startB).lte('competence_date', endB).is('deleted_at', null)
         : Promise.resolve(null),
     ])
+    const pageErrors = [resA?.error, resB?.error].filter(Boolean)
     const txA: any[] = resA?.data ?? []
     const txB: any[] = resB?.data ?? []
 
@@ -309,6 +316,11 @@ export default async function ReportsPage({
       <div className="flex flex-col flex-1">
         <Header title="Relatórios" />
         <div className="p-4 md:p-6 space-y-6 max-w-3xl">
+          {pageErrors.length > 0 && (
+            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <Suspense><ReportViewToggle view={view} /></Suspense>
             <Suspense><CompareMonthsPicker monthA={monthA} monthB={monthB} /></Suspense>
@@ -401,6 +413,7 @@ export default async function ReportsPage({
       coupleId ? db.from('property_maintenances').select('property_id, type, cost, completed_date, status').eq('couple_id', coupleId).not('cost', 'is', null).eq('status', 'concluido') : Promise.resolve(null),
     ])
 
+    const pageErrors = [vehiclesRes?.error, vehicleMaintsRes?.error, propertiesRes?.error, propMaintsRes?.error].filter(Boolean)
     const vehicles: any[] = vehiclesRes?.data ?? []
     const vehicleMaints: any[] = vehicleMaintsRes?.data ?? []
     const properties: any[] = propertiesRes?.data ?? []
@@ -442,6 +455,11 @@ export default async function ReportsPage({
       <div className="flex flex-col flex-1">
         <Header title="Relatórios" />
         <div className="p-4 md:p-6 space-y-6 max-w-3xl">
+          {pageErrors.length > 0 && (
+            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <Suspense><ReportViewToggle view={view} /></Suspense>
           </div>
@@ -589,6 +607,7 @@ export default async function ReportsPage({
       ? supabase.from('recurring_accounts').select('name, amount').eq('couple_id', coupleId).eq('active', true)
       : Promise.resolve(null),
   ])
+  const pageErrors = [transactionsRes?.error, prevTransactionsRes?.error].filter(Boolean)
   const transactions: any[] = transactionsRes?.data ?? []
   const prevTransactions: any[] = prevTransactionsRes?.data ?? []
   const members: any[] = membersRes?.data ?? []
@@ -728,6 +747,11 @@ export default async function ReportsPage({
     <div className="flex flex-col flex-1">
       <Header title="Relatórios" />
       <div className="p-4 md:p-6 space-y-6 max-w-3xl">
+        {pageErrors.length > 0 && (
+          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
             <Suspense><ReportViewToggle view={view} /></Suspense>

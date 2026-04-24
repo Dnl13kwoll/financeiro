@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -8,12 +8,13 @@ import { Pencil, Trash2 } from 'lucide-react'
 
 export function BudgetDeleteButton({ id }: { id: string }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleDelete() {
     if (!confirm('Excluir este orçamento?')) return
     const supabase = createClient()
     await (supabase.from('budgets') as any).delete().eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (
@@ -39,6 +40,7 @@ export function BudgetEditButton({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -52,7 +54,7 @@ export function BudgetEditButton({
     setLoading(false)
     setOpen(false)
     showToast('Orçamento atualizado!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

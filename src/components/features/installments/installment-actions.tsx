@@ -1,3 +1,4 @@
+import { useTransition } from 'react'
 'use client'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -5,19 +6,20 @@ import { XCircle, Trash2 } from 'lucide-react'
 
 export function InstallmentActions({ id, status }: { id: string; status: string }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleCancel() {
     if (!confirm('Cancelar este parcelamento?')) return
     const supabase = createClient()
     await (supabase.from('installments') as any).update({ status: 'canceled' }).eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
     if (!confirm('Excluir este parcelamento permanentemente?')) return
     const supabase = createClient()
     await (supabase.from('installments') as any).delete().eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

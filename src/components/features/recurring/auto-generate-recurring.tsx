@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -14,6 +14,7 @@ export function AutoGenerateRecurring({
   currentMonth: string
 }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const ran = useRef(false)
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export function AutoGenerateRecurring({
 
       if (generated > 0) {
         showToast(`${generated} recorrente(s) gerada(s) automaticamente para este mês!`)
-        router.refresh()
+        startTransition(() => { router.refresh() })
       }
     }
 

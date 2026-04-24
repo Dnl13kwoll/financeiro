@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -20,6 +20,7 @@ export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; a
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -45,7 +46,7 @@ export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; a
     setLoading(false)
     setOpen(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (
@@ -136,6 +137,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
   const [editOpen, setEditOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -159,7 +161,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
     setLoading(false)
     setAddOpen(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
@@ -181,7 +183,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
     showToast('Meta atualizada!')
     setLoading(false)
     setEditOpen(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
@@ -190,7 +192,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const { error } = await (supabase.from('goals') as any).delete().eq('id', goal.id)
     if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast('Meta excluída.', 'error')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

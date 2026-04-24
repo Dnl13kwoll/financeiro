@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -85,6 +85,7 @@ export function ImportOFXButton({
   const [loading, setLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -125,7 +126,7 @@ export function ImportOFXButton({
     setParsed([])
     if (fileRef.current) fileRef.current.value = ''
     showToast(`${rows.length} transação(ões) importada(s)!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

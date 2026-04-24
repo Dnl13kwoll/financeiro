@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ThumbsUp, ThumbsDown } from 'lucide-react'
@@ -21,6 +21,7 @@ export function WishlistVote({
 }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function vote(approved: boolean) {
     setLoading(true)
@@ -30,7 +31,7 @@ export function WishlistVote({
       { onConflict: 'item_id,user_id' }
     )
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

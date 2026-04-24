@@ -167,6 +167,8 @@ export default async function DashboardPage() {
     : null
   const recentTx: any[] = recentTxRes?.data ?? []
 
+  const pageErrors = [balancesRes?.error, recentTxRes?.error].filter(Boolean)
+
   // Metas ativas
   const goalsRes = coupleId
     ? await (supabase.from('goals') as any).select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
@@ -232,6 +234,11 @@ export default async function DashboardPage() {
       <Header title="Dashboard" />
 
       <div className="p-4 md:p-6 space-y-6 overflow-y-auto">
+        {pageErrors.length > 0 && (
+          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+          </div>
+        )}
         <DashboardHider />
         {coupleId && <DueInstallmentsChecker coupleId={coupleId} />}
         <div className="flex justify-end">

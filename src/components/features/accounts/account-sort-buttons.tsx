@@ -1,3 +1,4 @@
+import { useTransition } from 'react'
 'use client'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -15,6 +16,7 @@ export function AccountSortButtons({
   isLast: boolean
 }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function move(direction: 'up' | 'down') {
     const supabase = createClient()
@@ -22,7 +24,7 @@ export function AccountSortButtons({
     await (supabase.from('accounts') as any)
       .update({ sort_order: sortOrder + delta })
       .eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

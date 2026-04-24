@@ -39,6 +39,8 @@ export default async function InstallmentsPage({
     supabase.from('categories').select('id, name').eq('type', 'expense').order('name'),
   ])
 
+  const pageErrors = [installmentsRes?.error, accountsRes?.error, categoriesRes?.error].filter(Boolean)
+
   const installments: any[] = installmentsRes?.data ?? []
   const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
   const categories: { id: string; name: string }[] = (categoriesRes?.data ?? []) as any[]
@@ -94,6 +96,11 @@ export default async function InstallmentsPage({
       <Header title="Parcelamentos" />
 
       <div className="p-4 md:p-6 space-y-4">
+        {pageErrors.length > 0 && (
+          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* Status filter tabs */}
           <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">

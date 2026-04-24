@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -11,6 +11,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -26,14 +27,14 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
     })
     setLoading(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Excluir categoria "${name}"?`)) return
     const supabase = createClient()
     await (supabase.from('categories') as any).delete().eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleReorder(id: string, direction: 'up' | 'down') {
@@ -49,7 +50,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
       (supabase.from('categories') as any).update({ sort_order: bOrder }).eq('id', custom[idx].id),
       (supabase.from('categories') as any).update({ sort_order: aOrder }).eq('id', custom[swapIdx].id),
     ])
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const custom = categories.filter(c => (c as any).couple_id).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))

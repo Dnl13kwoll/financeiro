@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition} from 'react'
 import { Plus, X, ShoppingCart, Trash2, Check, MoreVertical, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -23,6 +23,7 @@ export function NewShoppingListButton({
   const [budgetCategoryId, setBudgetCategoryId] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   function handleCategoryChange(id: string) {
     setBudgetCategoryId(id)
@@ -51,7 +52,7 @@ export function NewShoppingListButton({
     setName('')
     setBudget('')
     setBudgetCategoryId('')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (
@@ -139,6 +140,7 @@ export function AddShoppingItemButton({ listId, userId }: { listId: string; user
   const [category, setCategory] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -158,7 +160,7 @@ export function AddShoppingItemButton({ listId, userId }: { listId: string; user
     if (error) { showToast('Erro ao adicionar item', 'error'); return }
     setOpen(false)
     setName(''); setQty('1'); setUnit(''); setPrice(''); setCategory('')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (
@@ -253,6 +255,7 @@ export function CheckShoppingItem({ id, checked, actualPrice }: { id: string; ch
   const [showPrice, setShowPrice] = useState(false)
   const [price, setPrice] = useState(actualPrice?.toString() ?? '')
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function toggle() {
     if (!checked && !showPrice) { setShowPrice(true); return }
@@ -264,7 +267,7 @@ export function CheckShoppingItem({ id, checked, actualPrice }: { id: string; ch
     }).eq('id', id)
     setLoading(false)
     setShowPrice(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function uncheck() {
@@ -272,7 +275,7 @@ export function CheckShoppingItem({ id, checked, actualPrice }: { id: string; ch
     const supabase = createClient()
     await (supabase.from('shopping_items') as any).update({ checked: false }).eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (checked) {
@@ -318,12 +321,13 @@ export function CheckShoppingItem({ id, checked, actualPrice }: { id: string; ch
 export function DeleteShoppingItem({ id }: { id: string }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
   async function del() {
     if (!confirm('Remover item?')) return
     setLoading(true)
     await (createClient().from('shopping_items') as any).delete().eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
   return (
     <button onClick={del} disabled={loading}
@@ -337,12 +341,13 @@ export function DeleteShoppingItem({ id }: { id: string }) {
 export function DeleteShoppingList({ id }: { id: string }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
   async function del() {
     if (!confirm('Excluir lista e todos os itens?')) return
     setLoading(true)
     await (createClient().from('shopping_lists') as any).delete().eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
   return (
     <button onClick={del} disabled={loading}
@@ -356,11 +361,12 @@ export function DeleteShoppingList({ id }: { id: string }) {
 export function CompleteShoppingList({ id, completed }: { id: string; completed: boolean }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
   async function toggle() {
     setLoading(true)
     await (createClient().from('shopping_lists') as any).update({ completed: !completed }).eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
   return (
     <button onClick={toggle} disabled={loading}

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Plus } from 'lucide-react'
@@ -18,6 +18,7 @@ export function AddPlanItem({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -39,7 +40,7 @@ export function AddPlanItem({
     setLoading(false)
     setOpen(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (!open) {

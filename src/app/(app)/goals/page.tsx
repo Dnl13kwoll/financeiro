@@ -37,6 +37,8 @@ export default async function GoalsPage({
       : Promise.resolve(null),
   ])
 
+  const pageErrors = [goalsRes?.error, accountsRes?.error].filter(Boolean)
+
   let goals: any[] = goalsRes?.data ?? []
   const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
 
@@ -76,6 +78,11 @@ export default async function GoalsPage({
       <Header title="Metas" />
 
       <div className="p-6 space-y-4 max-w-2xl">
+        {pageErrors.length > 0 && (
+          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+          </div>
+        )}
         {urgentGoals.length > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
             <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm">

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2 } from 'lucide-react'
@@ -19,6 +19,7 @@ export function PlanItemRow({
   const [value, setValue] = useState(String(planned))
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function save() {
     setLoading(true)
@@ -28,13 +29,13 @@ export function PlanItemRow({
       .eq('id', id)
     setLoading(false)
     setEditing(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
     const supabase = createClient()
     await (supabase.from('monthly_plans') as any).delete().eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const diff = planned - spent

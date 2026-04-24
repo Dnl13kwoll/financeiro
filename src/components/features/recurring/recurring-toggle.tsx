@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -35,12 +35,13 @@ export function RecurringToggle({
   const [value, setValue] = useState(amount ? String(amount) : (defaultAmount ? String(defaultAmount) : ''))
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleUnpay() {
     if (!recordId) return
     const supabase = createClient()
     await (supabase.from('recurring_records') as any).update({ paid: false }).eq('id', recordId)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handlePay(e: React.FormEvent<HTMLFormElement>) {
@@ -82,7 +83,7 @@ export function RecurringToggle({
     setLoading(false)
     setOpen(false)
     showToast('Pagamento registrado!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (paid) {

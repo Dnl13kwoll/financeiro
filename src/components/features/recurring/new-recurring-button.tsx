@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -20,6 +20,7 @@ export function NewRecurringButton({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -52,7 +53,7 @@ export function NewRecurringButton({
     setLoading(false)
     setOpen(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Copy } from 'lucide-react'
@@ -7,6 +7,7 @@ import { Copy } from 'lucide-react'
 export function CopyBudgetsButton({ coupleId, currentMonth }: { coupleId: string; currentMonth: string }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleCopy() {
     if (!confirm('Copiar os orçamentos do mês anterior para este mês?')) return
@@ -37,7 +38,7 @@ export function CopyBudgetsButton({ coupleId, currentMonth }: { coupleId: string
 
     await (supabase.from('budgets') as any).upsert(payload, { onConflict: 'couple_id,category_id,month' })
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,7 @@ export function DailyLimitSetting({
   const [value, setValue] = useState(currentLimit?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSave() {
     setLoading(true)
@@ -26,7 +27,7 @@ export function DailyLimitSetting({
     setLoading(false)
     setEditing(false)
     showToast('Limite diário atualizado!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -20,6 +20,7 @@ export function SaveNetworthSnapshot({
 }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSave() {
     setLoading(true)
@@ -30,7 +31,7 @@ export function SaveNetworthSnapshot({
     )
     setLoading(false)
     showToast('Snapshot salvo!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

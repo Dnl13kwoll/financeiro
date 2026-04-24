@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -99,6 +99,7 @@ export function TripCard({
   itinerary: ItineraryItem[]; diary: DiaryEntry[]; attachments: Attachment[]
 }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const supabase = createClient()
   const [expanded, setExpanded] = useState(true)
   const [tab, setTab] = useState<'budget' | 'places' | 'checklist' | 'companions' | 'itinerary' | 'notes' | 'files' | 'today'>('budget')
@@ -225,17 +226,17 @@ export function TripCard({
       booking_ref: expBookingRef || null,
     })
     setExpDesc(''); setExpEst(''); setExpActual(''); setExpCurrency('BRL'); setExpRate('1'); setExpBookingRef('')
-    setShowExpForm(false); router.refresh()
+    setShowExpForm(false); startTransition(() => { router.refresh() })
   }
 
   async function togglePaid(exp: Expense) {
     await (supabase.from('trip_expenses') as any).update({ paid: !exp.paid }).eq('id', exp.id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function deleteExpense(id: string) {
     await (supabase.from('trip_expenses') as any).delete().eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function addPlace() {
@@ -329,23 +330,23 @@ export function TripCard({
       currency: quoteCurrency, exchange_rate: rate, notes: quoteNotes || null,
     })
     setQuoteDesc(''); setQuoteProvider(''); setQuoteAmount(''); setQuoteCurrency('BRL'); setQuoteRate('1'); setQuoteNotes('')
-    setShowQuoteForm(false); router.refresh()
+    setShowQuoteForm(false); startTransition(() => { router.refresh() })
   }
 
   async function toggleChosen(q: Quote) {
     await (supabase.from('trip_quotes') as any).update({ chosen: !q.chosen }).eq('id', q.id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function deleteQuote(id: string) {
     await (supabase.from('trip_quotes') as any).delete().eq('id', id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function deleteTrip() {
     if (!confirm('Excluir esta viagem e todos os dados?')) return
     await (supabase.from('trips') as any).delete().eq('id', trip.id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function duplicateTrip() {
@@ -359,7 +360,7 @@ export function TripCard({
       status: 'planning',
       goal_id: trip.goal_id,
     })
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function saveNotes() {
@@ -426,7 +427,7 @@ export function TripCard({
     setArchiving(true)
     await (supabase.from('trips') as any).update({ archived: !trip.archived }).eq('id', trip.id)
     setArchiving(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   // File upload

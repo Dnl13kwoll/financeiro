@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -29,6 +29,7 @@ export function RolloverBudgetButton({
   const [preview, setPreview] = useState<RolloverItem[] | null>(null)
   const [applying, setApplying] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handlePreview() {
     setLoading(true)
@@ -129,7 +130,7 @@ export function RolloverBudgetButton({
 
       showToast(`Saldo de ${preview.length} categoria(s) transferido!`)
       setPreview(null)
-      router.refresh()
+      startTransition(() => { router.refresh() })
     } catch {
       showToast('Erro ao fazer rollover.', 'error')
     } finally {

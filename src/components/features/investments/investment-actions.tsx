@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { Plus, X, Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -46,6 +46,7 @@ function InvestmentForm({
   const [notes, setNotes] = useState(initial?.notes ?? '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   const showRate = RATE_TYPES.includes(type)
   const showMaturity = MATURITY_TYPES.includes(type)
@@ -82,7 +83,7 @@ function InvestmentForm({
     if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast(initial?.id ? 'Investimento atualizado!' : 'Investimento cadastrado!')
     onSave()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (
@@ -319,6 +320,7 @@ export function UpdateValueButton({ id, currentValue }: { id: string; currentVal
   const [val, setVal] = useState(currentValue?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function save() {
     if (!val) return
@@ -330,7 +332,7 @@ export function UpdateValueButton({ id, currentValue }: { id: string; currentVal
     if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast('Valor atualizado!')
     setOpen(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (!open) {
@@ -363,12 +365,13 @@ export function UpdateValueButton({ id, currentValue }: { id: string; currentVal
 export function InvestmentMenuButton({ id, active }: { id: string; active: boolean }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function toggleActive() {
     setLoading(true)
     await (createClient().from('investments') as any).update({ active: !active }).eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function del() {
@@ -376,7 +379,7 @@ export function InvestmentMenuButton({ id, active }: { id: string; active: boole
     setLoading(true)
     await (createClient().from('investments') as any).delete().eq('id', id)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -22,6 +22,7 @@ export function QuickAddFab() {
   const [coupleId, setCoupleId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleOpen() {
     setOpen(true)
@@ -85,7 +86,7 @@ export function QuickAddFab() {
     setType('expense')
     setSelectedCategoryId('')
     showToast('Transação salva!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const today = new Date().toISOString().slice(0, 10)

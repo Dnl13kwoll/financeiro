@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -218,6 +218,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
   const [formatKey, setFormatKey] = useState<string>('auto')
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     setError('')
@@ -284,7 +285,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
     if (err) { setError(err.message); setLoading(false); return }
     setStep('done')
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   function handleClose() {

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -30,11 +30,12 @@ export function InstallmentItemToggle({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleUnpay() {
     const supabase = createClient()
     await (supabase.from('installment_items') as any).update({ paid: false }).eq('id', itemId)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handlePay(e: React.FormEvent<HTMLFormElement>) {
@@ -64,7 +65,7 @@ export function InstallmentItemToggle({
     setLoading(false)
     setOpen(false)
     showToast('Parcela marcada como paga!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (paid) {

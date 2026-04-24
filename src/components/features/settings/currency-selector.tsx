@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -15,13 +15,14 @@ const CURRENCIES = [
 export function CurrencySelector({ coupleId, current }: { coupleId: string; current: string }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setLoading(true)
     const supabase = createClient()
     await (supabase.from('couples') as any).update({ currency: e.target.value }).eq('id', coupleId)
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

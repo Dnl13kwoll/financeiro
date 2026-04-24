@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -8,6 +8,7 @@ import { Check, Trash2, RotateCcw } from 'lucide-react'
 export function WishlistItemActions({ id, purchased }: { id: string; purchased: boolean }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function togglePurchased() {
     setLoading(true)
@@ -19,7 +20,7 @@ export function WishlistItemActions({ id, purchased }: { id: string; purchased: 
     setLoading(false)
     if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast(purchased ? 'Marcado como desejado.' : 'Marcado como comprado!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
@@ -28,7 +29,7 @@ export function WishlistItemActions({ id, purchased }: { id: string; purchased: 
     const { error } = await (supabase.from('wishlist_items') as any).delete().eq('id', id)
     if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast('Item removido.', 'error')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

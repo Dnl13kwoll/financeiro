@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -16,6 +16,7 @@ export function TransactionSplitToggle({
 }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function toggle() {
     setLoading(true)
@@ -39,7 +40,7 @@ export function TransactionSplitToggle({
     }
 
     setLoading(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
@@ -26,6 +26,7 @@ export function SuggestBudgetsButton({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function loadSuggestions() {
     setLoading(true)
@@ -104,7 +105,7 @@ export function SuggestBudgetsButton({
     setLoading(false)
     setOpen(false)
     showToast(`${toApply.length} orçamentos criados/atualizados!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   function toggleAll() {

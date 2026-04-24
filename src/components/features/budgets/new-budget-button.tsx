@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -12,6 +12,7 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   const now = new Date()
   const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
@@ -53,7 +54,7 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
     setLoading(false)
     setOpen(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -13,6 +13,7 @@ export function NewInstallmentButton({ coupleId, userId, accounts = [], categori
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -76,7 +77,7 @@ export function NewInstallmentButton({ coupleId, userId, accounts = [], categori
     setLoading(false)
     setOpen(false)
     form.reset()
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const today = new Date().toISOString().slice(0, 10)

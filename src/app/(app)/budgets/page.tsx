@@ -70,6 +70,8 @@ export default async function BudgetsPage({
     .eq('type', 'expense')
     .order('name')
 
+  const pageErrors = [budgetsRes?.error, expensesRes?.error, categoriesRes?.error].filter(Boolean)
+
   const budgets: any[] = budgetsRes?.data ?? []
   const expenses: any[] = expensesRes?.data ?? []
   const categories: { id: string; name: string }[] = (categoriesRes?.data ?? []) as any[]
@@ -107,6 +109,11 @@ export default async function BudgetsPage({
         <BudgetAlertNotifier alerts={budgetAlerts} />
       )}
       <div className="p-4 md:p-6 space-y-4">
+        {pageErrors.length > 0 && (
+          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+          </div>
+        )}
         {/* Month navigation */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

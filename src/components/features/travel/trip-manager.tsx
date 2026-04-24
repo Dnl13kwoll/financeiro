@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Plane, Plus, Search, ArrowUp, ArrowDown, Archive } from 'lucide-react'
@@ -36,6 +36,7 @@ export function TripManager({
   goals: Goal[]
 }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const supabase = createClient()
 
   // Filters
@@ -92,7 +93,7 @@ export function TripManager({
     setName(''); setDestination(''); setStartDate(''); setEndDate('')
     setBudget(''); setGoalId(''); setNewTags('')
     setShowForm(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function moveTripOrder(trip: Trip, dir: 'up' | 'down') {
@@ -105,7 +106,7 @@ export function TripManager({
       (supabase.from('trips') as any).update({ sort_order: other.sort_order }).eq('id', trip.id),
       (supabase.from('trips') as any).update({ sort_order: trip.sort_order }).eq('id', other.id),
     ])
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

@@ -61,6 +61,8 @@ export default async function AccountsPage() {
       : Promise.resolve(null),
   ])
 
+  const pageErrors = [accountsRes?.error, balancesRes?.error].filter(Boolean)
+
   const accounts: Account[] = (accountsRes?.data ?? []) as Account[]
   const balances: any[] = balancesRes?.data ?? []
 
@@ -80,6 +82,11 @@ export default async function AccountsPage() {
       <Header title="Contas" />
 
       <div className="p-6">
+        {pageErrors.length > 0 && (
+          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+          </div>
+        )}
         <div className="flex justify-end gap-2 mb-5">
           {coupleId && <TransferButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
           {coupleId && <NewAccountButton coupleId={coupleId} userId={user!.id} />}

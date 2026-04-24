@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -11,6 +11,7 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
   const [editOpen, setEditOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -26,7 +27,7 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
     }).eq('id', recurring.id)
     setLoading(false)
     setEditOpen(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
@@ -35,7 +36,7 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
     await (supabase.from('recurring_accounts') as any)
       .update({ active: false })
       .eq('id', recurring.id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

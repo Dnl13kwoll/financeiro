@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
@@ -32,6 +32,7 @@ export function CategoryRules({
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleAdd() {
     if (!pattern.trim() || !categoryId) return
@@ -91,7 +92,7 @@ export function CategoryRules({
 
     setLoading(false)
     showToast(`${count} transações categorizadas!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const matchLabels = { contains: 'contém', starts_with: 'começa com', exact: 'igual a' }

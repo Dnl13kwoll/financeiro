@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -43,6 +43,7 @@ export function TransactionActions({
   const [loading, setLoading] = useState(false)
   const [deleteTimer, setDeleteTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   const filteredCategories = categories.filter(c =>
     transaction.type === 'transfer' ? false : c.type === transaction.type
@@ -71,7 +72,7 @@ export function TransactionActions({
     setLoading(false)
     setEditOpen(false)
     showToast('Transação atualizada!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDuplicate() {
@@ -93,7 +94,7 @@ export function TransactionActions({
     }
     setDuplicating(false)
     showToast('Transação duplicada!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   function handleDelete() {
@@ -103,7 +104,7 @@ export function TransactionActions({
       await (supabase.from('transactions') as any)
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', transaction.id)
-      router.refresh()
+      startTransition(() => { router.refresh() })
     }, 4000)
     setDeleteTimer(timer)
     showToast('Transação excluída. Desfazer?', 'error', () => {

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -10,6 +10,7 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState<'cash' | 'bank' | 'credit_card'>('bank')
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -37,7 +38,7 @@ export function NewAccountButton({ coupleId, userId }: { coupleId: string; userI
     setOpen(false)
     form.reset()
     setType('bank')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

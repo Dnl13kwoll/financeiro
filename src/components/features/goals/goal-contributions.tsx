@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -82,6 +82,7 @@ export function GoalContributions({
   const [loading, setLoading] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -113,7 +114,7 @@ export function GoalContributions({
     } else {
       showToast('Aporte registrado!')
     }
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const today = new Date().toISOString().slice(0, 10)

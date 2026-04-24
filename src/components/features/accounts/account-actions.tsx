@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -32,6 +32,7 @@ export function AccountActions({ account }: { account: Account }) {
   const [editOpen, setEditOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -54,7 +55,7 @@ export function AccountActions({ account }: { account: Account }) {
     await (supabase.from('accounts') as any).update(payload).eq('id', account.id)
     setLoading(false)
     setEditOpen(false)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
@@ -63,7 +64,7 @@ export function AccountActions({ account }: { account: Account }) {
     await (supabase.from('accounts') as any)
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', account.id)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

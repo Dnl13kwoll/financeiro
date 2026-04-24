@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
 import { useRouter } from 'next/navigation'
@@ -10,6 +10,7 @@ export function EditProfile({ currentName }: { currentName: string }) {
   const [value, setValue] = useState(currentName)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function handleSave() {
     if (!value.trim()) return
@@ -26,7 +27,7 @@ export function EditProfile({ currentName }: { currentName: string }) {
     setLoading(false)
     setEditing(false)
     showToast('Nome atualizado!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   if (!editing) {

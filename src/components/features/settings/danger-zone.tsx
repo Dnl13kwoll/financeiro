@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -10,6 +10,7 @@ export function DangerZone({ coupleId }: { coupleId: string }) {
   const [confirmText, setConfirmText] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
   const CONFIRM_PHRASE = 'EXCLUIR TUDO'
 
@@ -56,7 +57,7 @@ export function DangerZone({ coupleId }: { coupleId: string }) {
 
       showToast('Todos os dados foram excluídos.')
       router.push('/settings')
-      router.refresh()
+      startTransition(() => { router.refresh() })
     } catch {
       showToast('Erro ao excluir dados. Tente novamente.', 'error')
       setLoading(false)

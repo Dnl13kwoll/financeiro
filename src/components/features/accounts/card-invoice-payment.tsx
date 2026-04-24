@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -25,6 +25,7 @@ export function CardInvoicePayment({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const remaining = invoiceTotal - totalPaid
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -45,14 +46,14 @@ export function CardInvoicePayment({
     setOpen(false)
     form.reset()
     showToast('Pagamento registrado!')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   async function handleDelete(id: string) {
     const supabase = createClient()
     await (supabase.from('card_invoice_payments') as any).delete().eq('id', id)
     showToast('Pagamento removido.', 'error')
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   const today = new Date().toISOString().slice(0, 10)

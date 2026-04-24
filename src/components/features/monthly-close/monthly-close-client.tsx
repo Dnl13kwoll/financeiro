@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition} from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
@@ -30,6 +30,7 @@ type CheckItem = { id: string; label: string; ok: boolean; warn?: boolean; detai
 
 export function MonthlyCloseClient(props: Props) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const [goalsOpen, setGoalsOpen] = useState(false)
   const [savingGoalId, setSavingGoalId] = useState<string | null>(null)
   const [amounts, setAmounts] = useState<Record<string, string>>({})
@@ -104,7 +105,7 @@ export function MonthlyCloseClient(props: Props) {
     }
     setAmounts(prev => ({ ...prev, [goalId]: '' }))
     showToast(`Aporte de ${formatCurrency(val)} adicionado à meta!`)
-    router.refresh()
+    startTransition(() => { router.refresh() })
   }
 
   return (

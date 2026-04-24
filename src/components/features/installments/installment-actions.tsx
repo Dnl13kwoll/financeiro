@@ -1,5 +1,5 @@
-import { useTransition } from 'react'
 'use client'
+import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { XCircle, Trash2 } from 'lucide-react'

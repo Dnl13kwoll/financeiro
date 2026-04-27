@@ -28,7 +28,7 @@ export function AutoGenerateRecurring({
       const supabase = createClient()
 
       const { data: recurring } = await supabase.from('recurring_accounts')
-        .select('id, name, amount, day_due, category_id')
+        .select('id, name, amount, day_due, category_id, account_id, type')
         .eq('couple_id', coupleId)
         .eq('active', true)
         .not('paused', 'is', true)
@@ -55,16 +55,14 @@ export function AutoGenerateRecurring({
 
         if (existing && existing.length > 0) continue
 
-        // recurring_accounts has no account_id column; needs DB migration to fully support
-        // Using type assertion since null was the original behavior (feature is incomplete)
-        await (supabase.from('transactions') as any).insert({
+        await supabase.from('transactions').insert({
           couple_id: coupleId,
           user_id: userId,
-          type: 'expense',
+          type: (rec.type ?? 'expense') as 'expense' | 'income',
           amount: rec.amount,
           description: rec.name,
           category_id: rec.category_id ?? null,
-          account_id: null,
+          account_id: rec.account_id ?? null,
           date: dueDate,
           competence_date: dueDate,
           is_private: false,

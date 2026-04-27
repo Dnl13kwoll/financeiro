@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'

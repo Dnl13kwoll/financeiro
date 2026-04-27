@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { format, parseISO, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -381,7 +382,7 @@ export function SubscriptionsClient({ coupleId, initialSubscriptions }: {
   }, [active])
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir esta assinatura?')) return
+    if (!await confirmDialog('Excluir esta assinatura?')) return
     const { error } = await (createClient() as any).from('subscriptions').delete().eq('id', id)
     if (error) { showToast('Erro ao excluir', 'error'); return }
     setSubs(s => s.filter(x => x.id !== id))

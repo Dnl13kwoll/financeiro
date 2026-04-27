@@ -31,6 +31,7 @@ export function RecurringToggle({
   coupleId?: string
   name?: string
 }) {
+  const [optimisticPaid, setOptimisticPaid] = useState(paid)
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(amount ? String(amount) : (defaultAmount ? String(defaultAmount) : ''))
   const [loading, setLoading] = useState(false)
@@ -39,9 +40,17 @@ export function RecurringToggle({
 
   async function handleUnpay() {
     if (!recordId) return
-    const supabase = createClient()
-    await supabase.from('recurring_records').update({ paid: false }).eq('id', recordId)
-    startTransition(() => { router.refresh() })
+    setOptimisticPaid(false)
+    const { error } = await createClient()
+      .from('recurring_records')
+      .update({ paid: false })
+      .eq('id', recordId)
+    if (error) {
+      setOptimisticPaid(true)
+      showToast('Erro ao atualizar.', 'error')
+    } else {
+      startTransition(() => { router.refresh() })
+    }
   }
 
   async function handlePay(e: React.FormEvent<HTMLFormElement>) {
@@ -55,16 +64,26 @@ export function RecurringToggle({
     const createTx = data.get('create_transaction') === 'on'
 
     if (recordId) {
-      await supabase.from('recurring_records')
+      const { error } = await supabase.from('recurring_records')
         .update({ paid: true, amount: realAmount })
         .eq('id', recordId)
+      if (error) {
+        setLoading(false)
+        showToast('Erro ao salvar.', 'error')
+        return
+      }
     } else {
-      await supabase.from('recurring_records').insert({
+      const { error } = await supabase.from('recurring_records').insert({
         recurring_id: recurringId,
         reference_month: referenceMonth,
         amount: realAmount,
         paid: true,
       })
+      if (error) {
+        setLoading(false)
+        showToast('Erro ao salvar.', 'error')
+        return
+      }
     }
 
     if (createTx && accountId && realAmount > 0 && userId && coupleId) {
@@ -80,13 +99,14 @@ export function RecurringToggle({
       })
     }
 
+    setOptimisticPaid(true)
     setLoading(false)
     setOpen(false)
     showToast('Pagamento registrado!')
     startTransition(() => { router.refresh() })
   }
 
-  if (paid) {
+  if (optimisticPaid) {
     return (
       <button onClick={handleUnpay} className="transition-colors" title="Marcar como não pago">
         <CheckCircle2 className="w-5 h-5 text-green-500 hover:text-green-600" />

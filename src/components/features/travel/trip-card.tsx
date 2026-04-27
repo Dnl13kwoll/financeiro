@@ -9,6 +9,8 @@ import {
   ArrowUp, ArrowDown, Trash2, Users, Target, Link2,
   Copy, Printer, Cloud, Calendar, Share2, Archive, Tag, FileUp, Paperclip,
 } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { showToast } from '@/components/ui/toast'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type Trip = {
@@ -344,8 +346,10 @@ export function TripCard({
   }
 
   async function deleteTrip() {
-    if (!confirm('Excluir esta viagem e todos os dados?')) return
-    await supabase.from('trips').delete().eq('id', trip.id)
+    if (!await confirmDialog('Excluir esta viagem e todos os dados?')) return
+    const { error } = await supabase.from('trips').delete().eq('id', trip.id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Viagem excluída.')
     startTransition(() => { router.refresh() })
   }
 

@@ -1172,6 +1172,7 @@ export type Database = {
       }
       recurring_accounts: {
         Row: {
+          account_id: string | null
           active: boolean
           amount: number | null
           category_id: string | null
@@ -1182,9 +1183,11 @@ export type Database = {
           id: string
           name: string
           paused: boolean
+          type: string
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           active?: boolean
           amount?: number | null
           category_id?: string | null
@@ -1195,9 +1198,11 @@ export type Database = {
           id?: string
           name: string
           paused?: boolean
+          type?: string
           user_id: string
         }
         Update: {
+          account_id?: string | null
           active?: boolean
           amount?: number | null
           category_id?: string | null
@@ -1208,9 +1213,17 @@ export type Database = {
           id?: string
           name?: string
           paused?: boolean
+          type?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recurring_accounts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recurring_accounts_category_id_fkey"
             columns: ["category_id"]

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
@@ -78,7 +79,7 @@ export default async function RecurringPage() {
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex gap-2 justify-end">
           {coupleId && <GenerateRecurringButton coupleId={coupleId} userId={user!.id} currentMonth={currentMonth} />}
-          {coupleId && <NewRecurringButton coupleId={coupleId} userId={user!.id} categories={categories} />}
+          {coupleId && <NewRecurringButton coupleId={coupleId} userId={user!.id} categories={categories} accounts={accounts} />}
         </div>
 
         {active.length > 0 && (
@@ -195,7 +196,7 @@ export default async function RecurringPage() {
                     </p>
                   </div>
                   <RecurringPauseToggle id={rec.id} paused={false} name={rec.name} />
-                  <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due, amount: rec.amount }} />
+                  <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due, amount: rec.amount, account_id: rec.account_id, category_id: rec.category_id, type: rec.type }} accounts={accounts} categories={categories} />
                 </div>
               </div>
             </div>
@@ -218,7 +219,7 @@ export default async function RecurringPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <RecurringPauseToggle id={rec.id} paused={true} name={rec.name} />
-                  <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due, amount: rec.amount }} />
+                  <RecurringActions recurring={{ id: rec.id, name: rec.name, day_due: rec.day_due, amount: rec.amount, account_id: rec.account_id, category_id: rec.category_id, type: rec.type }} accounts={accounts} categories={categories} />
                 </div>
               </div>
             ))}

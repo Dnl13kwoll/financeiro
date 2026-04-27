@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { Plus, Pencil, Trash2, PlusCircle } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 type Goal = {
   id: string
@@ -187,7 +188,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
   }
 
   async function handleDelete() {
-    if (!confirm(`Excluir a meta "${goal.name}"?`)) return
+    if (!await confirmDialog(`Excluir a meta "${goal.name}"?`)) return
     const supabase = createClient()
     const { error } = await supabase.from('goals').delete().eq('id', goal.id)
     if (error) { showToast('Erro: ' + error.message, 'error'); return }

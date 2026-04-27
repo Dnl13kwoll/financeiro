@@ -5,15 +5,18 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { Pencil, Trash2 } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 export function BudgetDeleteButton({ id }: { id: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
   async function handleDelete() {
-    if (!confirm('Excluir este orçamento?')) return
+    if (!await confirmDialog('Excluir este orçamento?')) return
     const supabase = createClient()
-    await supabase.from('budgets').delete().eq('id', id)
+    const { error } = await supabase.from('budgets').delete().eq('id', id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Orçamento excluído.')
     startTransition(() => { router.refresh() })
   }
 

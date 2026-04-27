@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { showToast } from '@/components/ui/toast'
 
 type Category = { id: string; name: string; type: 'income' | 'expense'; sort_order?: number; color?: string | null }
 
@@ -31,9 +33,11 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Excluir categoria "${name}"?`)) return
+    if (!await confirmDialog(`Excluir categoria "${name}"?`)) return
     const supabase = createClient()
-    await supabase.from('categories').delete().eq('id', id)
+    const { error } = await supabase.from('categories').delete().eq('id', id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Categoria excluída.')
     startTransition(() => { router.refresh() })
   }
 

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useTransition} from 'react'
 import { Plus, X, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { showToast } from '@/components/ui/toast'
@@ -375,10 +376,12 @@ export function InvestmentMenuButton({ id, active }: { id: string; active: boole
   }
 
   async function del() {
-    if (!confirm('Excluir este investimento permanentemente?')) return
+    if (!await confirmDialog('Excluir este investimento permanentemente?')) return
     setLoading(true)
-    await (createClient().from('investments') as any).delete().eq('id', id)
+    const { error } = await (createClient().from('investments') as any).delete().eq('id', id)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Investimento excluído.')
     startTransition(() => { router.refresh() })
   }
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
 import { Zap } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 export function GenerateRecurringButton({
   coupleId,
@@ -19,15 +20,15 @@ export function GenerateRecurringButton({
   const [, startTransition] = useTransition()
 
   async function handleGenerate() {
-    if (!confirm('Gerar transações para todas as contas recorrentes ativas neste mês?')) return
+    if (!await confirmDialog('Gerar transações para todas as contas recorrentes ativas neste mês?', { destructive: false, confirmLabel: 'Gerar' })) return
     setLoading(true)
     try {
       const supabase = createClient()
 
       // Fetch active recurring accounts
-      const { data: recurring } = await (supabase
-        .from('recurring_accounts') as any)
-        .select('id, name, amount, day_due, category_id, account_id')
+      const { data: recurring } = await supabase
+        .from('recurring_accounts')
+        .select('id, name, amount, day_due, category_id, account_id, type')
         .eq('couple_id', coupleId)
         .eq('active', true)
         .not('paused', 'is', true)
@@ -62,7 +63,7 @@ export function GenerateRecurringButton({
         await supabase.from('transactions').insert({
           couple_id: coupleId,
           user_id: userId,
-          type: 'expense',
+          type: (rec.type ?? 'expense') as 'expense' | 'income',
           amount: rec.amount,
           description: rec.name,
           category_id: rec.category_id ?? null,

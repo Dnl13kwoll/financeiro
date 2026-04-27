@@ -9,6 +9,7 @@ import {
   Gauge, MapPin, DollarSign, Clock, ChevronRight, Download,
 } from 'lucide-react'
 import { MaintenanceAlertChecker } from './maintenance-alert-checker'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { format, parseISO, differenceInDays, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -1029,7 +1030,7 @@ export function VehiclesClient({
   }).length
 
   async function handleDeleteVehicle(id: string) {
-    if (!confirm('Excluir este veículo e todas as suas manutenções?')) return
+    if (!await confirmDialog('Excluir este veículo e todas as suas manutenções?')) return
     const { error } = await (supabase as any).from('vehicles').update({ active: false }).eq('id', id)
     if (error) { showToast('Erro ao excluir', 'error'); return }
     setVehicles(v => v.filter(x => x.id !== id))
@@ -1038,7 +1039,7 @@ export function VehiclesClient({
   }
 
   async function handleDeleteMaintenance(id: string) {
-    if (!confirm('Excluir esta manutenção?')) return
+    if (!await confirmDialog('Excluir esta manutenção?')) return
     const { error } = await supabase.from('vehicle_maintenances').delete().eq('id', id)
     if (error) { showToast('Erro ao excluir', 'error'); return }
     setMaintenances(m => m.filter(x => x.id !== id))

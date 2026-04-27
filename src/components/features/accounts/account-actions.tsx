@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { Pencil, Trash2 } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { showToast } from '@/components/ui/toast'
 
 const ACCOUNT_COLORS = [
   { value: '#6366f1', label: 'Índigo' },
@@ -52,18 +54,22 @@ export function AccountActions({ account }: { account: Account }) {
       payload.closing_day = parseInt(data.get('closing_day') as string) || null
       payload.due_day = parseInt(data.get('due_day') as string) || null
     }
-    await supabase.from('accounts').update(payload).eq('id', account.id)
+    const { error } = await supabase.from('accounts').update(payload).eq('id', account.id)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Conta atualizada.')
     setEditOpen(false)
     startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
-    if (!confirm(`Excluir a conta "${account.name}"?`)) return
+    if (!await confirmDialog(`Excluir a conta "${account.name}"?`)) return
     const supabase = createClient()
-    await supabase.from('accounts')
+    const { error } = await supabase.from('accounts')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', account.id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Conta excluída.')
     startTransition(() => { router.refresh() })
   }
 

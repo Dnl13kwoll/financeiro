@@ -1,6 +1,7 @@
 'use client'
 import { useState, useTransition} from 'react'
 import { Plus, X, Trash2 } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { showToast } from '@/components/ui/toast'
@@ -186,10 +187,12 @@ export function DeletePriceRecord({ id }: { id: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   async function del() {
-    if (!confirm('Excluir registro?')) return
+    if (!await confirmDialog('Excluir registro?')) return
     setLoading(true)
-    await (createClient().from('price_history') as any).delete().eq('id', id)
+    const { error } = await (createClient().from('price_history') as any).delete().eq('id', id)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Registro excluído.')
     startTransition(() => { router.refresh() })
   }
   return (

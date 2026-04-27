@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/components/ui/toast'
 import { Trash2, Tag, X, CheckCircle2 } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 type Category = { id: string; name: string; type: string }
 
@@ -22,15 +23,16 @@ export function BulkActionsBar({
   const [, startTransition] = useTransition()
 
   async function handleBulkDelete() {
-    if (!confirm(`Excluir ${selectedIds.length} transação(ões)?`)) return
+    if (!await confirmDialog(`Excluir ${selectedIds.length} transação(ões)?`)) return
     setLoading(true)
     const supabase = createClient()
-    await supabase.from('transactions')
+    const { error } = await supabase.from('transactions')
       .update({ deleted_at: new Date().toISOString() })
       .in('id', selectedIds)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
     onClearSelection()
-    showToast(`${selectedIds.length} transação(ões) excluída(s).`, 'error')
+    showToast(`${selectedIds.length} transação(ões) excluída(s).`)
     startTransition(() => { router.refresh() })
   }
 

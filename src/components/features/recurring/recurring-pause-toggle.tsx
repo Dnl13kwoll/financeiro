@@ -14,33 +14,37 @@ export function RecurringPauseToggle({
   paused: boolean
   name: string
 }) {
-  const [loading, setLoading] = useState(false)
+  const [optimisticPaused, setOptimisticPaused] = useState(paused)
   const router = useRouter()
   const [, startTransition] = useTransition()
 
   async function toggle() {
-    setLoading(true)
-    const supabase = createClient()
-    await supabase.from('recurring_accounts')
-      .update({ paused: !paused })
+    const next = !optimisticPaused
+    setOptimisticPaused(next)
+    const { error } = await createClient()
+      .from('recurring_accounts')
+      .update({ paused: next })
       .eq('id', id)
-    showToast(paused ? `"${name}" reativada!` : `"${name}" pausada.`)
-    setLoading(false)
+    if (error) {
+      setOptimisticPaused(!next)
+      showToast('Erro ao atualizar.', 'error')
+      return
+    }
+    showToast(next ? `"${name}" pausada.` : `"${name}" reativada!`)
     startTransition(() => { router.refresh() })
   }
 
   return (
     <button
       onClick={toggle}
-      disabled={loading}
-      title={paused ? 'Reativar' : 'Pausar'}
+      title={optimisticPaused ? 'Reativar' : 'Pausar'}
       className={`p-1.5 rounded transition-colors ${
-        paused
+        optimisticPaused
           ? 'text-green-500 hover:bg-green-50 hover:text-green-600'
           : 'text-gray-400 hover:bg-amber-50 hover:text-amber-500'
       }`}
     >
-      {paused ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+      {optimisticPaused ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
     </button>
   )
 }

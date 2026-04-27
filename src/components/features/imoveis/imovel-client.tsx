@@ -10,6 +10,7 @@ import {
   Building2, TreePine, MapPin, ShieldCheck, Receipt, Download,
 } from 'lucide-react'
 import { MaintenanceAlertChecker } from '@/components/features/vehicles/maintenance-alert-checker'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { format, parseISO, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -830,7 +831,7 @@ export function ImovelClient({ coupleId, initialProperties, initialMaintenances 
   const pendingCount = maintenances.filter(m => m.status !== 'concluido').length
 
   async function handleDeleteProperty(id: string) {
-    if (!confirm('Excluir este imóvel e todas as suas manutenções?')) return
+    if (!await confirmDialog('Excluir este imóvel e todas as suas manutenções?')) return
     const { error } = await (createClient() as any).from('properties').update({ active: false }).eq('id', id)
     if (error) { showToast('Erro ao excluir', 'error'); return }
     setProperties(v => v.filter(x => x.id !== id))
@@ -839,7 +840,7 @@ export function ImovelClient({ coupleId, initialProperties, initialMaintenances 
   }
 
   async function handleDeleteMaintenance(id: string) {
-    if (!confirm('Excluir esta manutenção?')) return
+    if (!await confirmDialog('Excluir esta manutenção?')) return
     const { error } = await (createClient() as any).from('property_maintenances').delete().eq('id', id)
     if (error) { showToast('Erro ao excluir', 'error'); return }
     setMaintenances(m => m.filter(x => x.id !== id))

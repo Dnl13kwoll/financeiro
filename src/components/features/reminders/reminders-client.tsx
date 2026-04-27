@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { format, parseISO, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Reminder {
   id: string
@@ -196,7 +197,7 @@ export function RemindersClient({ coupleId, initialReminders }: {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir este lembrete?')) return
+    if (!await confirmDialog('Excluir este lembrete?')) return
     const { error } = await (createClient() as any).from('financial_reminders').delete().eq('id', id)
     if (error) { showToast('Erro ao excluir', 'error'); return }
     setReminders(r => r.filter(x => x.id !== id))

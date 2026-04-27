@@ -3,22 +3,28 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { XCircle, Trash2 } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { showToast } from '@/components/ui/toast'
 
 export function InstallmentActions({ id, status }: { id: string; status: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
   async function handleCancel() {
-    if (!confirm('Cancelar este parcelamento?')) return
+    if (!await confirmDialog('Cancelar este parcelamento?', { confirmLabel: 'Cancelar' })) return
     const supabase = createClient()
-    await supabase.from('installments').update({ status: 'canceled' }).eq('id', id)
+    const { error } = await supabase.from('installments').update({ status: 'canceled' }).eq('id', id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Parcelamento cancelado.')
     startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
-    if (!confirm('Excluir este parcelamento permanentemente?')) return
+    if (!await confirmDialog('Excluir este parcelamento permanentemente?')) return
     const supabase = createClient()
-    await supabase.from('installments').delete().eq('id', id)
+    const { error } = await supabase.from('installments').delete().eq('id', id)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Parcelamento excluído.')
     startTransition(() => { router.refresh() })
   }
 

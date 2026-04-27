@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useTransition} from 'react'
 import { Plus, X, ShoppingCart, Trash2, Check, MoreVertical, Pencil } from 'lucide-react'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { showToast } from '@/components/ui/toast'
@@ -323,10 +324,11 @@ export function DeleteShoppingItem({ id }: { id: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   async function del() {
-    if (!confirm('Remover item?')) return
+    if (!await confirmDialog('Remover item?')) return
     setLoading(true)
-    await (createClient().from('shopping_items') as any).delete().eq('id', id)
+    const { error } = await (createClient().from('shopping_items') as any).delete().eq('id', id)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
     startTransition(() => { router.refresh() })
   }
   return (
@@ -343,10 +345,12 @@ export function DeleteShoppingList({ id }: { id: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   async function del() {
-    if (!confirm('Excluir lista e todos os itens?')) return
+    if (!await confirmDialog('Excluir lista e todos os itens?')) return
     setLoading(true)
-    await (createClient().from('shopping_lists') as any).delete().eq('id', id)
+    const { error } = await (createClient().from('shopping_lists') as any).delete().eq('id', id)
     setLoading(false)
+    if (error) { showToast('Erro: ' + error.message, 'error'); return }
+    showToast('Lista excluída.')
     startTransition(() => { router.refresh() })
   }
   return (

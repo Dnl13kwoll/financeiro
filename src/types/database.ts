@@ -2358,6 +2358,79 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          id: string
+          couple_id: string
+          created_by: string
+          assigned_to: string | null
+          title: string
+          description: string | null
+          status: string
+          priority: string
+          due_date: string | null
+          category: string | null
+          tags: string[]
+          completed_at: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          couple_id: string
+          created_by: string
+          assigned_to?: string | null
+          title: string
+          description?: string | null
+          status?: string
+          priority?: string
+          due_date?: string | null
+          category?: string | null
+          tags?: string[]
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          couple_id?: string
+          created_by?: string
+          assigned_to?: string | null
+          title?: string
+          description?: string | null
+          status?: string
+          priority?: string
+          due_date?: string | null
+          category?: string | null
+          tags?: string[]
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       account_balances: {

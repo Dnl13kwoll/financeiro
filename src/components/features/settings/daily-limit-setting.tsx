@@ -21,7 +21,7 @@ export function DailyLimitSetting({
   async function handleSave() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('couples') as any)
+    await supabase.from('couples')
       .update({ daily_limit: value ? parseFloat(value) : null })
       .eq('id', coupleId)
     setLoading(false)

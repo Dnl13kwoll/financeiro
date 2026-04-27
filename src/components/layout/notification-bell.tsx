@@ -40,9 +40,9 @@ export function NotificationBell({ coupleId }: { coupleId: string | null }) {
     if (!coupleId) return
     async function load() {
       const supabase = createClient()
-      const { data } = await (supabase.from('notifications') as any)
+      const { data } = await supabase.from('notifications')
         .select('*')
-        .eq('couple_id', coupleId)
+        .eq('couple_id', coupleId!)
         .order('created_at', { ascending: false })
         .limit(30)
       setNotifications(data ?? [])
@@ -62,9 +62,9 @@ export function NotificationBell({ coupleId }: { coupleId: string | null }) {
 
   async function markAllRead() {
     const supabase = createClient()
-    await (supabase.from('notifications') as any)
+    await supabase.from('notifications')
       .update({ read: true })
-      .eq('couple_id', coupleId)
+      .eq('couple_id', coupleId!)
       .eq('read', false)
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
   }

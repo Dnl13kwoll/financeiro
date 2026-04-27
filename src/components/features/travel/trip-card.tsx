@@ -216,7 +216,7 @@ export function TripCard({
     if (!expDesc || !expEst) return
     const rate = parseFloat(expRate) || 1
     const est = parseFloat(expEst) || 0
-    await (supabase.from('trip_expenses') as any).insert({
+    await supabase.from('trip_expenses').insert({
       trip_id: trip.id, category: expCat, description: expDesc,
       estimated: expCurrency === 'BRL' ? est : est * rate,
       foreign_currency: expCurrency !== 'BRL' ? expCurrency : null,
@@ -230,19 +230,19 @@ export function TripCard({
   }
 
   async function togglePaid(exp: Expense) {
-    await (supabase.from('trip_expenses') as any).update({ paid: !exp.paid }).eq('id', exp.id)
+    await supabase.from('trip_expenses').update({ paid: !exp.paid }).eq('id', exp.id)
     startTransition(() => { router.refresh() })
   }
 
   async function deleteExpense(id: string) {
-    await (supabase.from('trip_expenses') as any).delete().eq('id', id)
+    await supabase.from('trip_expenses').delete().eq('id', id)
     startTransition(() => { router.refresh() })
   }
 
   async function addPlace() {
     if (!placeName) return
     const maxOrder = places.length > 0 ? Math.max(...places.map(p => p.sort_order)) + 1 : 0
-    const { data } = await (supabase.from('trip_places') as any).insert({
+    const { data } = await supabase.from('trip_places').insert({
       trip_id: trip.id, name: placeName, type: placeType,
       address: placeAddr || null, maps_url: placeMaps || null,
       notes: placeNotes || null, sort_order: maxOrder,
@@ -255,7 +255,7 @@ export function TripCard({
   async function cycleStatus(place: Place) {
     const cycle = ['wishlist', 'confirmed', 'visited']
     const next = cycle[(cycle.indexOf(place.status) + 1) % cycle.length]
-    await (supabase.from('trip_places') as any).update({ status: next }).eq('id', place.id)
+    await supabase.from('trip_places').update({ status: next }).eq('id', place.id)
     setPlaces(prev => prev.map(p => p.id === place.id ? { ...p, status: next } : p))
   }
 
@@ -266,8 +266,8 @@ export function TripCard({
     if (swapIdx < 0 || swapIdx >= sorted.length) return
     const other = sorted[swapIdx]
     await Promise.all([
-      (supabase.from('trip_places') as any).update({ sort_order: other.sort_order }).eq('id', place.id),
-      (supabase.from('trip_places') as any).update({ sort_order: place.sort_order }).eq('id', other.id),
+      supabase.from('trip_places').update({ sort_order: other.sort_order }).eq('id', place.id),
+      supabase.from('trip_places').update({ sort_order: place.sort_order }).eq('id', other.id),
     ])
     setPlaces(prev => prev.map(p =>
       p.id === place.id ? { ...p, sort_order: other.sort_order } :
@@ -276,7 +276,7 @@ export function TripCard({
   }
 
   async function deletePlace(id: string) {
-    await (supabase.from('trip_places') as any).delete().eq('id', id)
+    await supabase.from('trip_places').delete().eq('id', id)
     setPlaces(prev => prev.filter(p => p.id !== id))
   }
 
@@ -285,13 +285,13 @@ export function TripCard({
     const toAdd = DEFAULT_CHECKLIST.filter(l => !existing.has(l))
     if (toAdd.length === 0) return
     const rows = toAdd.map((label, i) => ({ trip_id: trip.id, label, sort_order: checklists.length + i }))
-    const { data } = await (supabase.from('trip_checklists') as any).insert(rows).select()
+    const { data } = await supabase.from('trip_checklists').insert(rows).select()
     if (data) setChecklists(prev => [...prev, ...data])
   }
 
   async function addCheckItem() {
     if (!checkInput.trim()) return
-    const { data } = await (supabase.from('trip_checklists') as any).insert({
+    const { data } = await supabase.from('trip_checklists').insert({
       trip_id: trip.id, label: checkInput.trim(), sort_order: checklists.length,
     }).select().single()
     if (data) setChecklists(prev => [...prev, data])
@@ -299,24 +299,24 @@ export function TripCard({
   }
 
   async function toggleCheck(item: ChecklistItem) {
-    await (supabase.from('trip_checklists') as any).update({ checked: !item.checked }).eq('id', item.id)
+    await supabase.from('trip_checklists').update({ checked: !item.checked }).eq('id', item.id)
     setChecklists(prev => prev.map(c => c.id === item.id ? { ...c, checked: !c.checked } : c))
   }
 
   async function deleteCheck(id: string) {
-    await (supabase.from('trip_checklists') as any).delete().eq('id', id)
+    await supabase.from('trip_checklists').delete().eq('id', id)
     setChecklists(prev => prev.filter(c => c.id !== id))
   }
 
   async function addCompanion() {
     if (!companionInput.trim()) return
-    const { data } = await (supabase.from('trip_companions') as any).insert({ trip_id: trip.id, name: companionInput.trim() }).select().single()
+    const { data } = await supabase.from('trip_companions').insert({ trip_id: trip.id, name: companionInput.trim() }).select().single()
     if (data) setCompanions(prev => [...prev, data])
     setCompanionInput('')
   }
 
   async function deleteCompanion(id: string) {
-    await (supabase.from('trip_companions') as any).delete().eq('id', id)
+    await supabase.from('trip_companions').delete().eq('id', id)
     setCompanions(prev => prev.filter(c => c.id !== id))
   }
 
@@ -324,7 +324,7 @@ export function TripCard({
     if (!quoteDesc || !quoteAmount) return
     const rate = parseFloat(quoteRate) || 1
     const amt = parseFloat(quoteAmount) || 0
-    await (supabase.from('trip_quotes') as any).insert({
+    await supabase.from('trip_quotes').insert({
       trip_id: trip.id, category: quoteCat, description: quoteDesc,
       provider: quoteProvider || null, amount: quoteCurrency === 'BRL' ? amt : amt * rate,
       currency: quoteCurrency, exchange_rate: rate, notes: quoteNotes || null,
@@ -334,23 +334,23 @@ export function TripCard({
   }
 
   async function toggleChosen(q: Quote) {
-    await (supabase.from('trip_quotes') as any).update({ chosen: !q.chosen }).eq('id', q.id)
+    await supabase.from('trip_quotes').update({ chosen: !q.chosen }).eq('id', q.id)
     startTransition(() => { router.refresh() })
   }
 
   async function deleteQuote(id: string) {
-    await (supabase.from('trip_quotes') as any).delete().eq('id', id)
+    await supabase.from('trip_quotes').delete().eq('id', id)
     startTransition(() => { router.refresh() })
   }
 
   async function deleteTrip() {
     if (!confirm('Excluir esta viagem e todos os dados?')) return
-    await (supabase.from('trips') as any).delete().eq('id', trip.id)
+    await supabase.from('trips').delete().eq('id', trip.id)
     startTransition(() => { router.refresh() })
   }
 
   async function duplicateTrip() {
-    await (supabase.from('trips') as any).insert({
+    await supabase.from('trips').insert({
       couple_id: trip.couple_id,
       name: `Cópia de ${trip.name}`,
       destination: trip.destination,
@@ -365,14 +365,14 @@ export function TripCard({
 
   async function saveNotes() {
     setSavingNotes(true)
-    await (supabase.from('trips') as any).update({ notes }).eq('id', trip.id)
+    await supabase.from('trips').update({ notes }).eq('id', trip.id)
     setSavingNotes(false)
   }
 
   async function addItinItem() {
     if (!itinTitle || !itinDay) return
     const dayItems = itinerary.filter(i => i.day_date === itinDay)
-    const { data } = await (supabase.from('trip_itinerary') as any).insert({
+    const { data } = await supabase.from('trip_itinerary').insert({
       trip_id: trip.id, day_date: itinDay,
       time_slot: itinTime || null,
       title: itinTitle,
@@ -385,7 +385,7 @@ export function TripCard({
   }
 
   async function deleteItinItem(id: string) {
-    await (supabase.from('trip_itinerary') as any).delete().eq('id', id)
+    await supabase.from('trip_itinerary').delete().eq('id', id)
     setItinerary(prev => prev.filter(i => i.id !== id))
   }
 
@@ -393,20 +393,20 @@ export function TripCard({
   async function addTag() {
     if (!tagInput.trim() || tags.includes(tagInput.trim())) return
     const newTags = [...tags, tagInput.trim()]
-    await (supabase.from('trips') as any).update({ tags: newTags }).eq('id', trip.id)
+    await supabase.from('trips').update({ tags: newTags }).eq('id', trip.id)
     setTags(newTags)
     setTagInput('')
   }
 
   async function removeTag(tag: string) {
     const newTags = tags.filter(t => t !== tag)
-    await (supabase.from('trips') as any).update({ tags: newTags }).eq('id', trip.id)
+    await supabase.from('trips').update({ tags: newTags }).eq('id', trip.id)
     setTags(newTags)
   }
 
   // Budget limits
   async function saveBudgetLimits() {
-    await (supabase.from('trips') as any).update({ budget_limits: budgetLimits }).eq('id', trip.id)
+    await supabase.from('trips').update({ budget_limits: budgetLimits }).eq('id', trip.id)
     setEditingLimits(false)
   }
 
@@ -415,7 +415,7 @@ export function TripCard({
     setDiary(prev => ({ ...prev, [day]: content }))
     clearTimeout(diaryTimers.current[day])
     diaryTimers.current[day] = setTimeout(async () => {
-      await (supabase.from('trip_diary') as any).upsert(
+      await supabase.from('trip_diary').upsert(
         { trip_id: trip.id, day_date: day, content },
         { onConflict: 'trip_id,day_date' }
       )
@@ -425,7 +425,7 @@ export function TripCard({
   // Archive
   async function toggleArchive() {
     setArchiving(true)
-    await (supabase.from('trips') as any).update({ archived: !trip.archived }).eq('id', trip.id)
+    await supabase.from('trips').update({ archived: !trip.archived }).eq('id', trip.id)
     setArchiving(false)
     startTransition(() => { router.refresh() })
   }
@@ -442,7 +442,7 @@ export function TripCard({
       return
     }
     const { data: { publicUrl } } = supabase.storage.from('trip-files').getPublicUrl(path)
-    const { data: att } = await (supabase.from('trip_attachments') as any).insert({
+    const { data: att } = await supabase.from('trip_attachments').insert({
       trip_id: trip.id, name: file.name, url: publicUrl, size_bytes: file.size,
     }).select().single()
     if (att) setAttachments(prev => [...prev, att])
@@ -452,7 +452,7 @@ export function TripCard({
   async function deleteAttachment(id: string, url: string) {
     const path = url.split('/trip-files/')[1]
     if (path) await supabase.storage.from('trip-files').remove([path])
-    await (supabase.from('trip_attachments') as any).delete().eq('id', id)
+    await supabase.from('trip_attachments').delete().eq('id', id)
     setAttachments(prev => prev.filter(a => a.id !== id))
   }
 

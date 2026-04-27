@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const { error: dbError } = await (supabase.from('invitations') as any).upsert({
+    const { error: dbError } = await supabase.from('invitations').upsert({
       couple_id: coupleId,
       email,
       token,

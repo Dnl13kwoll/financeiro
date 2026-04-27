@@ -27,7 +27,7 @@ export function InstallmentItemReschedule({
     const newDate = data.get('due_date') as string
 
     const supabase = createClient()
-    const { error } = await (supabase.from('installment_items') as any)
+    const { error } = await supabase.from('installment_items')
       .update({ due_date: newDate })
       .eq('id', itemId)
 

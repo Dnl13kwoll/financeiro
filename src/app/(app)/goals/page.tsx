@@ -27,7 +27,7 @@ export default async function GoalsPage({
 
   const [goalsRes, accountsRes] = await Promise.all([
     coupleId
-      ? await (supabase.from('goals') as any)
+      ? await supabase.from('goals')
           .select('*, goal_history(*), accounts(name), goal_contributions(*)')
           .eq('couple_id', coupleId)
           .order('created_at', { ascending: false })

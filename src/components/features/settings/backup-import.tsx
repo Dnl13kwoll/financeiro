@@ -78,7 +78,7 @@ export function BackupImport() {
       const rows = backup.data[key]
       if (!rows || rows.length === 0) continue
 
-      const { error } = await (supabase.from(table) as any).upsert(rows, { onConflict: 'id', ignoreDuplicates: false })
+      const { error } = await supabase.from(table as any).upsert(rows, { onConflict: 'id', ignoreDuplicates: false })
       if (error) {
         console.error(`Error importing ${table}:`, error.message)
         errors++

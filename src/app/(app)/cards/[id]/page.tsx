@@ -62,7 +62,7 @@ export default async function CardPage({
 
   const [txRes, paymentsRes, balanceRes] = await Promise.all([
     supabase.from('transactions').select('*, categories(name)').eq('account_id', id).eq('type', 'expense').gte('date', cycleStartStr).lte('date', cycleEndStr).is('deleted_at', null).order('date', { ascending: false }),
-    (supabase.from('card_invoice_payments') as any).select('*').eq('account_id', id).gte('paid_at', cycleStartStr).lte('paid_at', cycleEndStr).order('paid_at', { ascending: false }),
+    supabase.from('card_invoice_payments').select('*').eq('account_id', id).gte('paid_at', cycleStartStr).lte('paid_at', cycleEndStr).order('paid_at', { ascending: false }),
     supabase.from('account_balances').select('*').eq('id', id).single(),
   ])
 

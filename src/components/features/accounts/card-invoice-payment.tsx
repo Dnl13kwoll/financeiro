@@ -34,7 +34,7 @@ export function CardInvoicePayment({
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
-    await (supabase.from('card_invoice_payments') as any).insert({
+    await supabase.from('card_invoice_payments').insert({
       account_id: accountId,
       couple_id: coupleId,
       user_id: userId,
@@ -51,7 +51,7 @@ export function CardInvoicePayment({
 
   async function handleDelete(id: string) {
     const supabase = createClient()
-    await (supabase.from('card_invoice_payments') as any).delete().eq('id', id)
+    await supabase.from('card_invoice_payments').delete().eq('id', id)
     showToast('Pagamento removido.', 'error')
     startTransition(() => { router.refresh() })
   }

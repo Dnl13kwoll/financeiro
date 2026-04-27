@@ -41,7 +41,7 @@ export default async function ProjectionPage() {
           .eq('active', true)
       : Promise.resolve(null),
     coupleId
-      ? (supabase.from('goals') as any)
+      ? supabase.from('goals')
           .select('id, name, target_amount, current_amount, deadline')
           .eq('couple_id', coupleId)
           .order('deadline', { ascending: true })

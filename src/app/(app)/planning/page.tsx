@@ -46,7 +46,7 @@ export default async function PlanningPage({
 
   const [plansRes, expensesRes, incomeRes, categoriesRes] = await Promise.all([
     coupleId
-      ? (supabase.from('monthly_plans') as any).select('*').eq('couple_id', coupleId).eq('month', monthStart).order('label')
+      ? supabase.from('monthly_plans').select('*').eq('couple_id', coupleId).eq('month', monthStart).order('label')
       : Promise.resolve(null),
     coupleId
       ? supabase.from('transactions').select('amount, category_id').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null)
@@ -75,7 +75,7 @@ export default async function PlanningPage({
     })
     annualMonths = await Promise.all(yearMonths.map(async ({ month, label, monthEnd }) => {
       const [pRes, eRes, iRes] = await Promise.all([
-        (supabase.from('monthly_plans') as any).select('planned_amount').eq('couple_id', coupleId).eq('month', month),
+        supabase.from('monthly_plans').select('planned_amount').eq('couple_id', coupleId).eq('month', month),
         supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', month).lte('competence_date', monthEnd).is('deleted_at', null),
         supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'income').gte('competence_date', month).lte('competence_date', monthEnd).is('deleted_at', null),
       ])

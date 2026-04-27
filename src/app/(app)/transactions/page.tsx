@@ -87,7 +87,7 @@ export default async function TransactionsPage({
   const categoriesRes = await supabase.from('categories').select('id, name, type, couple_id').order('name')
 
   const rulesRes = coupleId
-    ? await (supabase.from('category_rules') as any)
+    ? await supabase.from('category_rules')
         .select('id, pattern, match_type, category_id, categories(name)')
         .eq('couple_id', coupleId)
     : null

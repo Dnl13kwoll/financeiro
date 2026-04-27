@@ -12,7 +12,7 @@ type Template = {
   description: string | null
   category_id: string | null
   account_id: string | null
-  tags: string[]
+  tags: string[] | null
 }
 
 export function TransactionTemplates({
@@ -30,7 +30,7 @@ export function TransactionTemplates({
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data } = await (supabase.from('transaction_templates') as any)
+      const { data } = await supabase.from('transaction_templates')
         .select('*')
         .eq('couple_id', coupleId)
         .order('name')
@@ -42,7 +42,7 @@ export function TransactionTemplates({
   async function handleDelete(id: string, e: React.MouseEvent) {
     e.stopPropagation()
     const supabase = createClient()
-    await (supabase.from('transaction_templates') as any).delete().eq('id', id)
+    await supabase.from('transaction_templates').delete().eq('id', id)
     setTemplates(prev => prev.filter(t => t.id !== id))
     showToast('Template removido.', 'error')
   }
@@ -88,7 +88,7 @@ export function TransactionTemplates({
 
 export async function saveTransactionTemplate(coupleId: string, userId: string, template: Omit<Template, 'id'>) {
   const supabase = createClient()
-  await (supabase.from('transaction_templates') as any).insert({
+  await supabase.from('transaction_templates').insert({
     ...template,
     couple_id: coupleId,
     user_id: userId,

@@ -52,7 +52,7 @@ export function AccountActions({ account }: { account: Account }) {
       payload.closing_day = parseInt(data.get('closing_day') as string) || null
       payload.due_day = parseInt(data.get('due_day') as string) || null
     }
-    await (supabase.from('accounts') as any).update(payload).eq('id', account.id)
+    await supabase.from('accounts').update(payload).eq('id', account.id)
     setLoading(false)
     setEditOpen(false)
     startTransition(() => { router.refresh() })
@@ -61,7 +61,7 @@ export function AccountActions({ account }: { account: Account }) {
   async function handleDelete() {
     if (!confirm(`Excluir a conta "${account.name}"?`)) return
     const supabase = createClient()
-    await (supabase.from('accounts') as any)
+    await supabase.from('accounts')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', account.id)
     startTransition(() => { router.refresh() })

@@ -52,11 +52,11 @@ export default async function ActivityPage({
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(30),
-    (supabase.from('goal_history') as any)
+    supabase.from('goal_history')
       .select('id, amount, note, created_at, goals(name)')
       .limit(10)
       .order('created_at', { ascending: false }),
-    (supabase.from('installment_items') as any)
+    supabase.from('installment_items')
       .select('id, amount, due_date, paid, installments(description, couple_id)')
       .eq('paid', true)
       .order('updated_at', { ascending: false })

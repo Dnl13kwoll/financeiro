@@ -21,7 +21,7 @@ export function InstallmentItemCancel({
   async function toggle() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('installment_items') as any)
+    await supabase.from('installment_items')
       .update({ canceled: !canceled })
       .eq('id', itemId)
     showToast(canceled ? `Parcela ${partNumber} reativada.` : `Parcela ${partNumber} cancelada.`)

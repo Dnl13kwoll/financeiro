@@ -29,7 +29,7 @@ export default async function ShoppingPage() {
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const listsRes = coupleId
-    ? await (supabase.from('shopping_lists') as any)
+    ? await supabase.from('shopping_lists')
         .select('*, shopping_items(*)')
         .eq('couple_id', coupleId)
         .order('created_at', { ascending: false })
@@ -39,7 +39,7 @@ export default async function ShoppingPage() {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
   const budgetsRes = coupleId
-    ? await (supabase.from('budgets') as any)
+    ? await supabase.from('budgets')
         .select('id, amount, category_id, categories(id, name)')
         .eq('couple_id', coupleId)
         .eq('month', monthStart)

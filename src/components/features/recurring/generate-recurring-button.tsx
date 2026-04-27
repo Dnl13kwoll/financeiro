@@ -47,7 +47,7 @@ export function GenerateRecurringButton({
         const monthStart = currentMonth
         const monthEnd = new Date(year, month, 0).toISOString().slice(0, 10)
 
-        const { data: existing } = await (supabase.from('transactions') as any)
+        const { data: existing } = await supabase.from('transactions')
           .select('id')
           .eq('couple_id', coupleId)
           .eq('description', rec.name)
@@ -59,7 +59,7 @@ export function GenerateRecurringButton({
 
         if (!rec.amount) continue
 
-        await (supabase.from('transactions') as any).insert({
+        await supabase.from('transactions').insert({
           couple_id: coupleId,
           user_id: userId,
           type: 'expense',

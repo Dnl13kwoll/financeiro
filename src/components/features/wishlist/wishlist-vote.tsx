@@ -26,7 +26,7 @@ export function WishlistVote({
   async function vote(approved: boolean) {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('wishlist_votes') as any).upsert(
+    await supabase.from('wishlist_votes').upsert(
       { item_id: itemId, couple_id: coupleId, user_id: userId, approved },
       { onConflict: 'item_id,user_id' }
     )

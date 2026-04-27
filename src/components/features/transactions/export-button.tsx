@@ -51,7 +51,7 @@ export function ExportButton({
 
   async function fetchRows(): Promise<any[]> {
     const supabase = createClient()
-    let query = (supabase.from('transactions') as any)
+    let query = supabase.from('transactions')
       .select('date, description, amount, type, categories(name), accounts(name), tags, comment, is_private, receipt_url')
       .eq('couple_id', coupleId)
       .gte('competence_date', filters.monthStart)

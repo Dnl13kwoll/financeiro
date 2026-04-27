@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npx supabase db push --project-ref ahozjzuaiyneuipughak && npm run build",
   "crons": [
     {
       "path": "/api/notifications/send",

@@ -21,7 +21,7 @@ export function RecurringPauseToggle({
   async function toggle() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('recurring_accounts') as any)
+    await supabase.from('recurring_accounts')
       .update({ paused: !paused })
       .eq('id', id)
     showToast(paused ? `"${name}" reativada!` : `"${name}" pausada.`)

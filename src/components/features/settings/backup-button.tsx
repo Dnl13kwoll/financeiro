@@ -12,16 +12,16 @@ export function BackupButton() {
     const supabase = createClient()
 
     const [transactions, installments, installmentItems, recurring, recurringRecords, accounts, budgets, goals, goalHistory, categories] = await Promise.all([
-      (supabase.from('transactions') as any).select('*').is('deleted_at', null),
-      (supabase.from('installments') as any).select('*'),
-      (supabase.from('installment_items') as any).select('*'),
-      (supabase.from('recurring_accounts') as any).select('*').eq('active', true),
-      (supabase.from('recurring_records') as any).select('*'),
-      (supabase.from('accounts') as any).select('*').is('deleted_at', null),
-      (supabase.from('budgets') as any).select('*'),
-      (supabase.from('goals') as any).select('*'),
-      (supabase.from('goal_history') as any).select('*'),
-      (supabase.from('categories') as any).select('*'),
+      supabase.from('transactions').select('*').is('deleted_at', null),
+      supabase.from('installments').select('*'),
+      supabase.from('installment_items').select('*'),
+      supabase.from('recurring_accounts').select('*').eq('active', true),
+      supabase.from('recurring_records').select('*'),
+      supabase.from('accounts').select('*').is('deleted_at', null),
+      supabase.from('budgets').select('*'),
+      supabase.from('goals').select('*'),
+      supabase.from('goal_history').select('*'),
+      supabase.from('categories').select('*'),
     ])
 
     const backup = {

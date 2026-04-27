@@ -30,7 +30,7 @@ export default async function WishlistPage() {
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const itemsRes = coupleId
-    ? await (supabase.from('wishlist_items') as any)
+    ? await supabase.from('wishlist_items')
         .select('*')
         .eq('couple_id', coupleId)
         .order('priority')
@@ -38,7 +38,7 @@ export default async function WishlistPage() {
     : null
 
   const votesRes = coupleId
-    ? await (supabase.from('wishlist_votes') as any)
+    ? await supabase.from('wishlist_votes')
         .select('*')
         .eq('couple_id', coupleId)
     : null

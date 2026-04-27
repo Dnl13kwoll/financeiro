@@ -29,7 +29,7 @@ export function AcceptInviteButton({ token, invitationId, coupleId, email }: {
       couple_id: coupleId,
       role: 'member',
     }
-    const { error: memberErr } = await (supabase.from('couple_members') as any).insert(memberPayload)
+    const { error: memberErr } = await supabase.from('couple_members').insert(memberPayload)
 
     if (memberErr) {
       setError('Erro ao entrar no casal: ' + memberErr.message)
@@ -37,7 +37,7 @@ export function AcceptInviteButton({ token, invitationId, coupleId, email }: {
       return
     }
 
-    await (supabase.from('invitations') as any)
+    await supabase.from('invitations')
       .update({ status: 'accepted' })
       .eq('id', invitationId)
 

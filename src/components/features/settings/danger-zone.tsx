@@ -47,11 +47,11 @@ export function DangerZone({ coupleId }: { coupleId: string }) {
 
       for (const table of tables) {
         if (table === 'categories') {
-          await (supabase.from(table) as any).delete().eq('couple_id', coupleId)
+          await supabase.from(table as any).delete().eq('couple_id', coupleId)
         } else if (table === 'couples') {
-          await (supabase.from(table) as any).delete().eq('id', coupleId)
+          await supabase.from(table as any).delete().eq('id', coupleId)
         } else {
-          await (supabase.from(table) as any).delete().eq('couple_id', coupleId)
+          await supabase.from(table as any).delete().eq('couple_id', coupleId)
         }
       }
 

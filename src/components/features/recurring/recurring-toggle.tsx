@@ -40,7 +40,7 @@ export function RecurringToggle({
   async function handleUnpay() {
     if (!recordId) return
     const supabase = createClient()
-    await (supabase.from('recurring_records') as any).update({ paid: false }).eq('id', recordId)
+    await supabase.from('recurring_records').update({ paid: false }).eq('id', recordId)
     startTransition(() => { router.refresh() })
   }
 
@@ -55,12 +55,12 @@ export function RecurringToggle({
     const createTx = data.get('create_transaction') === 'on'
 
     if (recordId) {
-      await (supabase.from('recurring_records') as any)
+      await supabase.from('recurring_records')
         .update({ paid: true, amount: realAmount })
         .eq('id', recordId)
     } else {
-      await (supabase.from('recurring_records') as any).insert({
-        recurring_account_id: recurringId,
+      await supabase.from('recurring_records').insert({
+        recurring_id: recurringId,
         reference_month: referenceMonth,
         amount: realAmount,
         paid: true,
@@ -68,7 +68,7 @@ export function RecurringToggle({
     }
 
     if (createTx && accountId && realAmount > 0 && userId && coupleId) {
-      await (supabase.from('transactions') as any).insert({
+      await supabase.from('transactions').insert({
         type: 'expense',
         amount: realAmount,
         description: name ?? 'Conta recorrente',

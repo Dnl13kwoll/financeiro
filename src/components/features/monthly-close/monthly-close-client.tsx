@@ -95,12 +95,12 @@ export function MonthlyCloseClient(props: Props) {
     const supabase = createClient()
     const goal = props.goals.find(g => g.id === goalId)!
     const [upd, hist] = await Promise.all([
-      (supabase.from('goals') as any).update({ current_amount: goal.current_amount + val }).eq('id', goalId),
-      (supabase.from('goal_history') as any).insert({ goal_id: goalId, amount: val, note: `Aporte fechamento ${props.monthStart.slice(0, 7)}` }),
+      supabase.from('goals').update({ current_amount: goal.current_amount + val }).eq('id', goalId),
+      supabase.from('goal_history').insert({ goal_id: goalId, amount: val, note: `Aporte fechamento ${props.monthStart.slice(0, 7)}` }),
     ])
     setSavingGoalId(null)
     if (upd.error || hist.error) {
-      showToast('Erro: ' + (upd.error || hist.error).message, 'error')
+      showToast('Erro: ' + (upd.error || hist.error)!.message, 'error')
       return
     }
     setAmounts(prev => ({ ...prev, [goalId]: '' }))

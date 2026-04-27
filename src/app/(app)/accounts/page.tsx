@@ -52,7 +52,7 @@ export default async function AccountsPage() {
   const [balancesRes, forecastInstRes] = await Promise.all([
     coupleId ? supabase.from('account_balances').select('*') : Promise.resolve(null),
     coupleId
-      ? await (supabase.from('installment_items') as any)
+      ? await supabase.from('installment_items')
           .select('amount, installments(account_id)')
           .eq('paid', false)
           .eq('canceled', false)

@@ -38,7 +38,7 @@ export function CategoryRules({
     if (!pattern.trim() || !categoryId) return
     setLoading(true)
     const supabase = createClient()
-    const { data, error } = await (supabase.from('category_rules') as any)
+    const { data, error } = await supabase.from('category_rules')
       .insert({ couple_id: coupleId, pattern: pattern.trim(), match_type: matchType, category_id: categoryId })
       .select('id, pattern, match_type, category_id')
       .single()
@@ -46,7 +46,7 @@ export function CategoryRules({
       showToast('Erro ao criar regra', 'error')
     } else {
       const cat = categories.find(c => c.id === categoryId)
-      setRules(prev => [...prev, { ...data, category_name: cat?.name }])
+      setRules(prev => [...prev, { ...data, match_type: data.match_type as Rule['match_type'], category_name: cat?.name }])
       setPattern('')
       showToast('Regra criada!')
     }
@@ -55,7 +55,7 @@ export function CategoryRules({
 
   async function handleDelete(id: string) {
     const supabase = createClient()
-    await (supabase.from('category_rules') as any).delete().eq('id', id)
+    await supabase.from('category_rules').delete().eq('id', id)
     setRules(prev => prev.filter(r => r.id !== id))
     showToast('Regra removida')
   }
@@ -81,7 +81,7 @@ export function CategoryRules({
           rule.match_type === 'starts_with' ? desc.startsWith(pat) :
           desc === pat
         if (matches && tx.category_id !== rule.category_id) {
-          await (supabase.from('transactions') as any)
+          await supabase.from('transactions')
             .update({ category_id: rule.category_id })
             .eq('id', tx.id)
           count++

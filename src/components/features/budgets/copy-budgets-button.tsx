@@ -18,7 +18,7 @@ export function CopyBudgetsButton({ coupleId, currentMonth }: { coupleId: string
     const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}-01`
 
     const supabase = createClient()
-    const { data: prev } = await (supabase.from('budgets') as any)
+    const { data: prev } = await supabase.from('budgets')
       .select('category_id, amount')
       .eq('couple_id', coupleId)
       .eq('month', prevMonth)
@@ -36,7 +36,7 @@ export function CopyBudgetsButton({ coupleId, currentMonth }: { coupleId: string
       month: currentMonth,
     }))
 
-    await (supabase.from('budgets') as any).upsert(payload, { onConflict: 'couple_id,category_id,month' })
+    await supabase.from('budgets').upsert(payload, { onConflict: 'couple_id,category_id,month' })
     setLoading(false)
     startTransition(() => { router.refresh() })
   }

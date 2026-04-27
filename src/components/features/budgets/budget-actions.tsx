@@ -13,7 +13,7 @@ export function BudgetDeleteButton({ id }: { id: string }) {
   async function handleDelete() {
     if (!confirm('Excluir este orçamento?')) return
     const supabase = createClient()
-    await (supabase.from('budgets') as any).delete().eq('id', id)
+    await supabase.from('budgets').delete().eq('id', id)
     startTransition(() => { router.refresh() })
   }
 
@@ -47,7 +47,7 @@ export function BudgetEditButton({
     setLoading(true)
     const data = new FormData(e.currentTarget)
     const supabase = createClient()
-    await (supabase.from('budgets') as any).update({
+    await supabase.from('budgets').update({
       amount: parseFloat(data.get('amount') as string),
       alert_threshold: parseInt(data.get('threshold') as string),
     }).eq('id', id)

@@ -93,10 +93,10 @@ export function GoalContributions({
     const supabase = createClient()
 
     // Add contribution record
-    await (supabase.from('goal_contributions') as any).insert({
+    await supabase.from('goal_contributions').insert({
       goal_id: goalId,
       couple_id: coupleId,
-      user_id: userId,
+      contributed_by: userId,
       amount,
       note: (data.get('note') as string) || null,
       contributed_at: data.get('date') as string,
@@ -104,7 +104,7 @@ export function GoalContributions({
 
     // Update goal current_amount
     const newAmount = currentAmount + amount
-    await (supabase.from('goals') as any).update({ current_amount: newAmount }).eq('id', goalId)
+    await supabase.from('goals').update({ current_amount: newAmount }).eq('id', goalId)
 
     setLoading(false)
     setOpen(false)

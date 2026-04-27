@@ -19,7 +19,7 @@ export function NewWishlistButton({ coupleId, userId }: { coupleId: string; user
     const data = new FormData(form)
     const supabase = createClient()
     const priceRaw = data.get('price') as string
-    const { error } = await (supabase.from('wishlist_items') as any).insert({
+    const { error } = await supabase.from('wishlist_items').insert({
       name: data.get('name') as string,
       description: (data.get('description') as string) || null,
       url: (data.get('url') as string) || null,

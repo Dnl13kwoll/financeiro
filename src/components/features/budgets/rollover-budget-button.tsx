@@ -41,7 +41,7 @@ export function RolloverBudgetButton({
         0
       ).toISOString().slice(0, 10)
 
-      const { data: prevBudgets } = await (supabase.from('budgets') as any)
+      const { data: prevBudgets } = await supabase.from('budgets')
         .select('id, category_id, amount, categories(name)')
         .eq('couple_id', coupleId)
         .eq('month', prevMonth)
@@ -51,7 +51,7 @@ export function RolloverBudgetButton({
         return
       }
 
-      const { data: prevExpenses } = await (supabase.from('transactions') as any)
+      const { data: prevExpenses } = await supabase.from('transactions')
         .select('category_id, amount')
         .eq('couple_id', coupleId)
         .eq('type', 'expense')
@@ -64,7 +64,7 @@ export function RolloverBudgetButton({
         if (e.category_id) spentMap.set(e.category_id, (spentMap.get(e.category_id) ?? 0) + e.amount)
       }
 
-      const { data: currBudgets } = await (supabase.from('budgets') as any)
+      const { data: currBudgets } = await supabase.from('budgets')
         .select('id, category_id, amount')
         .eq('couple_id', coupleId)
         .eq('month', currentMonth)
@@ -102,7 +102,7 @@ export function RolloverBudgetButton({
     try {
       const supabase = createClient()
 
-      const { data: currBudgets } = await (supabase.from('budgets') as any)
+      const { data: currBudgets } = await supabase.from('budgets')
         .select('id, category_id, amount, alert_threshold')
         .eq('couple_id', coupleId)
         .eq('month', currentMonth)
@@ -114,11 +114,11 @@ export function RolloverBudgetButton({
       for (const item of preview) {
         const curr = currMap.get(item.category_id)
         if (curr) {
-          await (supabase.from('budgets') as any)
+          await supabase.from('budgets')
             .update({ amount: curr.amount + item.surplus })
             .eq('id', curr.id)
         } else {
-          await (supabase.from('budgets') as any).insert({
+          await supabase.from('budgets').insert({
             couple_id: coupleId,
             category_id: item.category_id,
             month: currentMonth,

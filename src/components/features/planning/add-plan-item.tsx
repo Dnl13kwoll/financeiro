@@ -30,7 +30,7 @@ export function AddPlanItem({
     const label = categoryId
       ? (categories.find((c) => c.id === categoryId)?.name ?? (data.get('label') as string))
       : (data.get('label') as string)
-    await (supabase.from('monthly_plans') as any).upsert({
+    await supabase.from('monthly_plans').upsert({
       couple_id: coupleId,
       month,
       category_id: categoryId,

@@ -50,8 +50,8 @@ export function TransferButton({
     }
     // Two transactions: expense from source, income to destination
     await Promise.all([
-      (supabase.from('transactions') as any).insert({ ...base, account_id: fromId }),
-      (supabase.from('transactions') as any).insert({ ...base, account_id: toId }),
+      supabase.from('transactions').insert({ ...base, account_id: fromId }),
+      supabase.from('transactions').insert({ ...base, account_id: toId }),
     ])
 
     setLoading(false)

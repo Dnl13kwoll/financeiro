@@ -38,7 +38,7 @@ export function AccountReconcile({
     }
 
     const supabase = createClient()
-    await (supabase.from('transactions') as any).insert({
+    await supabase.from('transactions').insert({
       type: diff > 0 ? 'income' : 'expense',
       amount: Math.abs(diff),
       description: 'Ajuste de saldo (reconciliação)',

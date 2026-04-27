@@ -45,10 +45,10 @@ export default async function NetWorthPage({
       ? supabase.from('account_balances').select('*').eq('couple_id', coupleId)
       : Promise.resolve(null),
     coupleId
-      ? (supabase.from('goals') as any).select('id, name, current_amount, target_amount').eq('couple_id', coupleId)
+      ? supabase.from('goals').select('id, name, current_amount, target_amount').eq('couple_id', coupleId)
       : Promise.resolve(null),
     coupleId
-      ? (supabase.from('networth_snapshots') as any).select('*').eq('couple_id', coupleId).order('month', { ascending: true }).limit(12)
+      ? supabase.from('networth_snapshots').select('*').eq('couple_id', coupleId).order('month', { ascending: true }).limit(12)
       : Promise.resolve(null),
     coupleId
       ? (supabase as any).from('vehicles').select('id, name, make, model, year, current_value').eq('couple_id', coupleId).eq('active', true).not('current_value', 'is', null)

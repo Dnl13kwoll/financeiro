@@ -29,11 +29,11 @@ export function BudgetAlertNotifier({ alerts }: { alerts: BudgetAlert[] }) {
         if (sessionStorage.getItem(key)) continue
         sessionStorage.setItem(key, '1')
 
-        await (supabase.from('notifications') as any).insert({
+        await supabase.from('notifications').insert({
           couple_id: alert.coupleId,
           user_id: user.id,
           type: over ? 'budget_over' : 'budget_warning',
-          message,
+          title: message,
           href: '/budgets',
           read: false,
         })

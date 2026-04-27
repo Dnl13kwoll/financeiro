@@ -30,21 +30,21 @@ export async function GET(req: Request) {
       .limit(8),
 
     // Metas
-    (supabase.from('goals') as any)
+    supabase.from('goals')
       .select('id, name, current_amount, target_amount')
       .eq('couple_id', coupleId)
       .ilike('name', pattern)
       .limit(5),
 
     // Investimentos
-    (supabase.from('investments') as any)
+    supabase.from('investments')
       .select('id, name, type, invested_amount, active')
       .eq('couple_id', coupleId)
       .ilike('name', pattern)
       .limit(5),
 
     // Orçamentos (busca por categoria)
-    (supabase.from('budgets') as any)
+    supabase.from('budgets')
       .select('id, category, amount, month')
       .eq('couple_id', coupleId)
       .ilike('category', pattern)

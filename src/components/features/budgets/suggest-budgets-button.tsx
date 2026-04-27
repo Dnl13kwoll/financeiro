@@ -48,7 +48,7 @@ export function SuggestBudgetsButton({
     // Fetch expenses for last 3 months
     const results = await Promise.all(
       months.map((mStart, i) =>
-        (supabase.from('transactions') as any)
+        supabase.from('transactions')
           .select('category_id, amount, categories(name)')
           .eq('couple_id', coupleId)
           .eq('type', 'expense')
@@ -96,7 +96,7 @@ export function SuggestBudgetsButton({
     const toApply = suggestions.filter(s => selected.has(s.category_id))
 
     for (const s of toApply) {
-      await (supabase.from('budgets') as any).upsert(
+      await supabase.from('budgets').upsert(
         { couple_id: coupleId, month: currentMonth, category_id: s.category_id, amount: s.avg },
         { onConflict: 'couple_id,month,category_id' }
       )

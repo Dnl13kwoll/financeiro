@@ -28,7 +28,7 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
     const threshold = data.get('alert_threshold') as string
 
     // Tenta com alert_threshold primeiro; se falhar (coluna não existe), tenta sem
-    let result = await (supabase.from('budgets') as any).upsert({
+    let result = await supabase.from('budgets').upsert({
       category_id: data.get('category_id') as string,
       couple_id: coupleId,
       amount: parseFloat(data.get('amount') as string),
@@ -37,7 +37,7 @@ export function NewBudgetButton({ coupleId, categories }: { coupleId: string; ca
     }, { onConflict: 'couple_id,category_id,month' })
 
     if (result.error?.message?.includes('alert_threshold')) {
-      result = await (supabase.from('budgets') as any).upsert({
+      result = await supabase.from('budgets').upsert({
         category_id: data.get('category_id') as string,
         couple_id: coupleId,
         amount: parseFloat(data.get('amount') as string),

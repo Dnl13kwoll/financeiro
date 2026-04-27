@@ -27,7 +27,7 @@ export function InstallmentItemEdit({
     const newAmount = parseFloat(data.get('amount') as string)
 
     const supabase = createClient()
-    const { error } = await (supabase.from('installment_items') as any)
+    const { error } = await supabase.from('installment_items')
       .update({ amount: newAmount })
       .eq('id', itemId)
 

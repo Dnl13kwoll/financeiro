@@ -75,9 +75,9 @@ function InvestmentForm({
     }
     let error
     if (initial?.id) {
-      ;({ error } = await (supabase.from('investments') as any).update(payload).eq('id', initial.id))
+      ;({ error } = await supabase.from('investments').update(payload).eq('id', initial.id))
     } else {
-      ;({ error } = await (supabase.from('investments') as any).insert(payload))
+      ;({ error } = await supabase.from('investments').insert(payload))
     }
     setLoading(false)
     if (error) { showToast('Erro: ' + error.message, 'error'); return }

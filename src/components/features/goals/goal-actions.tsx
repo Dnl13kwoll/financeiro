@@ -37,7 +37,7 @@ export function NewGoalButton({ coupleId, accounts = [] }: { coupleId: string; a
       deadline: (data.get('deadline') as string) || null,
       account_id: (data.get('account_id') as string) || null,
     }
-    const result = await (supabase.from('goals') as any).insert(payload)
+    const result = await supabase.from('goals').insert(payload)
     if (result.error) {
       setError(result.error.message)
       setLoading(false)
@@ -148,11 +148,11 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const note = (data.get('note') as string) || null
     const supabase = createClient()
     const [updateRes, histRes] = await Promise.all([
-      (supabase.from('goals') as any).update({ current_amount: goal.current_amount + value }).eq('id', goal.id),
-      (supabase.from('goal_history') as any).insert({ goal_id: goal.id, amount: value, note }),
+      supabase.from('goals').update({ current_amount: goal.current_amount + value }).eq('id', goal.id),
+      supabase.from('goal_history').insert({ goal_id: goal.id, amount: value, note }),
     ])
     if (updateRes.error || histRes.error) {
-      const msg = (updateRes.error || histRes.error).message
+      const msg = (updateRes.error || histRes.error)!.message
       showToast('Erro: ' + msg, 'error')
       setLoading(false)
       return
@@ -170,7 +170,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
-    const { error } = await (supabase.from('goals') as any).update({
+    const { error } = await supabase.from('goals').update({
       name: data.get('name') as string,
       target_amount: parseFloat(data.get('target_amount') as string),
       deadline: (data.get('deadline') as string) || null,
@@ -189,7 +189,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
   async function handleDelete() {
     if (!confirm(`Excluir a meta "${goal.name}"?`)) return
     const supabase = createClient()
-    const { error } = await (supabase.from('goals') as any).delete().eq('id', goal.id)
+    const { error } = await supabase.from('goals').delete().eq('id', goal.id)
     if (error) { showToast('Erro: ' + error.message, 'error'); return }
     showToast('Meta excluída.', 'error')
     startTransition(() => { router.refresh() })

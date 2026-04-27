@@ -51,7 +51,7 @@ export default async function InsightsPage() {
   // Fetch last 6 months of transactions
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-  const { data: txRaw } = await (supabase.from('transactions') as any)
+  const { data: txRaw } = await supabase.from('transactions')
     .select('amount, type, category_id, date, description, categories(name)')
     .eq('couple_id', coupleId)
     .gte('date', sixMonthsAgo.toISOString().slice(0, 10))

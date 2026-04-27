@@ -39,7 +39,7 @@ export function NewShoppingListButton({
     e.preventDefault()
     setLoading(true)
     const supabase = createClient()
-    const { error } = await (supabase.from('shopping_lists') as any).insert({
+    const { error } = await supabase.from('shopping_lists').insert({
       couple_id: coupleId,
       name: name.trim() || 'Lista de compras',
       budget: budget ? parseFloat(budget) : null,
@@ -147,7 +147,7 @@ export function AddShoppingItemButton({ listId, userId }: { listId: string; user
     if (!name.trim()) return
     setLoading(true)
     const supabase = createClient()
-    const { error } = await (supabase.from('shopping_items') as any).insert({
+    const { error } = await supabase.from('shopping_items').insert({
       list_id: listId,
       name: name.trim(),
       quantity: parseFloat(qty) || 1,
@@ -261,7 +261,7 @@ export function CheckShoppingItem({ id, checked, actualPrice }: { id: string; ch
     if (!checked && !showPrice) { setShowPrice(true); return }
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('shopping_items') as any).update({
+    await supabase.from('shopping_items').update({
       checked: !checked,
       actual_price: price ? parseFloat(price) : null,
     }).eq('id', id)
@@ -273,7 +273,7 @@ export function CheckShoppingItem({ id, checked, actualPrice }: { id: string; ch
   async function uncheck() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('shopping_items') as any).update({ checked: false }).eq('id', id)
+    await supabase.from('shopping_items').update({ checked: false }).eq('id', id)
     setLoading(false)
     startTransition(() => { router.refresh() })
   }

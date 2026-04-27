@@ -24,7 +24,7 @@ export function PlanItemRow({
   async function save() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('monthly_plans') as any)
+    await supabase.from('monthly_plans')
       .update({ planned_amount: parseFloat(value) || 0 })
       .eq('id', id)
     setLoading(false)
@@ -34,7 +34,7 @@ export function PlanItemRow({
 
   async function handleDelete() {
     const supabase = createClient()
-    await (supabase.from('monthly_plans') as any).delete().eq('id', id)
+    await supabase.from('monthly_plans').delete().eq('id', id)
     startTransition(() => { router.refresh() })
   }
 

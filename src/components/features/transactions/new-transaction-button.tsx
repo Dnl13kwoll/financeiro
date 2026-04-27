@@ -61,7 +61,7 @@ export function NewTransactionButton({
     description: string | null
     category_id: string | null
     account_id: string | null
-    tags: string[]
+    tags: string[] | null
   }) {
     if (t.type === 'income' || t.type === 'expense' || t.type === 'transfer') setType(t.type)
     if (t.amount) setFormAmount(String(t.amount))
@@ -104,7 +104,7 @@ export function NewTransactionButton({
     if (n === 1 && !skipDupCheck.current && type !== 'transfer') {
       const dateFrom = new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
       const dateTo = new Date(baseDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-      const { data: dups } = await (supabase.from('transactions') as any)
+      const { data: dups } = await supabase.from('transactions')
         .select('id, description, amount, date')
         .eq('couple_id', coupleId)
         .eq('amount', totalAmount)
@@ -114,7 +114,7 @@ export function NewTransactionButton({
         .is('deleted_at', null)
         .limit(1)
       if (dups && dups.length > 0) {
-        setDupWarning({ description: dups[0].description, amount: dups[0].amount, date: dups[0].date })
+        setDupWarning({ description: dups[0].description ?? '', amount: dups[0].amount, date: dups[0].date })
         setLoading(false)
         return
       }
@@ -122,8 +122,8 @@ export function NewTransactionButton({
     skipDupCheck.current = false
 
     if (n > 1 && type === 'expense') {
-      const { data: installGroup, error: installError } = await (supabase.from('installments') as any).insert({
-        description,
+      const { data: installGroup, error: installError } = await supabase.from('installments').insert({
+        description: description ?? '',
         total_amount: totalAmount,
         total_parts: n,
         couple_id: coupleId,
@@ -148,7 +148,7 @@ export function NewTransactionButton({
             paid: false,
           }
         })
-        const { error: itemsError } = await (supabase.from('installment_items') as any).insert(items)
+        const { error: itemsError } = await supabase.from('installment_items').insert(items)
         if (itemsError) {
           showToast('Erro ao criar parcelas: ' + itemsError.message, 'error')
           setLoading(false)
@@ -172,7 +172,7 @@ export function NewTransactionButton({
         comment: (data.get('comment') as string) || null,
         receipt_url: (data.get('receipt_url') as string) || null,
       }
-      const { error: txError } = await (supabase.from('transactions') as any).insert(payload)
+      const { error: txError } = await supabase.from('transactions').insert(payload)
       if (txError) {
         showToast('Erro ao salvar transação: ' + txError.message, 'error')
         setLoading(false)

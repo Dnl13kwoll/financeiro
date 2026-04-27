@@ -109,7 +109,7 @@ export default async function DashboardPage() {
   const next30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const next7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const dueSoonRes = coupleId
-    ? await (supabase.from('installment_items') as any).select('id, due_date, amount, installments(description)').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next7)
+    ? await supabase.from('installment_items').select('id, due_date, amount, installments(description)').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next7)
     : null
   const recurringDueRes = coupleId
     ? await supabase.from('recurring_accounts').select('id, name, day_due, amount').eq('couple_id', coupleId).eq('active', true).gte('day_due', now.getDate()).lte('day_due', now.getDate() + 7)
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
 
   // Previsão de saldo (30 dias)
   const pendingInstallmentsRes = coupleId
-    ? await (supabase.from('installment_items') as any).select('amount').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next30)
+    ? await supabase.from('installment_items').select('amount').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next30)
     : null
   const pendingInstallmentsTotal: number = (pendingInstallmentsRes?.data ?? []).reduce((s: number, i: any) => s + i.amount, 0)
 
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
 
   // Calendar: all month installments + all recurring
   const calendarInstallRes = coupleId
-    ? await (supabase.from('installment_items') as any)
+    ? await supabase.from('installment_items')
         .select('due_date, amount, installments(description)')
         .eq('paid', false)
         .eq('canceled', false)
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
 
   // Metas ativas
   const goalsRes = coupleId
-    ? await (supabase.from('goals') as any).select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+    ? await supabase.from('goals').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
     : null
   const goals: any[] = (goalsRes?.data ?? []).filter((g: any) => g.current_amount < g.target_amount).slice(0, 3)
 

@@ -20,7 +20,7 @@ export function CurrencySelector({ coupleId, current }: { coupleId: string; curr
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('couples') as any).update({ currency: e.target.value }).eq('id', coupleId)
+    await supabase.from('couples').update({ currency: e.target.value }).eq('id', coupleId)
     setLoading(false)
     startTransition(() => { router.refresh() })
   }

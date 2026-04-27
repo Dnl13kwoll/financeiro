@@ -7,7 +7,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   const supabase = await createClient()
 
-  const { data: invitation } = await (supabase.from('invitations') as any)
+  const { data: invitation } = await supabase.from('invitations')
     .select('id, email, couple_id, status, expires_at, couples(currency)')
     .eq('token', token)
     .single()

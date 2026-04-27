@@ -41,7 +41,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     const data = new FormData(form)
     const supabase = createClient()
 
-    await (supabase.from('accounts') as any).insert({
+    await supabase.from('accounts').insert({
       name: data.get('account_name') as string,
       type: data.get('type') as string,
       initial_balance: parseFloat(data.get('initial_balance') as string) || 0,

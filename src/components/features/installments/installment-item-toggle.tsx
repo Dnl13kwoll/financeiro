@@ -34,7 +34,7 @@ export function InstallmentItemToggle({
 
   async function handleUnpay() {
     const supabase = createClient()
-    await (supabase.from('installment_items') as any).update({ paid: false }).eq('id', itemId)
+    await supabase.from('installment_items').update({ paid: false }).eq('id', itemId)
     startTransition(() => { router.refresh() })
   }
 
@@ -47,10 +47,10 @@ export function InstallmentItemToggle({
     const createTx = data.get('create_transaction') === 'on'
 
     const supabase = createClient()
-    await (supabase.from('installment_items') as any).update({ paid: true }).eq('id', itemId)
+    await supabase.from('installment_items').update({ paid: true }).eq('id', itemId)
 
     if (createTx && accountId) {
-      await (supabase.from('transactions') as any).insert({
+      await supabase.from('transactions').insert({
         type: 'expense',
         amount,
         description: description ? `Parcela: ${description}` : 'Parcela',

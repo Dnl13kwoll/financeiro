@@ -36,7 +36,7 @@ export function NewPriceRecordButton({ coupleId, userId, itemSuggestions }: {
     if (!itemName.trim() || !price) return
     setLoading(true)
     const supabase = createClient()
-    const { error } = await (supabase.from('price_history') as any).insert({
+    const { error } = await supabase.from('price_history').insert({
       couple_id: coupleId,
       item_name: itemName.trim(),
       price: parseFloat(price),

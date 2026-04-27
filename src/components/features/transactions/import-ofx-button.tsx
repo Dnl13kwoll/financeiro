@@ -119,7 +119,7 @@ export function ImportOFXButton({
     }))
     // Insert in batches of 50
     for (let i = 0; i < rows.length; i += 50) {
-      await (supabase.from('transactions') as any).insert(rows.slice(i, i + 50))
+      await supabase.from('transactions').insert(rows.slice(i, i + 50))
     }
     setLoading(false)
     setOpen(false)

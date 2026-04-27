@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       accounts: {
@@ -1385,6 +1380,76 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_splits: {
+        Row: {
+          id: string
+          transaction_id: string
+          ratio: number
+          note: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          transaction_id: string
+          ratio?: number
+          note?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          transaction_id?: string
+          ratio?: number
+          note?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_splits_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          couple_id: string | null
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          couple_id?: string | null
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          couple_id?: string | null
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
             referencedColumns: ["id"]
           },
         ]

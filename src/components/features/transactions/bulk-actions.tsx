@@ -25,7 +25,7 @@ export function BulkActionsBar({
     if (!confirm(`Excluir ${selectedIds.length} transação(ões)?`)) return
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('transactions') as any)
+    await supabase.from('transactions')
       .update({ deleted_at: new Date().toISOString() })
       .in('id', selectedIds)
     setLoading(false)
@@ -37,7 +37,7 @@ export function BulkActionsBar({
   async function handleBulkReconcile() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('transactions') as any)
+    await supabase.from('transactions')
       .update({ reconciled: true })
       .in('id', selectedIds)
     setLoading(false)
@@ -49,7 +49,7 @@ export function BulkActionsBar({
   async function handleBulkCategorize(categoryId: string) {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('transactions') as any)
+    await supabase.from('transactions')
       .update({ category_id: categoryId || null })
       .in('id', selectedIds)
     setLoading(false)

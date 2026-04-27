@@ -57,7 +57,7 @@ export function TransactionActions({
     const supabase = createClient()
     const rawTags = (data.get('tags') as string) ?? ''
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
-    await (supabase.from('transactions') as any).update({
+    await supabase.from('transactions').update({
       comment: (data.get('comment') as string) || null,
       receipt_url: (data.get('receipt_url') as string) || null,
       amount: parseFloat(data.get('amount') as string),
@@ -80,13 +80,13 @@ export function TransactionActions({
     const supabase = createClient()
     const today = new Date().toISOString().slice(0, 10)
     // Fetch full transaction to get couple_id, user_id
-    const { data: original } = await (supabase.from('transactions') as any)
+    const { data: original } = await supabase.from('transactions')
       .select('*')
       .eq('id', transaction.id)
       .single()
     if (original) {
       const { id: _id, created_at: _c, updated_at: _u, deleted_at: _d, ...rest } = original
-      await (supabase.from('transactions') as any).insert({
+      await supabase.from('transactions').insert({
         ...rest,
         date: today,
         competence_date: today,
@@ -101,7 +101,7 @@ export function TransactionActions({
     // Optimistic: show undo toast, commit after 4 s unless cancelled
     const timer = setTimeout(async () => {
       const supabase = createClient()
-      await (supabase.from('transactions') as any)
+      await supabase.from('transactions')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', transaction.id)
       startTransition(() => { router.refresh() })

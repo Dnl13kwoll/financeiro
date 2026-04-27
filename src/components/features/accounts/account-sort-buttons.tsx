@@ -21,7 +21,7 @@ export function AccountSortButtons({
   async function move(direction: 'up' | 'down') {
     const supabase = createClient()
     const delta = direction === 'up' ? -15 : 15
-    await (supabase.from('accounts') as any)
+    await supabase.from('accounts')
       .update({ sort_order: sortOrder + delta })
       .eq('id', id)
     startTransition(() => { router.refresh() })

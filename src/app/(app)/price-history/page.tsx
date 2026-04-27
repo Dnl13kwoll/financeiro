@@ -24,7 +24,7 @@ export default async function PriceHistoryPage() {
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
   const histRes = coupleId
-    ? await (supabase.from('price_history') as any)
+    ? await supabase.from('price_history')
         .select('*')
         .eq('couple_id', coupleId)
         .order('recorded_at', { ascending: false })

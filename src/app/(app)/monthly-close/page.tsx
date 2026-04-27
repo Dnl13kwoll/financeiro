@@ -61,7 +61,7 @@ export default async function MonthlyClosePage() {
   const categories = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   // Budgets for prev month
-  const { data: budgets } = await (supabase.from('budgets') as any)
+  const { data: budgets } = await supabase.from('budgets')
     .select('id, category, amount')
     .eq('couple_id', coupleId)
     .eq('month', monthStart)
@@ -80,14 +80,14 @@ export default async function MonthlyClosePage() {
   const budgetsOk = budgetsWithSpent.filter((b: any) => b.spent <= b.amount)
 
   // Goals
-  const { data: goalsData } = await (supabase.from('goals') as any)
+  const { data: goalsData } = await supabase.from('goals')
     .select('id, name, current_amount, target_amount, deadline')
     .eq('couple_id', coupleId)
 
   const goals = (goalsData ?? []).filter((g: any) => g.current_amount < g.target_amount)
 
   // Installments due in month but unpaid
-  const { data: unpaidInstallments } = await (supabase.from('installment_items') as any)
+  const { data: unpaidInstallments } = await supabase.from('installment_items')
     .select('id, due_date, amount, installments(description, couple_id)')
     .eq('paid', false)
     .eq('canceled', false)

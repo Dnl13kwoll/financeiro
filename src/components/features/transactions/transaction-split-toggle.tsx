@@ -24,17 +24,17 @@ export function TransactionSplitToggle({
 
     if (hasSplit) {
       // Remove split
-      await (supabase.from('transaction_splits') as any).delete().eq('transaction_id', transactionId)
-      await (supabase.from('transactions') as any).update({ split_id: null }).eq('id', transactionId)
+      await supabase.from('transaction_splits').delete().eq('transaction_id', transactionId)
+      await supabase.from('transactions').update({ split_id: null }).eq('id', transactionId)
       showToast('Divisão removida.')
     } else {
       // Create 50/50 split
-      const { data: split } = await (supabase.from('transaction_splits') as any)
+      const { data: split } = await supabase.from('transaction_splits')
         .insert({ transaction_id: transactionId, ratio: 0.5, note: '50/50' })
         .select()
         .single()
       if (split) {
-        await (supabase.from('transactions') as any).update({ split_id: split.id }).eq('id', transactionId)
+        await supabase.from('transactions').update({ split_id: split.id }).eq('id', transactionId)
       }
       showToast(`Despesa dividida: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount / 2)} cada.`)
     }

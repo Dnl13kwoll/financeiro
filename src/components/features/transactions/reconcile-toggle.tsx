@@ -10,7 +10,7 @@ export function ReconcileToggle({ id, reconciled }: { id: string; reconciled: bo
   async function toggle() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('transactions') as any).update({ reconciled: !value }).eq('id', id)
+    await supabase.from('transactions').update({ reconciled: !value }).eq('id', id)
     setValue(v => !v)
     setLoading(false)
   }

@@ -25,7 +25,7 @@ export function SaveNetworthSnapshot({
   async function handleSave() {
     setLoading(true)
     const supabase = createClient()
-    await (supabase.from('networth_snapshots') as any).upsert(
+    await supabase.from('networth_snapshots').upsert(
       { couple_id: coupleId, month, assets, liabilities, net_worth: netWorth },
       { onConflict: 'couple_id,month' }
     )

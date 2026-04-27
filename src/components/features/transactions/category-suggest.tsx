@@ -38,7 +38,7 @@ export function DescriptionWithSuggest({
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       const supabase = createClient()
-      const { data } = await (supabase.from('transactions') as any)
+      const { data } = await supabase.from('transactions')
         .select('category_id, categories(id, name)')
         .eq('couple_id', coupleId)
         .eq('type', type)

@@ -42,7 +42,7 @@ export function NewRecurringButton({
       user_id: userId,
       couple_id: coupleId,
     }
-    const result = await (supabase.from('recurring_accounts') as any).insert(payload)
+    const result = await supabase.from('recurring_accounts').insert(payload)
 
     if (result.error) {
       setError(result.error.message)

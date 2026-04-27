@@ -23,7 +23,7 @@ export function CopyPlanButton({
     const supabase = createClient()
 
     // Get prev month's plans
-    const { data: prevPlans } = await (supabase.from('monthly_plans') as any)
+    const { data: prevPlans } = await supabase.from('monthly_plans')
       .select('label, category_id, planned_amount')
       .eq('couple_id', coupleId)
       .eq('month', prevMonth)
@@ -43,7 +43,7 @@ export function CopyPlanButton({
       planned_amount: p.planned_amount,
     }))
 
-    await (supabase.from('monthly_plans') as any).upsert(rows, { onConflict: 'couple_id,month,label' })
+    await supabase.from('monthly_plans').upsert(rows, { onConflict: 'couple_id,month,label' })
 
     setLoading(false)
     showToast(`${rows.length} linha(s) copiadas do mês anterior!`)

@@ -13,7 +13,7 @@ export function DueInstallmentsChecker({ coupleId }: { coupleId: string }) {
       const supabase = createClient()
       const in3days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
-      const { data: items } = await (supabase.from('installment_items') as any)
+      const { data: items } = await supabase.from('installment_items')
         .select('due_date, amount, installments(description, couple_id)')
         .eq('paid', false)
         .eq('canceled', false)

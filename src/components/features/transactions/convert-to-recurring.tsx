@@ -26,7 +26,7 @@ export function ConvertToRecurring({
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
-    await (supabase.from('recurring_accounts') as any).insert({
+    await supabase.from('recurring_accounts').insert({
       name: data.get('name') as string,
       day_due: parseInt(data.get('day_due') as string),
       amount: transaction.amount,

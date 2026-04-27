@@ -11,14 +11,14 @@ export function InstallmentActions({ id, status }: { id: string; status: string 
   async function handleCancel() {
     if (!confirm('Cancelar este parcelamento?')) return
     const supabase = createClient()
-    await (supabase.from('installments') as any).update({ status: 'canceled' }).eq('id', id)
+    await supabase.from('installments').update({ status: 'canceled' }).eq('id', id)
     startTransition(() => { router.refresh() })
   }
 
   async function handleDelete() {
     if (!confirm('Excluir este parcelamento permanentemente?')) return
     const supabase = createClient()
-    await (supabase.from('installments') as any).delete().eq('id', id)
+    await supabase.from('installments').delete().eq('id', id)
     startTransition(() => { router.refresh() })
   }
 

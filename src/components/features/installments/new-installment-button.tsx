@@ -65,7 +65,7 @@ export function NewInstallmentButton({ coupleId, userId, accounts = [], categori
           due_date: dueDate.toISOString().slice(0, 10),
         }
       })
-      const { error: itemsError } = await (supabase.from('installment_items') as any).insert(items)
+      const { error: itemsError } = await supabase.from('installment_items').insert(items)
       if (itemsError) {
         showToast('Parcelamento criado, mas erro nas parcelas: ' + itemsError.message, 'error')
         setLoading(false)

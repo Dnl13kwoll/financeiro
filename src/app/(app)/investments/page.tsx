@@ -48,7 +48,7 @@ export default async function InvestmentsPage() {
 
   const [invRes, goalsRes, rates] = await Promise.all([
     coupleId
-      ? (supabase.from('investments') as any)
+      ? supabase.from('investments')
           .select('*, goals(name)')
           .eq('couple_id', coupleId)
           .order('created_at', { ascending: false })

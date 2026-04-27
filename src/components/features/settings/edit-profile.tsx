@@ -20,7 +20,7 @@ export function EditProfile({ currentName }: { currentName: string }) {
     // Also update profiles table
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await (supabase.from('profiles') as any)
+      await supabase.from('profiles')
         .update({ name: value.trim() })
         .eq('id', user.id)
     }

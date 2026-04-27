@@ -19,7 +19,7 @@ async function sendPush(
     return true
   } catch (err: any) {
     if (err?.statusCode === 410 || err?.statusCode === 404) {
-      await (supabase.from('push_subscriptions') as any).delete().eq('endpoint', sub.endpoint)
+      await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
     }
     return false
   }
@@ -49,7 +49,7 @@ export async function GET(req: Request) {
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
   const isMonday = now.getDay() === 1
 
-  const { data: subscriptions } = await (supabase.from('push_subscriptions') as any).select('*')
+  const { data: subscriptions } = await supabase.from('push_subscriptions').select('*')
   if (!subscriptions || subscriptions.length === 0) {
     return NextResponse.json({ sent: 0 })
   }
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     if (!sub.couple_id) continue
 
     // 1. Due installments in next 7 days
-    const { data: dueSoon } = await (supabase.from('installment_items') as any)
+    const { data: dueSoon } = await supabase.from('installment_items')
       .select('id, due_date, amount, installments(description, couple_id)')
       .eq('paid', false)
       .eq('canceled', false)
@@ -125,7 +125,7 @@ export async function GET(req: Request) {
     }
 
     // 5. Goal completion check
-    const { data: goalsData } = await (supabase.from('goals') as any)
+    const { data: goalsData } = await supabase.from('goals')
       .select('id, name, current_amount, target_amount')
       .eq('couple_id', sub.couple_id)
 

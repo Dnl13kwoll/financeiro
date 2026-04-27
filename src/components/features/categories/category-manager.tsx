@@ -19,7 +19,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
     const form = e.currentTarget
     const data = new FormData(form)
     const supabase = createClient()
-    await (supabase.from('categories') as any).insert({
+    await supabase.from('categories').insert({
       name: data.get('name') as string,
       type: data.get('type') as string,
       color: (data.get('color') as string) || null,
@@ -33,7 +33,7 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Excluir categoria "${name}"?`)) return
     const supabase = createClient()
-    await (supabase.from('categories') as any).delete().eq('id', id)
+    await supabase.from('categories').delete().eq('id', id)
     startTransition(() => { router.refresh() })
   }
 
@@ -47,8 +47,8 @@ export function CategoryManager({ categories, coupleId }: { categories: Category
     const aOrder = custom[idx].sort_order ?? idx
     const bOrder = custom[swapIdx].sort_order ?? swapIdx
     await Promise.all([
-      (supabase.from('categories') as any).update({ sort_order: bOrder }).eq('id', custom[idx].id),
-      (supabase.from('categories') as any).update({ sort_order: aOrder }).eq('id', custom[swapIdx].id),
+      supabase.from('categories').update({ sort_order: bOrder }).eq('id', custom[idx].id),
+      supabase.from('categories').update({ sort_order: aOrder }).eq('id', custom[swapIdx].id),
     ])
     startTransition(() => { router.refresh() })
   }

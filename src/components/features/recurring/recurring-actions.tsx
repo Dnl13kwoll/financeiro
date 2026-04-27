@@ -20,7 +20,7 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
     const data = new FormData(form)
     const supabase = createClient()
     const amountRaw = data.get('amount') as string
-    await (supabase.from('recurring_accounts') as any).update({
+    await supabase.from('recurring_accounts').update({
       name: data.get('name') as string,
       day_due: parseInt(data.get('day_due') as string),
       amount: amountRaw ? parseFloat(amountRaw) : null,
@@ -33,7 +33,7 @@ export function RecurringActions({ recurring }: { recurring: Recurring }) {
   async function handleDelete() {
     if (!confirm(`Excluir "${recurring.name}"?`)) return
     const supabase = createClient()
-    await (supabase.from('recurring_accounts') as any)
+    await supabase.from('recurring_accounts')
       .update({ active: false })
       .eq('id', recurring.id)
     startTransition(() => { router.refresh() })

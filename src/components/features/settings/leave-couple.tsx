@@ -9,7 +9,7 @@ export function LeaveCoupleButton({ userId, coupleId }: { userId: string; couple
   async function handleLeave() {
     if (!confirm('Tem certeza que deseja sair do casal? Esta ação não pode ser desfeita.')) return
     const supabase = createClient()
-    await (supabase.from('couple_members') as any)
+    await supabase.from('couple_members')
       .delete()
       .eq('user_id', userId)
       .eq('couple_id', coupleId)

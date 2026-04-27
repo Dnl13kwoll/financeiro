@@ -79,7 +79,7 @@ export function TripManager({
   async function createTrip() {
     if (!name || !destination) return
     const tags = newTags.split(',').map(t => t.trim()).filter(Boolean)
-    await (supabase.from('trips') as any).insert({
+    await supabase.from('trips').insert({
       couple_id: coupleId,
       name, destination,
       start_date: startDate || null,
@@ -103,8 +103,8 @@ export function TripManager({
     if (swapIdx < 0 || swapIdx >= visible.length) return
     const other = visible[swapIdx]
     await Promise.all([
-      (supabase.from('trips') as any).update({ sort_order: other.sort_order }).eq('id', trip.id),
-      (supabase.from('trips') as any).update({ sort_order: trip.sort_order }).eq('id', other.id),
+      supabase.from('trips').update({ sort_order: other.sort_order }).eq('id', trip.id),
+      supabase.from('trips').update({ sort_order: trip.sort_order }).eq('id', other.id),
     ])
     startTransition(() => { router.refresh() })
   }

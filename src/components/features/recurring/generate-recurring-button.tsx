@@ -58,7 +58,7 @@ export function GenerateRecurringButton({
 
         if (existing && existing.length > 0) continue
 
-        if (!rec.amount) continue
+        if (!rec.amount || !rec.account_id) continue // need both amount and account
 
         await supabase.from('transactions').insert({
           couple_id: coupleId,
@@ -67,7 +67,7 @@ export function GenerateRecurringButton({
           amount: rec.amount,
           description: rec.name,
           category_id: rec.category_id ?? null,
-          account_id: rec.account_id ?? null,
+          account_id: rec.account_id,
           date: dueDate,
           competence_date: dueDate,
           is_private: false,

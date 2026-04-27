@@ -22,14 +22,14 @@ export function RealtimeSync() {
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const ownUserIdRef = useRef<string | null>(null)
 
-  function scheduleRefresh() {
-    if (refreshTimer.current) clearTimeout(refreshTimer.current)
-    refreshTimer.current = setTimeout(() => {
-      startTransition(() => router.refresh())
-    }, 800)
-  }
-
   useEffect(() => {
+    function scheduleRefresh() {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current)
+      refreshTimer.current = setTimeout(() => {
+        startTransition(() => router.refresh())
+      }, 800)
+    }
+
     const supabase = createClient()
     let channel: ReturnType<typeof supabase.channel> | null = null
 

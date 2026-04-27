@@ -41,7 +41,7 @@ export function AutoGenerateRecurring({
       let generated = 0
 
       for (const rec of recurring) {
-        if (!rec.amount) continue // skip variable-amount ones
+        if (!rec.amount || !rec.account_id) continue // need both amount and account
 
         const dueDate = new Date(year, month - 1, rec.day_due).toISOString().slice(0, 10)
 
@@ -62,7 +62,7 @@ export function AutoGenerateRecurring({
           amount: rec.amount,
           description: rec.name,
           category_id: rec.category_id ?? null,
-          account_id: rec.account_id ?? null,
+          account_id: rec.account_id,
           date: dueDate,
           competence_date: dueDate,
           is_private: false,

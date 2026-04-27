@@ -8,8 +8,18 @@ import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 import { OnboardingTour } from '@/components/features/onboarding/onboarding-tour'
 import { RealtimeSync } from '@/components/layout/realtime-sync'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
+import { MonthlyCloseReminder } from '@/components/layout/monthly-close-reminder'
+import { BudgetAlertChecker } from '@/components/features/budget/budget-alert-checker'
+import { createClient } from '@/lib/supabase/server'
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const memberRes = user
+    ? await supabase.from('couple_members').select('couple_id').eq('user_id', user.id).limit(1).maybeSingle()
+    : null
+  const coupleId: string | null = (memberRes?.data as any)?.couple_id ?? null
+
   return (
     <div className="flex min-h-screen">
       <ServiceWorkerRegister />
@@ -23,6 +33,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <ToastContainer />
       <OnboardingTour />
       <ConfirmDialogProvider />
+      <MonthlyCloseReminder />
+      {coupleId && <BudgetAlertChecker coupleId={coupleId} />}
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { DashboardHider } from '@/components/features/dashboard/hidable-widget'
 import { DashboardCustomizeButton } from '@/components/features/dashboard/dashboard-customize'
 import { DueInstallmentsChecker } from '@/components/features/dashboard/due-installments-checker'
 import { RemindersDashboardCard } from '@/components/features/reminders/reminders-dashboard-card'
+import { UpcomingBillsWidget } from '@/components/features/dashboard/upcoming-bills-widget'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -112,12 +113,28 @@ export default async function DashboardPage() {
   const dueSoonRes = coupleId
     ? await supabase.from('installment_items').select('id, due_date, amount, installments(description)').eq('paid', false).eq('canceled', false).gte('due_date', today).lte('due_date', next7)
     : null
+  // Recurring due in next 7 days — also fetch paid status from recurring_records
   const recurringDueRes = coupleId
-    ? await supabase.from('recurring_accounts').select('id, name, day_due, amount').eq('couple_id', coupleId).eq('active', true).gte('day_due', now.getDate()).lte('day_due', now.getDate() + 7)
+    ? await supabase
+        .from('recurring_accounts')
+        .select('id, name, day_due, amount, recurring_records!left(paid, reference_month)')
+        .eq('couple_id', coupleId)
+        .eq('active', true)
+        .not('paused', 'is', true)
     : null
 
   const dueSoon: any[] = dueSoonRes?.data ?? []
-  const recurringDue: any[] = recurringDueRes?.data ?? []
+  // Filter recurring to those with day_due in [today..today+7]
+  const recurringDue: any[] = (recurringDueRes?.data ?? []).filter((r: any) => {
+    const d = r.day_due as number
+    const todayDay = now.getDate()
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const lastDay = Math.min(todayDay + 7, daysInMonth)
+    return d >= todayDay && d <= lastDay
+  }).map((r: any) => {
+    const record = (r.recurring_records ?? []).find((rec: any) => rec.reference_month === monthStart)
+    return { ...r, paid: record?.paid ?? false }
+  })
   const hasAlerts = dueSoon.length > 0 || recurringDue.length > 0
 
   // Previsão de saldo (30 dias)
@@ -462,30 +479,14 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Alertas */}
-        {hasAlerts && (
-          <section className="bg-orange-50 border border-orange-200 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-4 h-4 text-orange-500" />
-              <h3 className="font-semibold text-orange-800 text-sm">Vencimentos nos próximos 7 dias</h3>
-            </div>
-            <div className="space-y-1.5">
-              {dueSoon.map((item: any) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-orange-700">{(item.installments as any)?.description ?? 'Parcela'} · {formatDate(item.due_date)}</span>
-                  <span className="font-medium text-orange-800 financial-value">{formatCurrency(item.amount)}</span>
-                </div>
-              ))}
-              {recurringDue.map((rec: any) => (
-                <div key={rec.id} className="flex justify-between text-sm">
-                  <span className="text-orange-700">{rec.name} · dia {rec.day_due}</span>
-                  <span className="font-medium text-orange-800 financial-value">
-                    {rec.amount ? formatCurrency(rec.amount) : <span className="text-orange-500 text-xs">recorrente</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
+        {/* Contas a pagar esta semana */}
+        {coupleId && (
+          <UpcomingBillsWidget
+            installments={dueSoon}
+            recurring={recurringDue}
+            today={today}
+            currentMonthStart={monthStart}
+          />
         )}
 
         {/* Calendário de compromissos */}

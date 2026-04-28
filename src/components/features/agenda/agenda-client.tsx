@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, ExternalLink, X, Loader2, Calendar, LogOut, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, ExternalLink, X, Loader2, Calendar, LogOut } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
@@ -275,11 +275,8 @@ export function AgendaClient({
             className="flex items-center gap-1.5 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
             title={`Sincronizar vencimentos de ${monthLabel} com o Google Calendar`}
           >
-            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             <span className="hidden sm:inline">Sincronizar</span>
-          </button>
-          <button onClick={fetchEvents} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Atualizar">
-            <RefreshCw className="w-4 h-4" />
           </button>
           <button onClick={() => openNew(selectedDate ?? today)} className="flex items-center gap-1.5 bg-primary-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">
             <Plus className="w-4 h-4" />

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, ExternalLink, X, Loader2, Calendar, LogOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, ExternalLink, X, Loader2, Calendar, LogOut, Zap } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
@@ -97,6 +97,7 @@ export function AgendaClient({
   const [newDate, setNewDate] = useState(today)
   const [allDay, setAllDay] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
   const fetchEvents = useCallback(async () => {
     if (!connected) return
@@ -205,6 +206,31 @@ export function AgendaClient({
     }
   }
 
+  async function handleSync() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/calendar/sync-bills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month: month + 1, year }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        if (data.created === 0) {
+          showToast(`Calendário já atualizado (${data.skipped} vencimentos já existentes)`)
+        } else {
+          showToast(`${data.created} vencimento${data.created !== 1 ? 's' : ''} adicionado${data.created !== 1 ? 's' : ''} ao calendário!`)
+        }
+        await fetchEvents()
+      } else {
+        showToast(data.error ?? 'Erro ao sincronizar', 'error')
+      }
+    } catch {
+      showToast('Erro de rede', 'error')
+    }
+    setSyncing(false)
+  }
+
   async function handleDisconnect() {
     if (!await confirmDialog('Desconectar o Google Calendar?', { destructive: true, confirmLabel: 'Desconectar' })) return
     await fetch('/api/auth/google/disconnect', { method: 'POST' })
@@ -243,6 +269,15 @@ export function AgendaClient({
           {googleEmail && (
             <span className="hidden sm:inline text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{googleEmail}</span>
           )}
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-1.5 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+            title={`Sincronizar vencimentos de ${monthLabel} com o Google Calendar`}
+          >
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            <span className="hidden sm:inline">Sincronizar</span>
+          </button>
           <button onClick={fetchEvents} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Atualizar">
             <RefreshCw className="w-4 h-4" />
           </button>

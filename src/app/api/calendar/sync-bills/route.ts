@@ -95,6 +95,15 @@ export async function POST(req: NextRequest) {
     .eq('active', true)
     .eq('paused', false)
 
+  // Fetch tasks with due_date this month (not done)
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id, title, description, status, priority, due_date')
+    .eq('couple_id', coupleId)
+    .neq('status', 'done')
+    .gte('due_date', `${monthStr}-01`)
+    .lte('due_date', `${monthStr}-31`)
+
   // Fetch existing events to detect duplicates via [fin:*] tags
   const timeMin = new Date(year, month - 1, 1).toISOString()
   const timeMax = new Date(year, month, 0, 23, 59, 59).toISOString()
@@ -161,6 +170,21 @@ export async function POST(req: NextRequest) {
     const emoji = (rec as any).type === 'income' ? '💰' : '🔄'
     const summary = `${emoji} ${(rec as any).name}${fmtAmount((rec as any).amount)}`
     await createCalEvent(summary, date, tag, '6')
+  }
+
+  // Sync tasks with due date (color by priority)
+  const PRIORITY_COLOR: Record<string, string> = {
+    urgent: '11', // red
+    high: '6',    // orange
+    medium: '9',  // blueberry
+    low: '7',     // peacock
+  }
+  for (const task of tasks ?? []) {
+    const tag = `[fin:TASK:${(task as any).id}]`
+    const statusEmoji = (task as any).status === 'in_progress' ? '🔄' : '☑️'
+    const summary = `${statusEmoji} ${(task as any).title}`
+    const colorId = PRIORITY_COLOR[(task as any).priority] ?? '9'
+    await createCalEvent(summary, (task as any).due_date, tag, colorId)
   }
 
   return NextResponse.json({ created, skipped })

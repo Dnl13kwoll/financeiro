@@ -11,6 +11,7 @@ import { PieChart } from '@/components/features/dashboard/pie-chart'
 import { CommitmentsCalendar } from '@/components/features/dashboard/commitments-calendar'
 import { DashboardHider } from '@/components/features/dashboard/hidable-widget'
 import { DashboardCustomizeButton } from '@/components/features/dashboard/dashboard-customize'
+import { ExportPdfButton } from '@/components/features/dashboard/export-pdf-button'
 import { DueInstallmentsChecker } from '@/components/features/dashboard/due-installments-checker'
 import { RemindersDashboardCard } from '@/components/features/reminders/reminders-dashboard-card'
 import { UpcomingBillsWidget } from '@/components/features/dashboard/upcoming-bills-widget'
@@ -259,7 +260,8 @@ export default async function DashboardPage() {
         )}
         <DashboardHider />
         {coupleId && <DueInstallmentsChecker coupleId={coupleId} />}
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <ExportPdfButton />
           <DashboardCustomizeButton />
         </div>
         {/* Cards */}

@@ -17,7 +17,12 @@ export async function GET() {
   }
 
   if (!process.env.GOOGLE_CLIENT_ID) {
-    return NextResponse.json({ error: 'GOOGLE_CLIENT_ID not configured' }, { status: 500 })
+    const googleKeys = Object.keys(process.env).filter(k => k.startsWith('GOOGLE'))
+    return NextResponse.json({
+      error: 'GOOGLE_CLIENT_ID not configured',
+      google_keys_found: googleKeys,
+      hint: googleKeys.length === 0 ? 'Nenhuma variável GOOGLE_ encontrada no servidor' : `Encontradas: ${googleKeys.join(', ')}`,
+    }, { status: 500 })
   }
 
   const params = new URLSearchParams({

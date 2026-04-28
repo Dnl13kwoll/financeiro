@@ -262,6 +262,35 @@ export async function GET(req: Request) {
       const body = (subs ?? []).length === 1 ? `Renovação de "${names}" nos próximos dias` : `Renovações próximas: ${names}${(subs ?? []).length > 3 ? ` e mais ${(subs ?? []).length - 3}` : ''}`
       if (await sendPush(sub, '📦 Renovação de assinatura', body, '/subscriptions', supabase)) sent++
     }
+
+    // 10. Credit card limit alerts (>= 80% usage)
+    const { data: creditCards } = await supabase
+      .from('accounts')
+      .select('id, name, limit_amount')
+      .eq('couple_id', sub.couple_id)
+      .eq('type', 'credit_card')
+      .is('deleted_at', null)
+      .not('limit_amount', 'is', null)
+
+    for (const card of (creditCards ?? [])) {
+      const { data: bal } = await supabase
+        .from('account_balances')
+        .select('balance')
+        .eq('id', card.id)
+        .maybeSingle()
+
+      const used = Math.max(0, -((bal as any)?.balance ?? 0))
+      const limit = card.limit_amount as number
+      const pct = limit > 0 ? used / limit : 0
+
+      if (pct >= 0.95) {
+        const body = `${card.name}: limite quase esgotado! ${Math.round(pct * 100)}% usado (${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(limit - used)} disponível)`
+        if (await sendPush(sub, '🚨 Limite do cartão', body, '/accounts', supabase)) sent++
+      } else if (pct >= 0.8) {
+        const body = `${card.name}: ${Math.round(pct * 100)}% do limite usado. Disponível: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(limit - used)}`
+        if (await sendPush(sub, '⚠️ Limite do cartão', body, '/accounts', supabase)) sent++
+      }
+    }
   }
 
   return NextResponse.json({ sent })

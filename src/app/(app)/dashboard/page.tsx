@@ -32,9 +32,10 @@ export default async function DashboardPage() {
   const currency: string = memberData?.couples?.currency ?? 'BRL'
   const dailyLimit: number | null = memberData?.couples?.daily_limit ?? null
 
-  const [balancesRes, alertAccountsRes] = await Promise.all([
+  const [balancesRes, alertAccountsRes, creditCardsRes] = await Promise.all([
     coupleId ? supabase.from('account_balances').select('*').eq('couple_id', coupleId) : Promise.resolve(null),
     coupleId ? supabase.from('accounts').select('id, name, min_balance_alert').eq('couple_id', coupleId).is('deleted_at', null).not('min_balance_alert', 'is', null) : Promise.resolve(null),
+    coupleId ? supabase.from('accounts').select('id, name, limit_amount').eq('couple_id', coupleId).eq('type', 'credit_card').is('deleted_at', null).not('limit_amount', 'is', null) : Promise.resolve(null),
   ])
   const balances: any[] = balancesRes?.data ?? []
   const totalBalance = balances.reduce((acc, b) => acc + b.balance, 0)
@@ -42,6 +43,16 @@ export default async function DashboardPage() {
   const lowBalanceAlerts: { name: string; balance: number; threshold: number }[] = (alertAccountsRes?.data ?? [])
     .filter((a: any) => (balanceMap2.get(a.id) ?? 0) < a.min_balance_alert)
     .map((a: any) => ({ name: a.name, balance: balanceMap2.get(a.id) ?? 0, threshold: a.min_balance_alert }))
+
+  // Credit card limit alerts
+  const creditCardAlerts = (creditCardsRes?.data ?? [])
+    .map((c: any) => {
+      const bal = balanceMap2.get(c.id) ?? 0
+      const used = Math.max(0, -bal)
+      const limit = c.limit_amount as number
+      return { name: c.name, used, limit, pct: Math.min(100, Math.round((used / limit) * 100)) }
+    })
+    .filter(c => c.pct >= 80)
 
   const now = new Date()
   const todayStr = now.toISOString().slice(0, 10)
@@ -398,6 +409,34 @@ export default async function DashboardPage() {
                 <span className="font-semibold">Limite diário ultrapassado!</span>{' '}
                 Você gastou {formatCurrency(todayExpenses, currency)} hoje (limite: {formatCurrency(dailyLimit!, currency)}).
               </p>
+            </div>
+          </section>
+        )}
+
+        {/* Alertas de limite de cartão */}
+        {creditCardAlerts.length > 0 && (
+          <section className="bg-orange-50 border border-orange-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-4 h-4 text-orange-500" />
+              <h3 className="font-semibold text-orange-800 text-sm">Limite do cartão — atenção</h3>
+            </div>
+            <div className="space-y-3">
+              {creditCardAlerts.map(c => (
+                <div key={c.name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-orange-700">{c.name}</span>
+                    <span className={`font-medium ${c.pct >= 95 ? 'text-red-600' : 'text-orange-700'}`}>
+                      {c.pct}% usado · {formatCurrency(c.limit - c.used, currency)} disponível
+                    </span>
+                  </div>
+                  <div className="w-full bg-orange-100 rounded-full h-1.5">
+                    <div
+                      className={`h-1.5 rounded-full ${c.pct >= 95 ? 'bg-red-500' : 'bg-orange-400'}`}
+                      style={{ width: `${c.pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}

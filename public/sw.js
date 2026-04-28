@@ -43,7 +43,8 @@ self.addEventListener('fetch', (event) => {
       caches.match(event.request).then((cached) => {
         if (cached) return cached
         return fetch(event.request).then((res) => {
-          caches.open(CACHE_STATIC).then((c) => c.put(event.request, res.clone()))
+          const clone = res.clone()
+          caches.open(CACHE_STATIC).then((c) => c.put(event.request, clone))
           return res
         })
       })
@@ -56,16 +57,15 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((res) => {
-          // Only cache successful responses
           if (res.ok) {
-            caches.open(CACHE_PAGES).then((c) => c.put(event.request, res.clone()))
+            const clone = res.clone()
+            caches.open(CACHE_PAGES).then((c) => c.put(event.request, clone))
           }
           return res
         })
         .catch(() =>
           caches.match(event.request).then((cached) => {
             if (cached) return cached
-            // Offline fallback: return cached dashboard if available
             return caches.match('/dashboard') ?? Response.error()
           })
         )
@@ -73,13 +73,15 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // API/data requests: network-first, stale fallback (max 50 entries)
+  // API/data requests: network-first, stale fallback — skip OAuth redirects
   if (url.pathname.startsWith('/api/') || url.pathname.includes('supabase')) {
+    if (url.pathname.startsWith('/api/auth/')) return
     event.respondWith(
       fetch(event.request)
         .then((res) => {
           if (res.ok) {
-            caches.open(CACHE_DATA).then((c) => c.put(event.request, res.clone()))
+            const clone = res.clone()
+            caches.open(CACHE_DATA).then((c) => c.put(event.request, clone))
           }
           return res
         })
@@ -92,7 +94,8 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request).then((res) => {
-        caches.open(CACHE_STATIC).then((c) => c.put(event.request, res.clone()))
+        const clone = res.clone()
+        caches.open(CACHE_STATIC).then((c) => c.put(event.request, clone))
         return res
       })
       return cached ?? fetchPromise

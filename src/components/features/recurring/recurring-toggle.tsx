@@ -19,6 +19,9 @@ export function RecurringToggle({
   userId,
   coupleId,
   name,
+  defaultAccountId,
+  categoryId,
+  recurringType,
 }: {
   recurringId: string
   referenceMonth: string
@@ -30,6 +33,9 @@ export function RecurringToggle({
   userId?: string
   coupleId?: string
   name?: string
+  defaultAccountId?: string | null
+  categoryId?: string | null
+  recurringType?: string | null
 }) {
   const [optimisticPaid, setOptimisticPaid] = useState(paid)
   const [open, setOpen] = useState(false)
@@ -88,12 +94,13 @@ export function RecurringToggle({
 
     if (createTx && accountId && realAmount > 0 && userId && coupleId) {
       await supabase.from('transactions').insert({
-        type: 'expense',
+        type: recurringType === 'income' ? 'income' : 'expense',
         amount: realAmount,
         description: name ?? 'Conta recorrente',
         account_id: accountId,
+        category_id: categoryId ?? null,
         date: new Date().toISOString().slice(0, 10),
-        competence_date: new Date().toISOString().slice(0, 10),
+        competence_date: referenceMonth,
         user_id: userId,
         couple_id: coupleId,
       })
@@ -141,6 +148,7 @@ export function RecurringToggle({
                 <label className="block text-sm font-medium text-gray-700 mb-1">Conta debitada</label>
                 <select
                   name="account_id"
+                  defaultValue={defaultAccountId ?? ''}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Sem débito automático</option>

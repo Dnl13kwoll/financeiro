@@ -59,6 +59,49 @@ export async function GET(req: Request) {
   for (const sub of subscriptions) {
     if (!sub.couple_id) continue
 
+    // 0. Bills due TODAY — high-priority notification
+    const { data: todayInstallments } = await supabase.from('installment_items')
+      .select('id, amount, installments(description, couple_id)')
+      .eq('paid', false)
+      .eq('canceled', false)
+      .eq('due_date', today)
+
+    const myTodayInstallments = (todayInstallments ?? []).filter(
+      (d: any) => (d.installments as any)?.couple_id === sub.couple_id
+    )
+
+    const { data: todayRecurring } = await supabase
+      .from('recurring_accounts')
+      .select('id, name, amount, day_due')
+      .eq('couple_id', sub.couple_id)
+      .eq('active', true)
+      .eq('paused', false)
+      .eq('day_due', now.getDate())
+
+    const todayRecurringUnpaid = await Promise.all(
+      (todayRecurring ?? []).map(async (rec: any) => {
+        const { data: record } = await supabase
+          .from('recurring_records')
+          .select('paid')
+          .eq('recurring_id', rec.id)
+          .eq('reference_month', monthStart)
+          .maybeSingle()
+        return record?.paid ? null : rec
+      })
+    ).then(r => r.filter(Boolean))
+
+    const todayTotal = myTodayInstallments.length + todayRecurringUnpaid.length
+    if (todayTotal > 0) {
+      const names = [
+        ...myTodayInstallments.map((d: any) => (d.installments as any)?.description ?? 'Parcela'),
+        ...todayRecurringUnpaid.map((r: any) => r.name),
+      ].slice(0, 3).join(', ')
+      const body = todayTotal === 1
+        ? `"${names}" vence hoje. Não esqueça de pagar!`
+        : `${todayTotal} contas vencem hoje: ${names}${todayTotal > 3 ? '...' : ''}`
+      if (await sendPush(sub, '🔴 Vence hoje!', body, '/recurring', supabase)) sent++
+    }
+
     // 1. Due installments in next 7 days
     const { data: dueSoon } = await supabase.from('installment_items')
       .select('id, due_date, amount, installments(description, couple_id)')

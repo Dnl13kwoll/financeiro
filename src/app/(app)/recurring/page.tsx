@@ -157,6 +157,9 @@ export default async function RecurringPage() {
                     userId={user!.id}
                     coupleId={coupleId!}
                     name={rec.name}
+                    defaultAccountId={rec.account_id}
+                    categoryId={rec.category_id}
+                    recurringType={rec.type}
                   />
                   <div>
                     <p className="font-medium text-gray-900">{rec.name}</p>

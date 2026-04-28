@@ -8,7 +8,7 @@ import {
   PieChart, Settings, LogOut, BarChart2, Target, Menu, X,
   CalendarClock, TrendingUp, LineChart, Activity, Heart, ClipboardList,
   Landmark, HelpCircle, Star, Plane, ShoppingCart, Tag, Lightbulb,
-  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car, Home, Tv, Bell, Wallet, CheckSquare,
+  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car, Home, Tv, Bell, Wallet, CheckSquare, CalendarDays,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -62,6 +62,7 @@ const NAV_GROUPS = [
   {
     label: 'Estilo de vida',
     items: [
+      { href: '/agenda',       label: 'Agenda',              icon: CalendarDays },
       { href: '/wishlist',     label: 'Lista de Desejos',    icon: Heart },
       { href: '/travel',       label: 'Viagens',             icon: Plane },
       { href: '/shopping',     label: 'Lista de Compras',    icon: ShoppingCart },

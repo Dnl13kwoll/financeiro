@@ -11,6 +11,7 @@ import { BackupImport } from '@/components/features/settings/backup-import'
 import { DangerZone } from '@/components/features/settings/danger-zone'
 import { DailyLimitSetting } from '@/components/features/settings/daily-limit-setting'
 import { EditProfile } from '@/components/features/settings/edit-profile'
+import { GoogleCalendarSettings } from '@/components/features/agenda/google-calendar-settings'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -46,6 +47,14 @@ export default async function SettingsPage() {
 
   const members: any[] = membersRes?.data ?? []
   const invitations: any[] = invitationsRes?.data ?? []
+
+  const { data: googleToken } = await (supabase as any)
+    .from('google_tokens')
+    .select('google_email')
+    .eq('user_id', user!.id)
+    .maybeSingle()
+  const googleConnected = !!googleToken
+  const googleEmail: string | null = (googleToken as any)?.google_email ?? null
 
   return (
     <div className="flex flex-col flex-1">
@@ -136,6 +145,15 @@ export default async function SettingsPage() {
             Receba avisos de vencimentos no celular mesmo com o app fechado.
           </p>
           <PushSubscribeButton />
+        </section>
+
+        {/* Google Calendar */}
+        <section className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-900 mb-1">Google Calendar</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Visualize e crie eventos diretamente no app, sincronizados com seu Google Calendar.
+          </p>
+          <GoogleCalendarSettings isConnected={googleConnected} googleEmail={googleEmail} />
         </section>
 
         {/* Backup */}

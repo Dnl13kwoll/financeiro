@@ -6,8 +6,8 @@ export async function POST(req: NextRequest) {
   try {
     const { email, coupleId } = await req.json()
 
-    if (!email || !coupleId) {
-      return NextResponse.json({ error: 'email e coupleId são obrigatórios' }, { status: 400 })
+    if (!coupleId) {
+      return NextResponse.json({ error: 'coupleId é obrigatório' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -20,9 +20,11 @@ export async function POST(req: NextRequest) {
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
+    const inviteEmail = email || `link-only+${token}@invite.local`
+
     const { error: dbError } = await supabase.from('invitations').upsert({
       couple_id: coupleId,
-      email,
+      email: inviteEmail,
       token,
       expires_at: expiresAt,
       status: 'pending',
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
     const inviteUrl = `${appUrl}/invite/${token}`
     const senderName = user.user_metadata?.full_name ?? 'Alguém'
 
-    if (process.env.RESEND_API_KEY) {
+    if (email && process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
         from: 'Financeiro Casal <noreply@salusmetrics.com.br>',
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, inviteUrl })
   } catch (err: any) {
     return NextResponse.json({ error: String(err?.message ?? 'Erro interno') }, { status: 500 })
   }

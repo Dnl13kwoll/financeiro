@@ -95,7 +95,7 @@ export function QuickAddFab() {
     <>
       <button
         onClick={handleOpen}
-        className="fixed bottom-6 right-6 z-30 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 active:scale-95 transition-all flex items-center justify-center"
+        className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-30 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 active:scale-95 transition-all flex items-center justify-center"
         title="Nova transação rápida"
         aria-label="Nova transação"
       >

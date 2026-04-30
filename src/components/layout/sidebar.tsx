@@ -16,6 +16,42 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+// ── Badge counts ─────────────────────────────────────────────────────────────
+type BadgeCounts = Partial<Record<string, number>>
+
+async function fetchBadgeCounts(): Promise<BadgeCounts> {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return {}
+
+    const memberRes = await supabase
+      .from('couple_members').select('couple_id').eq('user_id', user.id).maybeSingle()
+    const coupleId = (memberRes.data as any)?.couple_id
+    if (!coupleId) return {}
+
+    const today = new Date().toISOString().slice(0, 10)
+
+    const [tasksRes, remindersRes, billsRes] = await Promise.all([
+      supabase.from('tasks').select('id', { count: 'exact', head: true })
+        .eq('couple_id', coupleId).neq('status', 'done'),
+      supabase.from('financial_reminders').select('id', { count: 'exact', head: true })
+        .eq('couple_id', coupleId).eq('status', 'pendente').lte('due_date', today),
+      supabase.from('installment_items')
+        .select('id, installments!inner(couple_id)', { count: 'exact', head: true })
+        .eq('installments.couple_id', coupleId)
+        .eq('paid', false).eq('canceled', false).lte('due_date', today),
+    ])
+
+    return {
+      '/tasks':     (tasksRes.count ?? 0) + (remindersRes.count ?? 0),
+      '/recurring': billsRes.count ?? 0,
+    }
+  } catch {
+    return {}
+  }
+}
+
 // ── Nav items ─────────────────────────────────────────────────────────────────
 const NAV_GROUPS = [
   {
@@ -181,18 +217,20 @@ function CustomizeModal({
 }
 
 // ── NavLinks ──────────────────────────────────────────────────────────────────
-function NavLinks({ pathname, onNavigate, favorites, onToggleFavorite, hidden }: {
+function NavLinks({ pathname, onNavigate, favorites, onToggleFavorite, hidden, badges }: {
   pathname: string
   onNavigate?: () => void
   favorites: string[]
   onToggleFavorite: (href: string) => void
   hidden: Set<string>
+  badges: BadgeCounts
 }) {
   const visible = navItems.filter(n => !hidden.has(n.href))
   return (
     <>
       {visible.map(({ href, label, icon: Icon }) => {
         const isFav = favorites.includes(href)
+        const badge = badges[href] ?? 0
         return (
           <div key={href} className="group relative flex items-center">
             <Link
@@ -206,7 +244,12 @@ function NavLinks({ pathname, onNavigate, favorites, onToggleFavorite, hidden }:
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
-              {label}
+              <span className="flex-1">{label}</span>
+              {badge > 0 && (
+                <span className="ml-auto mr-5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
             </Link>
             <button
               onClick={e => { e.preventDefault(); onToggleFavorite(href) }}
@@ -234,6 +277,7 @@ export function Sidebar() {
   const [customizeOpen, setCustomizeOpen] = useState(false)
   const [favorites, setFavorites] = useState<string[]>([])
   const [hidden, setHidden] = useState<Set<string>>(new Set())
+  const [badges, setBadges] = useState<BadgeCounts>({})
 
   useEffect(() => {
     try {
@@ -242,6 +286,7 @@ export function Sidebar() {
       const hid = localStorage.getItem('sidebar-hidden')
       if (hid) setHidden(new Set(JSON.parse(hid)))
     } catch {}
+    fetchBadgeCounts().then(setBadges)
   }, [])
 
   function toggleFavorite(href: string) {
@@ -388,6 +433,7 @@ export function Sidebar() {
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             hidden={hidden}
+            badges={badges}
           />
         </nav>
         <LogoutButton />
@@ -403,6 +449,7 @@ export function Sidebar() {
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             hidden={hidden}
+            badges={badges}
           />
         </nav>
         <LogoutButton />

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Investimentos' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import {
@@ -120,6 +121,10 @@ export default async function InvestmentsPage() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Investimentos" />
+      <PageTabs tabs={[
+        { href: '/investments', label: 'Carteira' },
+        { href: '/simulator', label: 'Simulador' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-6">
 

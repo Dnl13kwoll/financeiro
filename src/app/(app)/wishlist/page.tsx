@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Lista de Desejos' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { NewWishlistButton } from '@/components/features/wishlist/new-wishlist-button'
@@ -56,7 +57,11 @@ export default async function WishlistPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Lista de Desejos" />
+      <Header title="Listas" />
+      <PageTabs tabs={[
+        { href: '/wishlist', label: 'Desejos' },
+        { href: '/shopping', label: 'Compras' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-4">
         {queryError && (

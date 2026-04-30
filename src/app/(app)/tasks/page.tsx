@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { TasksClient } from '@/components/features/tasks/tasks-client'
 
@@ -42,7 +43,11 @@ export default async function TasksPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Tarefas" />
+      <Header title="Atividades" />
+      <PageTabs tabs={[
+        { href: '/tasks', label: 'Tarefas' },
+        { href: '/reminders', label: 'Lembretes' },
+      ]} />
       <TasksClient
         tasks={tasks}
         members={members}

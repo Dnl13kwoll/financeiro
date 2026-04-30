@@ -6,9 +6,9 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, CreditCard, ArrowLeftRight, Layers, RefreshCw,
   PieChart, Settings, LogOut, BarChart2, Target, Menu, X,
-  CalendarClock, TrendingUp, LineChart, Activity, Heart, ClipboardList,
-  Landmark, HelpCircle, Star, Plane, ShoppingCart, Tag, Lightbulb,
-  CalendarCheck, Sliders, Calculator, SlidersHorizontal, RotateCcw, Car, Home, Tv, Bell, Wallet, CheckSquare, CalendarDays,
+  CalendarClock, LineChart, Heart,
+  HelpCircle, Star, Plane, Tag,
+  CalendarCheck, Sliders, SlidersHorizontal, RotateCcw, Car, CheckSquare, CalendarDays,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
@@ -30,45 +30,29 @@ const NAV_GROUPS = [
   {
     label: 'Controle',
     items: [
-      { href: '/installments',   label: 'Parcelamentos',   icon: Layers },
-      { href: '/recurring',      label: 'Recorrentes',     icon: RefreshCw },
-      { href: '/subscriptions',  label: 'Assinaturas',     icon: Tv },
-      { href: '/commitments',    label: 'Compromissos Fixos', icon: Wallet },
-      { href: '/reminders',      label: 'Lembretes',       icon: Bell },
-      { href: '/tasks',          label: 'Tarefas',         icon: CheckSquare },
-      { href: '/budgets',        label: 'Orçamentos',      icon: PieChart },
-      { href: '/goals',          label: 'Metas',           icon: Target },
+      { href: '/installments',   label: 'Parcelamentos',    icon: Layers },
+      { href: '/recurring',      label: 'Pagamentos Fixos', icon: RefreshCw },
+      { href: '/tasks',          label: 'Atividades',       icon: CheckSquare },
+      { href: '/budgets',        label: 'Orçamentos',       icon: PieChart },
+      { href: '/goals',          label: 'Metas',            icon: Target },
     ],
   },
   {
     label: 'Análise',
     items: [
       { href: '/timeline',     label: 'Linha do Tempo',  icon: CalendarClock },
-      { href: '/projection',   label: 'Projeção',        icon: TrendingUp },
-      { href: '/planning',     label: 'Planejamento',    icon: ClipboardList },
-      { href: '/networth',     label: 'Patrimônio',      icon: Landmark },
-      { href: '/insights',     label: 'Insights',        icon: Lightbulb },
-      { href: '/reports',      label: 'Relatórios',      icon: BarChart2 },
-      { href: '/activity',     label: 'Atividade',       icon: Activity },
-    ],
-  },
-  {
-    label: 'Investimentos',
-    items: [
+      { href: '/reports',      label: 'Análise',         icon: BarChart2 },
       { href: '/investments',  label: 'Investimentos',   icon: LineChart },
-      { href: '/simulator',    label: 'Simulador',       icon: Calculator },
     ],
   },
   {
     label: 'Estilo de vida',
     items: [
-      { href: '/agenda',       label: 'Agenda',              icon: CalendarDays },
-      { href: '/wishlist',     label: 'Lista de Desejos',    icon: Heart },
-      { href: '/travel',       label: 'Viagens',             icon: Plane },
-      { href: '/shopping',     label: 'Lista de Compras',    icon: ShoppingCart },
-      { href: '/price-history',label: 'Histórico de Preços', icon: Tag },
-      { href: '/vehicles',     label: 'Veículos',            icon: Car },
-      { href: '/imoveis',      label: 'Imóveis',             icon: Home },
+      { href: '/agenda',       label: 'Agenda',           icon: CalendarDays },
+      { href: '/wishlist',     label: 'Listas',           icon: Heart },
+      { href: '/travel',       label: 'Viagens',          icon: Plane },
+      { href: '/price-history',label: 'Hist. de Preços',  icon: Tag },
+      { href: '/vehicles',     label: 'Patrimônio Físico',icon: Car },
     ],
   },
   {
@@ -88,6 +72,21 @@ const navItems = NAV_GROUPS.flatMap(g => g.items)
 
 // Items that can never be hidden
 const ALWAYS_VISIBLE = new Set(['/dashboard', '/settings'])
+
+// Tab siblings: when on any of these routes, highlight the primary sidebar item
+const TAB_SIBLINGS: Record<string, string[]> = {
+  '/recurring':   ['/subscriptions', '/commitments'],
+  '/tasks':       ['/reminders'],
+  '/investments': ['/simulator'],
+  '/reports':     ['/insights', '/projection', '/planning', '/networth'],
+  '/vehicles':    ['/imoveis'],
+  '/wishlist':    ['/shopping'],
+}
+
+function isActive(href: string, pathname: string) {
+  if (pathname === href) return true
+  return (TAB_SIBLINGS[href] ?? []).includes(pathname)
+}
 
 // ── Customize modal ────────────────────────────────────────────────────────────
 function CustomizeModal({
@@ -201,7 +200,7 @@ function NavLinks({ pathname, onNavigate, favorites, onToggleFavorite, hidden }:
               onClick={onNavigate}
               className={cn(
                 'flex flex-1 items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                pathname === href
+                isActive(href, pathname)
                   ? 'bg-primary-50 text-primary-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               )}
@@ -326,7 +325,7 @@ export function Sidebar() {
         {visibleFavs.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} onClick={onNav}
             className={cn('flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              pathname === href ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50')}>
+              isActive(href, pathname) ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50')}>
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
             {label}
           </Link>

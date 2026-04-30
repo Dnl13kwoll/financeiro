@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { NewRecurringButton } from '@/components/features/recurring/new-recurring-button'
@@ -73,7 +74,12 @@ export default async function RecurringPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Recorrentes" />
+      <Header title="Pagamentos Fixos" />
+      <PageTabs tabs={[
+        { href: '/recurring', label: 'Recorrentes' },
+        { href: '/subscriptions', label: 'Assinaturas' },
+        { href: '/commitments', label: 'Compromissos' },
+      ]} />
 
       {coupleId && <AutoGenerateRecurring coupleId={coupleId} userId={user!.id} currentMonth={currentMonth} />}
       <div className="p-4 md:p-6 space-y-4">

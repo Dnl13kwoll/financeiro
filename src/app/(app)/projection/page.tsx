@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { ProjectionClient } from '@/components/features/projection/projection-client'
@@ -80,7 +81,14 @@ export default async function ProjectionPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Projeção Financeira" />
+      <Header title="Análise" />
+      <PageTabs tabs={[
+        { href: '/reports', label: 'Relatórios' },
+        { href: '/insights', label: 'Insights' },
+        { href: '/projection', label: 'Projeção' },
+        { href: '/planning', label: 'Planejamento' },
+        { href: '/networth', label: 'Patrimônio' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-6">
         {!coupleId ? (

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Simulador de Investimentos' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { SimulatorClient } from '@/components/features/simulator/simulator-client'
 import { createClient } from '@/lib/supabase/server'
 
@@ -35,7 +36,11 @@ export default async function SimulatorPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Simulador de Investimentos" />
+      <Header title="Investimentos" />
+      <PageTabs tabs={[
+        { href: '/investments', label: 'Carteira' },
+        { href: '/simulator', label: 'Simulador' },
+      ]} />
       <div className="p-4 md:p-6">
         <SimulatorClient
           selicRate={rates.selic}

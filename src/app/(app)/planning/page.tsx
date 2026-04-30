@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Planejamento' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { CopyPlanButton } from '@/components/features/planning/copy-plan-button'
 import { AnnualPlanView } from '@/components/features/planning/annual-plan-view'
 import { createClient } from '@/lib/supabase/server'
@@ -108,7 +109,14 @@ export default async function PlanningPage({
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Planejamento Mensal" />
+      <Header title="Análise" />
+      <PageTabs tabs={[
+        { href: '/reports', label: 'Relatórios' },
+        { href: '/insights', label: 'Insights' },
+        { href: '/projection', label: 'Projeção' },
+        { href: '/planning', label: 'Planejamento' },
+        { href: '/networth', label: 'Patrimônio' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-4">
         {/* View toggle */}

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { ExportButtons } from '@/components/features/reports/export-buttons'
@@ -94,7 +95,14 @@ export default async function ReportsPage({
 
     return (
       <div className="flex flex-col flex-1">
-        <Header title="Relatórios" />
+        <Header title="Análise" />
+        <PageTabs tabs={[
+          { href: '/reports', label: 'Relatórios' },
+          { href: '/insights', label: 'Insights' },
+          { href: '/projection', label: 'Projeção' },
+          { href: '/planning', label: 'Planejamento' },
+          { href: '/networth', label: 'Patrimônio' },
+        ]} />
         <div className="p-4 md:p-6 space-y-6 max-w-3xl">
           {pageErrors.length > 0 && (
             <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -314,7 +322,14 @@ export default async function ReportsPage({
 
     return (
       <div className="flex flex-col flex-1">
-        <Header title="Relatórios" />
+        <Header title="Análise" />
+        <PageTabs tabs={[
+          { href: '/reports', label: 'Relatórios' },
+          { href: '/insights', label: 'Insights' },
+          { href: '/projection', label: 'Projeção' },
+          { href: '/planning', label: 'Planejamento' },
+          { href: '/networth', label: 'Patrimônio' },
+        ]} />
         <div className="p-4 md:p-6 space-y-6 max-w-3xl">
           {pageErrors.length > 0 && (
             <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -453,7 +468,14 @@ export default async function ReportsPage({
 
     return (
       <div className="flex flex-col flex-1">
-        <Header title="Relatórios" />
+        <Header title="Análise" />
+        <PageTabs tabs={[
+          { href: '/reports', label: 'Relatórios' },
+          { href: '/insights', label: 'Insights' },
+          { href: '/projection', label: 'Projeção' },
+          { href: '/planning', label: 'Planejamento' },
+          { href: '/networth', label: 'Patrimônio' },
+        ]} />
         <div className="p-4 md:p-6 space-y-6 max-w-3xl">
           {pageErrors.length > 0 && (
             <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

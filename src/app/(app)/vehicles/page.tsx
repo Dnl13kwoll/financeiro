@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { VehiclesClient } from '@/components/features/vehicles/vehicles-client'
 
 export const metadata: Metadata = { title: 'Veículos & Manutenções' }
@@ -34,7 +35,11 @@ export default async function VehiclesPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Veículos & Manutenções" />
+      <Header title="Patrimônio Físico" />
+      <PageTabs tabs={[
+        { href: '/vehicles', label: 'Veículos' },
+        { href: '/imoveis', label: 'Imóveis' },
+      ]} />
       <VehiclesClient
         coupleId={coupleId}
         initialVehicles={(vehiclesRes.data ?? []) as any[]}

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { CommitmentsClient } from '@/components/features/commitments/commitments-client'
 
 export const metadata: Metadata = { title: 'Compromissos Fixos' }
@@ -28,7 +29,12 @@ export default async function CommitmentsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Compromissos Fixos" />
+      <Header title="Pagamentos Fixos" />
+      <PageTabs tabs={[
+        { href: '/recurring', label: 'Recorrentes' },
+        { href: '/subscriptions', label: 'Assinaturas' },
+        { href: '/commitments', label: 'Compromissos' },
+      ]} />
       {coupleId ? (
         <CommitmentsClient recurring={recurring} subscriptions={subscriptions} />
       ) : (

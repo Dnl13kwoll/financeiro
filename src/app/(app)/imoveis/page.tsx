@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { ImovelClient } from '@/components/features/imoveis/imovel-client'
 
 export const metadata: Metadata = { title: 'Imóveis & Manutenção' }
@@ -34,7 +35,11 @@ export default async function ImovelPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Imóveis & Manutenção" />
+      <Header title="Patrimônio Físico" />
+      <PageTabs tabs={[
+        { href: '/vehicles', label: 'Veículos' },
+        { href: '/imoveis', label: 'Imóveis' },
+      ]} />
       <ImovelClient
         coupleId={coupleId}
         initialProperties={(propertiesRes.data ?? []) as any[]}

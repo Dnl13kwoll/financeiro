@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { SubscriptionsClient } from '@/components/features/subscriptions/subscriptions-client'
 
 export const metadata: Metadata = { title: 'Assinaturas' }
@@ -23,7 +24,12 @@ export default async function SubscriptionsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Assinaturas" />
+      <Header title="Pagamentos Fixos" />
+      <PageTabs tabs={[
+        { href: '/recurring', label: 'Recorrentes' },
+        { href: '/subscriptions', label: 'Assinaturas' },
+        { href: '/commitments', label: 'Compromissos' },
+      ]} />
       <SubscriptionsClient coupleId={coupleId} initialSubscriptions={data ?? []} />
     </div>
   )

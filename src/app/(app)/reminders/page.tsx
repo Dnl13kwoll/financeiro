@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { RemindersClient } from '@/components/features/reminders/reminders-client'
 
 export const metadata: Metadata = { title: 'Lembretes Financeiros' }
@@ -22,7 +23,11 @@ export default async function RemindersPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Lembretes Financeiros" />
+      <Header title="Atividades" />
+      <PageTabs tabs={[
+        { href: '/tasks', label: 'Tarefas' },
+        { href: '/reminders', label: 'Lembretes' },
+      ]} />
       <RemindersClient coupleId={coupleId} initialReminders={data ?? []} />
     </div>
   )

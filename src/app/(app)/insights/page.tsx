@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Insights' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Award, AlertTriangle, ThumbsUp, Lightbulb, Star } from 'lucide-react'
@@ -43,7 +44,14 @@ export default async function InsightsPage() {
   if (!coupleId) {
     return (
       <div className="flex flex-col flex-1">
-        <Header title="Insights" />
+        <Header title="Análise" />
+        <PageTabs tabs={[
+          { href: '/reports', label: 'Relatórios' },
+          { href: '/insights', label: 'Insights' },
+          { href: '/projection', label: 'Projeção' },
+          { href: '/planning', label: 'Planejamento' },
+          { href: '/networth', label: 'Patrimônio' },
+        ]} />
         <div className="p-6 text-center text-gray-400 py-16">Crie um casal em Configurações para ver insights.</div>
       </div>
     )

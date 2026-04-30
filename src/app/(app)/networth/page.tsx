@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Patrimônio Líquido' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
@@ -105,7 +106,14 @@ export default async function NetWorthPage({
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Patrimônio Líquido" />
+      <Header title="Análise" />
+      <PageTabs tabs={[
+        { href: '/reports', label: 'Relatórios' },
+        { href: '/insights', label: 'Insights' },
+        { href: '/projection', label: 'Projeção' },
+        { href: '/planning', label: 'Planejamento' },
+        { href: '/networth', label: 'Patrimônio' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-4">
         {/* Month nav + snapshot */}

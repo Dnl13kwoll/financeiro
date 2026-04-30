@@ -36,7 +36,7 @@ async function fetchBadgeCounts(): Promise<BadgeCounts> {
       supabase.from('tasks').select('id', { count: 'exact', head: true })
         .eq('couple_id', coupleId).neq('status', 'done'),
       supabase.from('financial_reminders').select('id', { count: 'exact', head: true })
-        .eq('couple_id', coupleId).eq('status', 'pendente').lte('due_date', today),
+        .eq('couple_id', coupleId).eq('done', false).lte('due_date', today),
       supabase.from('installment_items')
         .select('id, installments!inner(couple_id)', { count: 'exact', head: true })
         .eq('installments.couple_id', coupleId)

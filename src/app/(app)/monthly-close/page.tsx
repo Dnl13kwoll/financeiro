@@ -40,14 +40,15 @@ export default async function MonthlyClosePage() {
   // Transactions for prev month
   const { data: txsRaw } = await supabase
     .from('transactions')
-    .select('type, amount, category, competence_date, description')
+    .select('type, amount, category_id, competence_date, description, categories(name)')
     .eq('couple_id', coupleId)
     .gte('competence_date', monthStart)
     .lte('competence_date', monthEnd)
     .is('deleted_at', null)
     .neq('type', 'transfer')
 
-  const txList: { type: string; amount: number; category: string | null }[] = (txsRaw ?? []) as any
+  const txList: { type: string; amount: number; category: string | null }[] =
+    (txsRaw ?? []).map((t: any) => ({ ...t, category: (t.categories as any)?.name ?? null }))
   const income = txList.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const expense = txList.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
   const balance = income - expense
@@ -63,11 +64,13 @@ export default async function MonthlyClosePage() {
 
   // Budgets for prev month
   const { data: budgets } = await supabase.from('budgets')
-    .select('id, category, amount')
+    .select('id, category_id, amount, categories(name)')
     .eq('couple_id', coupleId)
     .eq('month', monthStart)
 
-  const budgetList = budgets ?? []
+  const budgetList = (budgets ?? []).map((b: any) => ({
+    ...b, category: (b.categories as any)?.name ?? b.category_id,
+  }))
 
   // Compute budget spent
   const budgetsWithSpent = budgetList.map((b: any) => {

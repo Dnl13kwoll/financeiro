@@ -2,19 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ArrowLeftRight, CalendarDays, CheckSquare, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, CalendarDays, Zap, BarChart2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
   { href: '/dashboard',    label: 'Início',      icon: LayoutDashboard },
   { href: '/transactions', label: 'Lançamentos', icon: ArrowLeftRight },
   { href: '/agenda',       label: 'Agenda',      icon: CalendarDays },
-  { href: '/tasks',        label: 'Atividades',  icon: CheckSquare },
+  { href: '/today',        label: 'Hoje',        icon: Zap },
   { href: '/reports',      label: 'Análise',     icon: BarChart2 },
 ]
 
 const TAB_SIBLINGS: Record<string, string[]> = {
-  '/tasks':   ['/reminders'],
   '/reports': ['/insights', '/projection', '/planning', '/networth'],
 }
 

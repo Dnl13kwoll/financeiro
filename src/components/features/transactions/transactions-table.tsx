@@ -125,6 +125,21 @@ export function TransactionsTable({
                         {t.is_private && <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">privado</span>}
                         {t.split_id && <span className="ml-2 text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">divisão</span>}
                       </span>
+                      {/* categoria + conta visíveis apenas no mobile */}
+                      <div className="flex items-center gap-2 md:hidden">
+                        {t.categories?.name && (
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.categories.color ?? '#d1d5db' }} />
+                            {t.categories.name}
+                          </span>
+                        )}
+                        {t.accounts?.name && (
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <span className="w-1 h-1 rounded-full bg-gray-300 shrink-0" />
+                            {t.accounts.name}
+                          </span>
+                        )}
+                      </div>
                       {t.comment && <span className="text-xs text-gray-400 italic">💬 {t.comment}</span>}
                       {t.receipt_url && (
                         <a href={t.receipt_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700">

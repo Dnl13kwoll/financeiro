@@ -18,7 +18,7 @@ type TodayItem = {
 type RecurringItem = {
   id: string
   name: string
-  amount: number
+  amount: number | null
   day_due: number
 }
 
@@ -188,7 +188,7 @@ export function TodayClient({
             {recurringToday.map(r => (
               <div key={r.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-gray-800">{r.name}</span>
-                {r.amount > 0 && (
+                {r.amount != null && r.amount > 0 && (
                   <span className="text-sm font-semibold text-gray-700 financial-value">{formatCurrency(r.amount)}</span>
                 )}
               </div>

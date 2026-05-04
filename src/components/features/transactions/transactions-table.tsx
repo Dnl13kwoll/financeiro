@@ -41,8 +41,8 @@ export function TransactionsTable({
   userId,
 }: {
   transactions: TxRow[]
-  accounts: { id: string; name: string }[]
-  categories: { id: string; name: string; type: 'income' | 'expense' }[]
+  accounts: { id: string; name: string; color?: string | null }[]
+  categories: { id: string; name: string; type: 'income' | 'expense'; color?: string | null }[]
   coupleId: string | null
   userId: string
 }) {

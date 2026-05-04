@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
+import { ColorSelect } from '@/components/ui/color-select'
 import { Copy, Pencil, Trash2 } from 'lucide-react'
 import { TransactionSplitToggle } from '@/components/features/transactions/transaction-split-toggle'
 import { ConvertToRecurring } from '@/components/features/transactions/convert-to-recurring'
 
-type Account = { id: string; name: string }
-type Category = { id: string; name: string; type: 'income' | 'expense' }
+type Account = { id: string; name: string; color?: string | null }
+type Category = { id: string; name: string; type: 'income' | 'expense'; color?: string | null }
 
 type Transaction = {
   id: string
@@ -42,6 +43,8 @@ export function TransactionActions({
   const [duplicating, setDuplicating] = useState(false)
   const [loading, setLoading] = useState(false)
   const [deleteTimer, setDeleteTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+  const [editAccountId, setEditAccountId] = useState(transaction.account_id)
+  const [editCategoryId, setEditCategoryId] = useState(transaction.category_id ?? '')
   const router = useRouter()
   const [, startTransition] = useTransition()
 
@@ -62,8 +65,8 @@ export function TransactionActions({
       receipt_url: (data.get('receipt_url') as string) || null,
       amount: parseFloat(data.get('amount') as string),
       description: (data.get('description') as string) || null,
-      category_id: (data.get('category_id') as string) || null,
-      account_id: data.get('account_id') as string,
+      category_id: editCategoryId || null,
+      account_id: editAccountId,
       date: data.get('date') as string,
       competence_date: data.get('date') as string,
       is_private: data.get('is_private') === 'on',
@@ -181,31 +184,24 @@ export function TransactionActions({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Conta</label>
-            <select
-              name="account_id"
-              required
-              defaultValue={transaction.account_id}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
+            <ColorSelect
+              options={accounts.map(a => ({ value: a.id, label: a.name, color: a.color }))}
+              value={editAccountId}
+              onChange={setEditAccountId}
+            />
           </div>
 
           {filteredCategories.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-              <select
-                name="category_id"
-                defaultValue={transaction.category_id ?? ''}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Sem categoria</option>
-                {filteredCategories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <ColorSelect
+                options={[
+                  { value: '', label: 'Sem categoria' },
+                  ...filteredCategories.map(c => ({ value: c.id, label: c.name, color: c.color })),
+                ]}
+                value={editCategoryId}
+                onChange={setEditCategoryId}
+              />
             </div>
           )}
 

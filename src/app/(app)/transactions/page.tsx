@@ -81,10 +81,10 @@ export default async function TransactionsPage({
   }
 
   const accountsRes = coupleId
-    ? await supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)
+    ? await supabase.from('accounts').select('id, name, color').eq('couple_id', coupleId).is('deleted_at', null)
     : null
 
-  const categoriesRes = await supabase.from('categories').select('id, name, type, couple_id').order('name')
+  const categoriesRes = await supabase.from('categories').select('id, name, type, color, couple_id').order('name')
 
   const rulesRes = coupleId
     ? await supabase.from('category_rules')
@@ -93,8 +93,8 @@ export default async function TransactionsPage({
     : null
 
   let transactions: any[] = transactionsRes?.data ?? []
-  const accounts: { id: string; name: string }[] = (accountsRes?.data ?? []) as any[]
-  const categories: { id: string; name: string; type: 'income' | 'expense'; couple_id?: string }[] = (categoriesRes?.data ?? []) as any[]
+  const accounts: { id: string; name: string; color?: string | null }[] = (accountsRes?.data ?? []) as any[]
+  const categories: { id: string; name: string; type: 'income' | 'expense'; color?: string | null; couple_id?: string }[] = (categoriesRes?.data ?? []) as any[]
   const rules: any[] = ((rulesRes?.data ?? []) as any[]).map((r: any) => ({
     id: r.id, pattern: r.pattern, match_type: r.match_type, category_id: r.category_id,
     category_name: r.categories?.name,

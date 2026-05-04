@@ -4,13 +4,14 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
+import { ColorSelect } from '@/components/ui/color-select'
 import { Plus, Bookmark } from 'lucide-react'
 import { DescriptionWithSuggest } from './category-suggest'
 import { TransactionTemplates, saveTransactionTemplate } from './transaction-templates'
 import { TagsInput } from './tags-input'
 
-type Account = { id: string; name: string; type?: string }
-type Category = { id: string; name: string; type: 'income' | 'expense' }
+type Account = { id: string; name: string; type?: string; color?: string | null }
+type Category = { id: string; name: string; type: 'income' | 'expense'; color?: string | null }
 
 export function NewTransactionButton({
   coupleId,
@@ -28,6 +29,7 @@ export function NewTransactionButton({
   const [type, setType] = useState<'income' | 'expense' | 'transfer'>('expense')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [toAccountId, setToAccountId] = useState('')
   const [installments, setInstallments] = useState(1)
   const [formAmount, setFormAmount] = useState('')
   const [formDescription, setFormDescription] = useState('')
@@ -162,7 +164,7 @@ export function NewTransactionButton({
         description,
         category_id: selectedCategoryId || null,
         account_id: selectedAccountId || (data.get('account_id') as string),
-        to_account_id: type === 'transfer' ? (data.get('to_account_id') as string) || null : null,
+        to_account_id: type === 'transfer' ? toAccountId || null : null,
         date: baseDate.toISOString().slice(0, 10),
         competence_date: baseDate.toISOString().slice(0, 10),
         is_private: data.get('is_private') === 'on',
@@ -191,6 +193,7 @@ export function NewTransactionButton({
     setType('expense')
     setSelectedCategoryId('')
     setSelectedAccountId('')
+    setToAccountId('')
     setInstallments(1)
     setFormAmount('')
     setFormDescription('')
@@ -275,50 +278,41 @@ export function NewTransactionButton({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {type === 'transfer' ? 'Conta de origem' : 'Conta'}
             </label>
-            <select
-              name="account_id"
-              required
+            <ColorSelect
+              options={[
+                { value: '', label: 'Selecione...' },
+                ...accounts.map(a => ({ value: a.id, label: a.name, color: a.color })),
+              ]}
               value={selectedAccountId}
-              onChange={e => setSelectedAccountId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">Selecione...</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
+              onChange={setSelectedAccountId}
+            />
           </div>
 
           {type === 'transfer' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Conta de destino</label>
-              <select
-                name="to_account_id"
-                required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Selecione...</option>
-                {accounts.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
+              <ColorSelect
+                options={[
+                  { value: '', label: 'Selecione...' },
+                  ...accounts.map(a => ({ value: a.id, label: a.name, color: a.color })),
+                ]}
+                value={toAccountId}
+                onChange={setToAccountId}
+              />
             </div>
           )}
 
           {type !== 'transfer' && filteredCategories.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-              <select
-                name="category_id"
+              <ColorSelect
+                options={[
+                  { value: '', label: 'Sem categoria' },
+                  ...filteredCategories.map(c => ({ value: c.id, label: c.name, color: c.color })),
+                ]}
                 value={selectedCategoryId}
-                onChange={e => setSelectedCategoryId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Sem categoria</option>
-                {filteredCategories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={setSelectedCategoryId}
+              />
             </div>
           )}
 

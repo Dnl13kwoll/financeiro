@@ -12,27 +12,28 @@ import {
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PrivacyToggle } from '@/components/ui/privacy-toggle'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-// ── Badge counts ─────────────────────────────────────────────────────────────
+// ── Badge counts + total balance ─────────────────────────────────────────────
 type BadgeCounts = Partial<Record<string, number>>
+type SidebarData = { badges: BadgeCounts; totalBalance: number | null }
 
-async function fetchBadgeCounts(): Promise<BadgeCounts> {
+async function fetchSidebarData(): Promise<SidebarData> {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return {}
+    if (!user) return { badges: {}, totalBalance: null }
 
     const memberRes = await supabase
       .from('couple_members').select('couple_id').eq('user_id', user.id).maybeSingle()
     const coupleId = (memberRes.data as any)?.couple_id
-    if (!coupleId) return {}
+    if (!coupleId) return { badges: {}, totalBalance: null }
 
     const today = new Date().toISOString().slice(0, 10)
 
-    const [tasksRes, remindersRes, billsRes] = await Promise.all([
+    const [tasksRes, remindersRes, billsRes, balancesRes] = await Promise.all([
       supabase.from('tasks').select('id', { count: 'exact', head: true })
         .eq('couple_id', coupleId).neq('status', 'done'),
       supabase.from('financial_reminders').select('id', { count: 'exact', head: true })
@@ -41,14 +42,22 @@ async function fetchBadgeCounts(): Promise<BadgeCounts> {
         .select('id, installments!inner(couple_id)', { count: 'exact', head: true })
         .eq('installments.couple_id', coupleId)
         .eq('paid', false).eq('canceled', false).lte('due_date', today),
+      supabase.from('account_balances').select('balance').eq('couple_id', coupleId),
     ])
 
+    const totalBalance = (balancesRes.data ?? []).reduce(
+      (sum, a) => sum + (a.balance ?? 0), 0
+    )
+
     return {
-      '/tasks':     (tasksRes.count ?? 0) + (remindersRes.count ?? 0),
-      '/recurring': billsRes.count ?? 0,
+      badges: {
+        '/tasks':     (tasksRes.count ?? 0) + (remindersRes.count ?? 0),
+        '/recurring': billsRes.count ?? 0,
+      },
+      totalBalance,
     }
   } catch {
-    return {}
+    return { badges: {}, totalBalance: null }
   }
 }
 
@@ -279,6 +288,7 @@ export function Sidebar() {
   const [favorites, setFavorites] = useState<string[]>([])
   const [hidden, setHidden] = useState<Set<string>>(new Set())
   const [badges, setBadges] = useState<BadgeCounts>({})
+  const [totalBalance, setTotalBalance] = useState<number | null>(null)
 
   useEffect(() => {
     try {
@@ -287,7 +297,10 @@ export function Sidebar() {
       const hid = localStorage.getItem('sidebar-hidden')
       if (hid) setHidden(new Set(JSON.parse(hid)))
     } catch {}
-    fetchBadgeCounts().then(setBadges)
+    fetchSidebarData().then(({ badges, totalBalance }) => {
+      setBadges(badges)
+      setTotalBalance(totalBalance)
+    })
   }, [])
 
   function toggleFavorite(href: string) {
@@ -399,6 +412,15 @@ export function Sidebar() {
           <span className="text-lg font-bold text-primary-600">Financeiro</span>
           <span className="text-xs text-gray-400 ml-2">para casais</span>
         </div>
+        {totalBalance !== null && (
+          <Link
+            href="/accounts"
+            className="text-sm font-semibold text-gray-700 hover:text-primary-600 transition-colors financial-value"
+            title="Ver contas"
+          >
+            {formatCurrency(totalBalance)}
+          </Link>
+        )}
         <button
           onClick={() => setMobileOpen(true)}
           className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg"

@@ -208,10 +208,13 @@ export function NewTransactionButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+        className="group flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
       >
         <Plus className="w-4 h-4" />
         Nova Transação
+        <kbd className="hidden sm:inline-flex items-center text-[10px] px-1.5 py-0.5 bg-primary-700 group-hover:bg-primary-800 rounded font-mono leading-none transition-colors">
+          N
+        </kbd>
       </button>
 
       <Modal open={open} onClose={() => { setOpen(false); resetForm() }} title="Nova Transação">

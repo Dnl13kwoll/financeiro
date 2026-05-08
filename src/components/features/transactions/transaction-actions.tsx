@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { ColorSelect } from '@/components/ui/color-select'
-import { Copy, Pencil, Trash2 } from 'lucide-react'
+import { Copy, Pencil, Trash2, CornerUpLeft } from 'lucide-react'
 import { TransactionSplitToggle } from '@/components/features/transactions/transaction-split-toggle'
 import { ConvertToRecurring } from '@/components/features/transactions/convert-to-recurring'
 
@@ -41,6 +41,7 @@ export function TransactionActions({
 }) {
   const [editOpen, setEditOpen] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
+  const [reversing, setReversing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [deleteTimer, setDeleteTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [editAccountId, setEditAccountId] = useState(transaction.account_id)
@@ -100,6 +101,27 @@ export function TransactionActions({
     startTransition(() => { router.refresh() })
   }
 
+  async function handleReversal() {
+    if (transaction.type === 'transfer') return
+    setReversing(true)
+    const supabase = createClient()
+    const { data: original } = await supabase
+      .from('transactions').select('*').eq('id', transaction.id).single()
+    if (original) {
+      const { id: _id, created_at: _c, updated_at: _u, deleted_at: _d, ...rest } = original
+      await supabase.from('transactions').insert({
+        ...rest,
+        type: transaction.type === 'income' ? 'expense' : 'income',
+        description: `Estorno: ${rest.description ?? ''}`.trim(),
+        date: new Date().toISOString().slice(0, 10),
+        competence_date: new Date().toISOString().slice(0, 10),
+      })
+    }
+    setReversing(false)
+    showToast('Estorno lançado!')
+    startTransition(() => { router.refresh() })
+  }
+
   function handleDelete() {
     // Optimistic: show undo toast, commit after 4 s unless cancelled
     const timer = setTimeout(async () => {
@@ -134,6 +156,16 @@ export function TransactionActions({
         >
           <Copy className="w-3.5 h-3.5" />
         </button>
+        {transaction.type !== 'transfer' && (
+          <button
+            onClick={handleReversal}
+            disabled={reversing}
+            className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors disabled:opacity-40"
+            title="Estornar (lançar transação reversa)"
+          >
+            <CornerUpLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
         {transaction.type === 'expense' && (
           <TransactionSplitToggle
             transactionId={transaction.id}

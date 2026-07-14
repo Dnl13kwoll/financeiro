@@ -200,7 +200,11 @@ export function AgendaClient({
       setEvents(prev => [...prev, ev])
       setNewOpen(false)
       ;(e.target as HTMLFormElement).reset()
-      showToast('Evento criado no Google Calendar!')
+      if (ev.partnerSynced) {
+        showToast('Evento criado para os dois!')
+      } else {
+        showToast('Evento criado! (parceiro não tem Google Calendar conectado)')
+      }
     } else {
       const err = await res.json()
       showToast('Erro: ' + (err.error?.message ?? 'tente novamente'), 'error')

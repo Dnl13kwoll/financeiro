@@ -24,6 +24,19 @@ export function AcceptInviteButton({ token, invitationId, coupleId, email }: {
       return
     }
 
+    // Verificar se já pertence a algum casal
+    const { data: existing } = await supabase
+      .from('couple_members')
+      .select('couple_id')
+      .eq('user_id', user.id)
+      .limit(1)
+
+    if (existing && existing.length > 0) {
+      setError('Você já pertence a um casal. Saia do casal atual antes de aceitar este convite.')
+      setLoading(false)
+      return
+    }
+
     const memberPayload: any = {
       user_id: user.id,
       couple_id: coupleId,

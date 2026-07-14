@@ -45,6 +45,8 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [inviteUrl, setInviteUrl] = useState('')
+  const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
 
   async function handleInvite(e: React.FormEvent) {
@@ -62,15 +64,22 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
       setError(json.error ?? `Erro ao enviar convite (${res.status})`)
     } else {
       setSuccess(true)
+      setInviteUrl(json.inviteUrl ?? '')
       setEmail('')
     }
     setLoading(false)
   }
 
+  async function handleCopy() {
+    await navigator.clipboard.writeText(inviteUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <>
       <button
-        onClick={() => { setOpen(true); setSuccess(false); setError('') }}
+        onClick={() => { setOpen(true); setSuccess(false); setInviteUrl(''); setCopied(false); setError('') }}
         className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
       >
         <UserPlus className="w-4 h-4" />
@@ -79,10 +88,30 @@ export function InvitePartnerButton({ coupleId }: { coupleId: string }) {
 
       <Modal open={open} onClose={() => setOpen(false)} title="Convidar Parceiro">
         {success ? (
-          <div className="text-center py-4">
-            <p className="text-green-600 font-medium">Convite enviado!</p>
-            <p className="text-sm text-gray-500 mt-1">O convite foi registrado com sucesso.</p>
-            <button onClick={() => setOpen(false)} className="mt-4 text-sm text-primary-600 hover:underline">
+          <div className="py-2 space-y-4">
+            <p className="text-green-600 font-medium text-center">Convite criado!</p>
+            {inviteUrl && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  {email ? 'Email enviado. Compartilhe também o link abaixo caso não chegue:' : 'Compartilhe este link com seu parceiro:'}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={inviteUrl}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-700 bg-gray-50 focus:outline-none"
+                    onClick={e => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    onClick={handleCopy}
+                    className="px-3 py-2 bg-primary-600 text-white text-xs rounded-lg hover:bg-primary-700 whitespace-nowrap"
+                  >
+                    {copied ? 'Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+            )}
+            <button onClick={() => setOpen(false)} className="w-full text-sm text-gray-500 hover:text-gray-700">
               Fechar
             </button>
           </div>

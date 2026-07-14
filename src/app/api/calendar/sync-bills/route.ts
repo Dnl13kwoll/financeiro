@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
 
   const { month, year } = await req.json()
   const monthStr = `${year}-${String(month).padStart(2, '0')}`
+  const lastDay = new Date(year, month, 0).getDate()
+  const monthEnd = `${monthStr}-${String(lastDay).padStart(2, '0')}`
 
   const { data: member } = await supabase
     .from('couple_members')
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
         .select('id, due_date, amount, part_number, installment_id')
         .in('installment_id', installmentIds)
         .gte('due_date', `${monthStr}-01`)
-        .lte('due_date', `${monthStr}-31`)
+        .lte('due_date', monthEnd)
         .eq('paid', false)
         .eq('canceled', false)
     : { data: [] }
@@ -102,7 +104,7 @@ export async function POST(req: NextRequest) {
     .eq('couple_id', coupleId)
     .neq('status', 'done')
     .gte('due_date', `${monthStr}-01`)
-    .lte('due_date', `${monthStr}-31`)
+    .lte('due_date', monthEnd)
 
   // Fetch existing events to detect duplicates via [fin:*] tags
   const timeMin = new Date(year, month - 1, 1).toISOString()

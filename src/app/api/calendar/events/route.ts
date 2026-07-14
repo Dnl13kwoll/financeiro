@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 async function getValidToken(userId: string, supabase: any): Promise<string | null> {
   const { data } = await supabase
@@ -75,6 +76,17 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ events: data.items ?? [] })
 }
 
+async function pushToGCal(token: string, body: object) {
+  return fetch(
+    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  )
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -85,15 +97,35 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
 
-  const res = await fetch(
-    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }
-  )
-
+  // Cria evento no calendário do usuário atual
+  const res = await pushToGCal(token, body)
   const data = await res.json()
+
+  if (res.ok) {
+    // Busca o parceiro e cria o mesmo evento no calendário dele
+    const { data: myMember } = await supabase
+      .from('couple_members')
+      .select('couple_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (myMember?.couple_id) {
+      const { data: partnerMember } = await supabase
+        .from('couple_members')
+        .select('user_id')
+        .eq('couple_id', myMember.couple_id)
+        .neq('user_id', user.id)
+        .maybeSingle()
+
+      if (partnerMember?.user_id) {
+        const admin = createAdminClient()
+        const partnerToken = await getValidToken(partnerMember.user_id, admin)
+        if (partnerToken) {
+          await pushToGCal(partnerToken, body)
+        }
+      }
+    }
+  }
+
   return NextResponse.json(data, { status: res.status })
 }

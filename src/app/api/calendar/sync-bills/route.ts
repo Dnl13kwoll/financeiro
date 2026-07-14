@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 async function getValidToken(userId: string, supabase: any): Promise<string | null> {
   const { data } = await supabase
@@ -106,51 +107,85 @@ export async function POST(req: NextRequest) {
     .gte('due_date', `${monthStr}-01`)
     .lte('due_date', monthEnd)
 
+  // Busca o parceiro (se tiver Google Calendar conectado)
+  const { data: partnerMember } = await supabase
+    .from('couple_members')
+    .select('user_id')
+    .eq('couple_id', coupleId)
+    .neq('user_id', user.id)
+    .maybeSingle()
+
+  let partnerToken: string | null = null
+  if (partnerMember?.user_id) {
+    const admin = createAdminClient()
+    partnerToken = await getValidToken(partnerMember.user_id, admin)
+  }
+
   // Fetch existing events to detect duplicates via [fin:*] tags
   const timeMin = new Date(year, month - 1, 1).toISOString()
   const timeMax = new Date(year, month, 0, 23, 59, 59).toISOString()
+  const calParams = new URLSearchParams({ timeMin, timeMax, singleEvents: 'true', maxResults: '500' })
 
-  const existRes = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${new URLSearchParams({
-      timeMin, timeMax, singleEvents: 'true', maxResults: '500',
-    })}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
-
-  const existingTags = new Set<string>()
-  if (existRes.ok) {
-    const existData = await existRes.json()
-    for (const ev of existData.items ?? []) {
-      const matches = (ev.description ?? '').match(/\[fin:[^\]]+\]/g) ?? []
-      matches.forEach((m: string) => existingTags.add(m))
+  async function fetchExistingTags(tkn: string): Promise<Set<string>> {
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${calParams}`,
+      { headers: { Authorization: `Bearer ${tkn}` } }
+    )
+    const tags = new Set<string>()
+    if (res.ok) {
+      const d = await res.json()
+      for (const ev of d.items ?? []) {
+        const matches = (ev.description ?? '').match(/\[fin:[^\]]+\]/g) ?? []
+        matches.forEach((m: string) => tags.add(m))
+      }
     }
+    return tags
   }
+
+  const existingTags = await fetchExistingTags(token)
+  const partnerExistingTags = partnerToken ? await fetchExistingTags(partnerToken) : new Set<string>()
 
   let created = 0
   let skipped = 0
 
   const createCalEvent = async (summary: string, date: string, tag: string, colorId: string) => {
-    if (existingTags.has(tag)) { skipped++; return }
-
     const nextDay = new Date(`${date}T00:00:00`)
     nextDay.setDate(nextDay.getDate() + 1)
+    const eventBody = {
+      summary,
+      description: tag,
+      start: { date },
+      end: { date: nextDay.toISOString().slice(0, 10) },
+      colorId,
+    }
 
-    const res = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          summary,
-          description: tag,
-          start: { date },
-          end: { date: nextDay.toISOString().slice(0, 10) },
-          colorId,
-        }),
-      }
-    )
+    let eventCreated = false
 
-    if (res.ok) { existingTags.add(tag); created++ }
+    if (!existingTags.has(tag)) {
+      const res = await fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(eventBody),
+        }
+      )
+      if (res.ok) { existingTags.add(tag); eventCreated = true }
+    }
+
+    if (partnerToken && !partnerExistingTags.has(tag)) {
+      const res = await fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${partnerToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(eventBody),
+        }
+      )
+      if (res.ok) { partnerExistingTags.add(tag); eventCreated = true }
+    }
+
+    if (eventCreated) created++
     else skipped++
   }
 

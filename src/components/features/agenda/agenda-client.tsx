@@ -200,11 +200,16 @@ export function AgendaClient({
       setEvents(prev => [...prev, ev])
       setNewOpen(false)
       ;(e.target as HTMLFormElement).reset()
-      if (ev.partnerSynced) {
-        showToast('Evento criado para os dois!')
-      } else {
-        showToast('Evento criado! (parceiro não tem Google Calendar conectado)')
+      const statusMsg: Record<string, string> = {
+        synced: 'Evento criado para os dois!',
+        no_couple: 'Evento criado! (sem casal configurado)',
+        no_partner: 'Evento criado! (parceiro não encontrado no casal)',
+        no_service_key: 'Evento criado! (SUPABASE_SERVICE_ROLE_KEY ausente)',
+        no_token: 'Evento criado! (parceiro não conectou o Google Calendar)',
+        gcal_error: 'Evento criado! (erro ao criar no calendário do parceiro)',
+        exception: 'Evento criado! (erro interno ao sincronizar parceiro)',
       }
+      showToast(statusMsg[ev.partnerStatus] ?? 'Evento criado!')
     } else {
       const err = await res.json()
       showToast('Erro: ' + (err.error?.message ?? 'tente novamente'), 'error')

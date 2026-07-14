@@ -102,9 +102,9 @@ export async function POST(req: NextRequest) {
   const data = await res.json()
 
   let partnerSynced = false
+  let partnerStatus = 'no_couple'
 
   if (res.ok) {
-    // Busca o parceiro e cria o mesmo evento no calendário dele
     try {
       const { data: myMember } = await supabase
         .from('couple_members')
@@ -113,6 +113,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
 
       if (myMember?.couple_id) {
+        partnerStatus = 'no_partner'
         const { data: partnerMember } = await supabase
           .from('couple_members')
           .select('user_id')
@@ -121,29 +122,35 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         if (partnerMember?.user_id) {
+          partnerStatus = 'no_service_key'
           const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-          if (!serviceKey) {
-            console.error('[calendar/events] SUPABASE_SERVICE_ROLE_KEY não configurado')
-          } else {
+          if (serviceKey) {
+            partnerStatus = 'no_token'
             const admin = createAdminClient()
             const partnerToken = await getValidToken(partnerMember.user_id, admin)
             if (partnerToken) {
+              partnerStatus = 'gcal_error'
               const partnerRes = await pushToGCal(partnerToken, body)
-              partnerSynced = partnerRes.ok
-              if (!partnerRes.ok) {
+              if (partnerRes.ok) {
+                partnerSynced = true
+                partnerStatus = 'synced'
+              } else {
                 const err = await partnerRes.json().catch(() => ({}))
-                console.error('[calendar/events] Erro ao criar evento no parceiro:', partnerRes.status, err)
+                console.error('[calendar/events] GCal erro parceiro:', partnerRes.status, err)
               }
             } else {
-              console.error('[calendar/events] Token do parceiro não encontrado ou inválido')
+              console.error('[calendar/events] Token do parceiro não encontrado')
             }
+          } else {
+            console.error('[calendar/events] SUPABASE_SERVICE_ROLE_KEY não configurado')
           }
         }
       }
     } catch (err) {
-      console.error('[calendar/events] Erro inesperado ao sincronizar parceiro:', err)
+      partnerStatus = 'exception'
+      console.error('[calendar/events] Exceção ao sincronizar parceiro:', err)
     }
   }
 
-  return NextResponse.json({ ...data, partnerSynced }, { status: res.status })
+  return NextResponse.json({ ...data, partnerSynced, partnerStatus }, { status: res.status })
 }

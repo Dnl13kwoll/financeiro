@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, ExternalLink, X, Loader2, Calendar, LogOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, ExternalLink, X, Loader2, Calendar, LogOut, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { showToast } from '@/components/ui/toast'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
@@ -98,6 +98,7 @@ export function AgendaClient({
   const [allDay, setAllDay] = useState(true)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchEvents = useCallback(async () => {
     if (!connected) return
@@ -229,6 +230,23 @@ export function AgendaClient({
       showToast('Erro de rede', 'error')
     }
     setSyncing(false)
+  }
+
+  async function handleDelete(ev: CalEvent) {
+    if (!await confirmDialog(`Excluir "${ev.summary ?? 'evento'}"?`, { destructive: true, confirmLabel: 'Excluir' })) return
+    setDeletingId(ev.id)
+    try {
+      const res = await fetch(`/api/calendar/events/${ev.id}`, { method: 'DELETE' })
+      if (res.ok || res.status === 204) {
+        setEvents((prev: CalEvent[]) => prev.filter((e: CalEvent) => e.id !== ev.id))
+        showToast('Evento excluído.')
+      } else {
+        showToast('Erro ao excluir evento.', 'error')
+      }
+    } catch {
+      showToast('Erro de rede.', 'error')
+    }
+    setDeletingId(null)
   }
 
   async function handleDisconnect() {
@@ -398,12 +416,24 @@ export function AgendaClient({
                       <p className="text-xs text-gray-400 mt-1 line-clamp-2">{ev.description}</p>
                     )}
                   </div>
-                  {ev.htmlLink && (
-                    <a href={ev.htmlLink} target="_blank" rel="noopener noreferrer"
-                      className="text-gray-400 hover:text-blue-500 shrink-0 transition-colors" title="Abrir no Google Calendar">
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {ev.htmlLink && (
+                      <a href={ev.htmlLink} target="_blank" rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-blue-500 transition-colors" title="Abrir no Google Calendar">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleDelete(ev)}
+                      disabled={deletingId === ev.id}
+                      className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
+                      title="Excluir evento"
+                    >
+                      {deletingId === ev.id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Trash2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

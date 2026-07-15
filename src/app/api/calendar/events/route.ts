@@ -113,20 +113,20 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
 
       if (myMember?.couple_id) {
-        partnerStatus = 'no_partner'
-        const { data: partnerMember } = await supabase
-          .from('couple_members')
-          .select('user_id')
-          .eq('couple_id', myMember.couple_id)
-          .neq('user_id', user.id)
-          .maybeSingle()
+        partnerStatus = 'no_service_key'
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (serviceKey) {
+          partnerStatus = 'no_partner'
+          const admin = createAdminClient()
+          const { data: partnerMember } = await admin
+            .from('couple_members')
+            .select('user_id')
+            .eq('couple_id', myMember.couple_id)
+            .neq('user_id', user.id)
+            .maybeSingle()
 
-        if (partnerMember?.user_id) {
-          partnerStatus = 'no_service_key'
-          const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-          if (serviceKey) {
+          if (partnerMember?.user_id) {
             partnerStatus = 'no_token'
-            const admin = createAdminClient()
             const partnerToken = await getValidToken(partnerMember.user_id, admin)
             if (partnerToken) {
               partnerStatus = 'gcal_error'
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
               console.error('[calendar/events] Token do parceiro não encontrado')
             }
           } else {
-            console.error('[calendar/events] SUPABASE_SERVICE_ROLE_KEY não configurado')
+            console.error('[calendar/events] Parceiro não encontrado em couple_members')
           }
         }
       }

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     .from('couple_members')
     .select('couple_id')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
   const coupleId = (memberRes.data as any)?.couple_id ?? null
 
   await supabase.from('push_subscriptions').upsert(

@@ -88,7 +88,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/timeline',     label: 'Linha do Tempo',  icon: CalendarClock },
       { href: '/reports',      label: 'Análise',         icon: BarChart2 },
-      { href: '/investments',  label: 'Investimentos',   icon: LineChart },
+      // { href: '/investments',  label: 'Investimentos',   icon: LineChart },
     ],
   },
   {

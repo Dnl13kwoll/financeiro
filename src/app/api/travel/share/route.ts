@@ -22,8 +22,10 @@ export async function POST(request: NextRequest) {
     .from('trip_share_tokens').select('token').eq('trip_id', tripId).maybeSingle()
   if (existing) return NextResponse.json({ token: existing.token })
 
-  const { data: tokenRow } = await (supabase as any)
-    .from('trip_share_tokens').insert({ trip_id: tripId }).select('token').single()
+  const { data: tokenRow, error: insertError } = await (supabase as any)
+    .from('trip_share_tokens').insert({ trip_id: tripId }).select('token').maybeSingle()
+
+  if (insertError || !tokenRow) return NextResponse.json({ error: 'Failed to create token' }, { status: 500 })
 
   return NextResponse.json({ token: tokenRow.token })
 }

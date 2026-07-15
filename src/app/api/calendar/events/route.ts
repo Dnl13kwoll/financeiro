@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
   // Cria evento no calendário do usuário atual
   const res = await pushToGCal(token, body)
-  const data = await res.json()
+  const data = await res.json().catch(() => ({}))
 
   let partnerSynced = false
   let partnerStatus = 'no_couple'

@@ -83,18 +83,25 @@ export default async function TodayPage() {
     due_date: t.due_date as string,
   }))
 
+  const pageErrors = [installmentsRes.error, remindersRes.error, tasksRes.error, recurringRes.error].filter(Boolean)
+
   const allItems = [...installments, ...reminders, ...tasks]
   const overdueItems = allItems.filter(i => i.due_date < today)
   const todayItems   = allItems.filter(i => i.due_date === today)
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Atividades" />
+      <Header title="Hoje" />
       <PageTabs tabs={[
         { href: '/today', label: 'Hoje' },
         { href: '/tasks', label: 'Tarefas' },
         { href: '/reminders', label: 'Lembretes' },
       ]} />
+      {pageErrors.length > 0 && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Alguns dados não puderam ser carregados. Tente recarregar a página.
+        </div>
+      )}
       <TodayClient
         today={today}
         overdueItems={overdueItems}

@@ -15,11 +15,13 @@ export default async function RemindersPage() {
     .from('couple_members').select('couple_id').eq('user_id', user!.id).maybeSingle()
   const coupleId = (member as any)?.couple_id ?? null
 
-  const { data } = await (supabase as any)
-    .from('financial_reminders')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('due_date', { ascending: true })
+  const { data, error } = coupleId
+    ? await (supabase as any)
+        .from('financial_reminders')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('due_date', { ascending: true })
+    : { data: [], error: null }
 
   return (
     <div className="flex flex-col flex-1">
@@ -29,6 +31,11 @@ export default async function RemindersPage() {
         { href: '/tasks', label: 'Tarefas' },
         { href: '/reminders', label: 'Lembretes' },
       ]} />
+      {error && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Alguns dados não puderam ser carregados. Tente recarregar a página.
+        </div>
+      )}
       <RemindersClient coupleId={coupleId} initialReminders={data ?? []} />
     </div>
   )

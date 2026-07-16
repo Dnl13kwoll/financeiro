@@ -63,6 +63,8 @@ export default async function ActivityPage({
       .limit(10),
   ])
 
+  const pageErrors = [txRes.error, goalHistRes.error, installmentRes.error].filter(Boolean)
+
   type FeedItem = {
     id: string
     time: string
@@ -113,6 +115,11 @@ export default async function ActivityPage({
       <Header title="Feed de Atividade" />
 
       <div className="p-4 md:p-6 max-w-xl space-y-3">
+        {pageErrors.length > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            Alguns dados não puderam ser carregados. Tente recarregar a página.
+          </div>
+        )}
         {/* Filter tabs */}
         <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
           {([

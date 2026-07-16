@@ -24,7 +24,7 @@ export default async function CardPage({
   const memberRes = await supabase.from('couple_members').select('couple_id').eq('user_id', user!.id).limit(1).maybeSingle()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const accountRes = await supabase.from('accounts').select('*').eq('id', id).single()
+  const accountRes = await supabase.from('accounts').select('*').eq('id', id).maybeSingle()
   const account: any = accountRes.data
   if (!account || account.type !== 'credit_card') {
     return <div className="p-6 text-gray-500">Cartão não encontrado.</div>
@@ -63,7 +63,7 @@ export default async function CardPage({
   const [txRes, paymentsRes, balanceRes] = await Promise.all([
     supabase.from('transactions').select('*, categories(name)').eq('account_id', id).eq('type', 'expense').gte('date', cycleStartStr).lte('date', cycleEndStr).is('deleted_at', null).order('date', { ascending: false }),
     supabase.from('card_invoice_payments').select('*').eq('account_id', id).gte('paid_at', cycleStartStr).lte('paid_at', cycleEndStr).order('paid_at', { ascending: false }),
-    supabase.from('account_balances').select('*').eq('id', id).single(),
+    supabase.from('account_balances').select('*').eq('id', id).maybeSingle(),
   ])
 
   const transactions: any[] = txRes.data ?? []

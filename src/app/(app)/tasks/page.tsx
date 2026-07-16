@@ -33,6 +33,8 @@ export default async function TasksPage() {
       : Promise.resolve(null),
   ])
 
+  const pageErrors = [tasksRes?.error, membersRes?.error].filter(Boolean)
+
   const tasks = (tasksRes?.data ?? []) as any[]
 
   const members = ((membersRes?.data ?? []) as any[]).map((m: any) => ({
@@ -49,6 +51,11 @@ export default async function TasksPage() {
         { href: '/tasks', label: 'Tarefas' },
         { href: '/reminders', label: 'Lembretes' },
       ]} />
+      {pageErrors.length > 0 && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Alguns dados não puderam ser carregados. Tente recarregar a página.
+        </div>
+      )}
       <TasksClient
         tasks={tasks}
         members={members}

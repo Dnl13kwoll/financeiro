@@ -18,6 +18,7 @@ export default async function CategoriesPage() {
 
   const categoriesRes = await supabase
     .from('categories').select('id, name, type, couple_id, color, sort_order').order('name')
+  const categoriesError = categoriesRes.error
   const categories: any[] = (categoriesRes.data ?? []) as any[]
 
   const custom = categories.filter(c => c.couple_id)
@@ -47,6 +48,11 @@ export default async function CategoriesPage() {
       ]} />
 
       <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto w-full">
+        {categoriesError && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            Alguns dados não puderam ser carregados. Tente recarregar a página.
+          </div>
+        )}
 
         {!coupleId && (
           <div className="text-center text-gray-400 py-16">Crie um casal em Configurações para gerenciar categorias.</div>

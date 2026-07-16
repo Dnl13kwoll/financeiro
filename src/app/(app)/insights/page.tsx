@@ -61,7 +61,7 @@ export default async function InsightsPage() {
   // Fetch last 6 months of transactions
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-  const { data: txRaw } = await supabase.from('transactions')
+  const { data: txRaw, error: txError } = await supabase.from('transactions')
     .select('amount, type, category_id, date, description, categories(name)')
     .eq('couple_id', coupleId)
     .gte('date', sixMonthsAgo.toISOString().slice(0, 10))
@@ -292,6 +292,11 @@ export default async function InsightsPage() {
       <Header title="Insights" />
 
       <div className="p-4 md:p-6 space-y-6">
+        {txError && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            Alguns dados não puderam ser carregados. Tente recarregar a página.
+          </div>
+        )}
 
         {/* Insights cards */}
         {insights.length > 0 ? (

@@ -52,6 +52,7 @@ export default async function TimelinePage({
       : Promise.resolve(null),
   ])
 
+  const pageErrors = [installmentItemsRes?.error, recurringRes?.error].filter(Boolean)
   const installmentItems: any[] = installmentItemsRes?.data ?? []
   const recurring: any[] = recurringRes?.data ?? []
 
@@ -129,6 +130,11 @@ export default async function TimelinePage({
       ]} />
 
       <div className="p-4 md:p-6 space-y-4">
+        {pageErrors.length > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            Alguns dados não puderam ser carregados. Tente recarregar a página.
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TimelineFilters currentDays={days} />
           {events.length > 0 && (

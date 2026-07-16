@@ -7,6 +7,7 @@ import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, ArrowLeft } from 'lucid
 import Link from 'next/link'
 import { AccountReconcile } from '@/components/features/accounts/account-reconcile'
 import { AccountBalanceHistory } from '@/components/features/accounts/account-balance-history'
+import { MonthFilter } from '@/components/features/accounts/month-filter'
 
 export default async function AccountDetailPage({
   params,
@@ -32,7 +33,7 @@ export default async function AccountDetailPage({
     .from('accounts')
     .select('*')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   const account: any = accountRes.data
 
   if (!account) {
@@ -137,18 +138,7 @@ export default async function AccountDetailPage({
         {/* Month filter */}
         <div className="flex items-center gap-3">
           <label className="text-sm text-gray-600">Mês:</label>
-          <form>
-            <input
-              type="month"
-              name="month"
-              defaultValue={monthParam}
-              onChange={(e) => {
-                const url = `/accounts/${id}?month=${e.target.value}`
-                if (typeof window !== 'undefined') window.location.href = url
-              }}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </form>
+          <MonthFilter accountId={id} defaultValue={monthParam} />
         </div>
 
         {/* Month summary */}

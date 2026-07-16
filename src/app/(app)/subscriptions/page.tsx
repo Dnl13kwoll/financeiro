@@ -15,12 +15,14 @@ export default async function SubscriptionsPage() {
     .from('couple_members').select('couple_id').eq('user_id', user!.id).maybeSingle()
   const coupleId = (member as any)?.couple_id ?? null
 
-  const { data } = await (supabase as any)
-    .from('subscriptions')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('active', { ascending: false })
-    .order('cost', { ascending: false })
+  const { data, error } = coupleId
+    ? await (supabase as any)
+        .from('subscriptions')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('active', { ascending: false })
+        .order('cost', { ascending: false })
+    : { data: [], error: null }
 
   return (
     <div className="flex flex-col flex-1">
@@ -30,6 +32,11 @@ export default async function SubscriptionsPage() {
         { href: '/subscriptions', label: 'Assinaturas' },
         { href: '/commitments', label: 'Compromissos' },
       ]} />
+      {error && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Alguns dados não puderam ser carregados. Tente recarregar a página.
+        </div>
+      )}
       <SubscriptionsClient coupleId={coupleId} initialSubscriptions={data ?? []} />
     </div>
   )

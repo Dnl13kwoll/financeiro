@@ -24,6 +24,7 @@ export default async function CommitmentsPage() {
       : Promise.resolve(null),
   ])
 
+  const pageErrors = [recurringRes?.error, subscriptionsRes?.error].filter(Boolean)
   const recurring = recurringRes?.data ?? []
   const subscriptions = subscriptionsRes?.data ?? []
 
@@ -35,6 +36,11 @@ export default async function CommitmentsPage() {
         { href: '/subscriptions', label: 'Assinaturas' },
         { href: '/commitments', label: 'Compromissos' },
       ]} />
+      {pageErrors.length > 0 && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Alguns dados não puderam ser carregados. Tente recarregar a página.
+        </div>
+      )}
       {coupleId ? (
         <CommitmentsClient recurring={recurring} subscriptions={subscriptions} />
       ) : (

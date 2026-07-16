@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
           } else if (!Array.isArray(pgRows)) {
             partnerStatus = `diag_not_array`
           } else if (pgRows.length === 0) {
-            partnerStatus = `diag_empty`
+            partnerStatus = `diag_empty_${myMember.couple_id.slice(0, 8)}`
           }
           const partnerId: string | null = Array.isArray(pgRows) ? (pgRows[0]?.user_id ?? null) : null
 

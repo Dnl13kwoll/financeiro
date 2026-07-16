@@ -112,25 +112,31 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .maybeSingle()
 
-      console.log('[DEBUG] myMember:', myMember, '| user.id:', user.id)
       if (myMember?.couple_id) {
         partnerStatus = 'no_service_key'
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-        console.log('[DEBUG] serviceKey set:', !!serviceKey)
-        if (serviceKey) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (serviceKey && supabaseUrl) {
           partnerStatus = 'no_partner'
-          const admin = createAdminClient()
-          const { data: partnerMember, error: partnerErr } = await admin
-            .from('couple_members')
-            .select('user_id')
-            .eq('couple_id', myMember.couple_id)
-            .neq('user_id', user.id)
-            .maybeSingle()
-          console.log('[DEBUG] partnerMember:', partnerMember, '| error:', partnerErr)
 
-          if (partnerMember?.user_id) {
+          // Busca direta via PostgREST com service role (bypassa RLS sem depender do SDK)
+          const pgRes = await fetch(
+            `${supabaseUrl}/rest/v1/couple_members?select=user_id&couple_id=eq.${myMember.couple_id}&user_id=neq.${user.id}&limit=1`,
+            {
+              headers: {
+                apikey: serviceKey,
+                Authorization: `Bearer ${serviceKey}`,
+              },
+            }
+          )
+          const pgRows = await pgRes.json().catch(() => [])
+          const partnerId: string | null = Array.isArray(pgRows) ? (pgRows[0]?.user_id ?? null) : null
+          console.log('[calendar/events] partner lookup status:', pgRes.status, '| partnerId:', partnerId)
+
+          if (partnerId) {
             partnerStatus = 'no_token'
-            const partnerToken = await getValidToken(partnerMember.user_id, admin)
+            const admin = createAdminClient()
+            const partnerToken = await getValidToken(partnerId, admin)
             if (partnerToken) {
               partnerStatus = 'gcal_error'
               const partnerRes = await pushToGCal(partnerToken, body)
@@ -145,7 +151,7 @@ export async function POST(req: NextRequest) {
               console.error('[calendar/events] Token do parceiro não encontrado')
             }
           } else {
-            console.error('[calendar/events] Parceiro não encontrado em couple_members')
+            console.error('[calendar/events] Parceiro não encontrado, pgRes.status:', pgRes.status, 'rows:', pgRows)
           }
         }
       }

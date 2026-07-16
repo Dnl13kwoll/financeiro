@@ -209,7 +209,7 @@ export function AgendaClient({
         gcal_error: 'Evento criado! (erro ao criar no calendário do parceiro)',
         exception: 'Evento criado! (erro interno ao sincronizar parceiro)',
       }
-      showToast(statusMsg[ev.partnerStatus] ?? 'Evento criado!')
+      showToast(statusMsg[ev.partnerStatus] ?? `Evento criado! (diag: ${ev.partnerStatus})`)
     } else {
       const err = await res.json()
       showToast('Erro: ' + (err.error?.message ?? 'tente novamente'), 'error')

@@ -129,9 +129,15 @@ export async function POST(req: NextRequest) {
               },
             }
           )
-          const pgRows = await pgRes.json().catch(() => [])
+          const pgRows = await pgRes.json().catch(() => null)
+          if (!pgRes.ok) {
+            partnerStatus = `diag_http_${pgRes.status}`
+          } else if (!Array.isArray(pgRows)) {
+            partnerStatus = `diag_not_array`
+          } else if (pgRows.length === 0) {
+            partnerStatus = `diag_empty`
+          }
           const partnerId: string | null = Array.isArray(pgRows) ? (pgRows[0]?.user_id ?? null) : null
-          console.log('[calendar/events] partner lookup status:', pgRes.status, '| partnerId:', partnerId)
 
           if (partnerId) {
             partnerStatus = 'no_token'

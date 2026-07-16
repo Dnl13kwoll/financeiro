@@ -25,6 +25,7 @@ export default async function RemindersPage() {
     <div className="flex flex-col flex-1">
       <Header title="Atividades" />
       <PageTabs tabs={[
+        { href: '/today', label: 'Hoje' },
         { href: '/tasks', label: 'Tarefas' },
         { href: '/reminders', label: 'Lembretes' },
       ]} />

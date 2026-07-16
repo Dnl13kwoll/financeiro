@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Hoje' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { TodayClient } from '@/components/features/today/today-client'
 
@@ -88,7 +89,12 @@ export default async function TodayPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Hoje" />
+      <Header title="Atividades" />
+      <PageTabs tabs={[
+        { href: '/today', label: 'Hoje' },
+        { href: '/tasks', label: 'Tarefas' },
+        { href: '/reminders', label: 'Lembretes' },
+      ]} />
       <TodayClient
         today={today}
         overdueItems={overdueItems}

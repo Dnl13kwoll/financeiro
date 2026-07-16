@@ -62,6 +62,7 @@ export default async function ShoppingPage() {
       <PageTabs tabs={[
         { href: '/wishlist', label: 'Desejos' },
         { href: '/shopping', label: 'Compras' },
+        { href: '/price-history', label: 'Hist. Preços' },
       ]} />
 
       <div className="p-4 md:p-6 space-y-6">

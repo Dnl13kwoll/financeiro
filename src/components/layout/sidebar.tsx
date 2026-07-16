@@ -75,7 +75,6 @@ const NAV_GROUPS = [
   {
     label: 'Controle',
     items: [
-      { href: '/today',          label: 'Hoje',             icon: Zap },
       { href: '/installments',   label: 'Parcelamentos',    icon: Layers },
       { href: '/recurring',      label: 'Pagamentos Fixos', icon: RefreshCw },
       { href: '/tasks',          label: 'Atividades',       icon: CheckSquare },
@@ -86,7 +85,6 @@ const NAV_GROUPS = [
   {
     label: 'Análise',
     items: [
-      { href: '/timeline',     label: 'Linha do Tempo',  icon: CalendarClock },
       { href: '/reports',      label: 'Análise',         icon: BarChart2 },
       // { href: '/investments',  label: 'Investimentos',   icon: LineChart },
     ],
@@ -97,7 +95,6 @@ const NAV_GROUPS = [
       { href: '/agenda',       label: 'Agenda',           icon: CalendarDays },
       { href: '/wishlist',     label: 'Listas',           icon: Heart },
       { href: '/travel',       label: 'Viagens',          icon: Plane },
-      { href: '/price-history',label: 'Hist. de Preços',  icon: Tag },
       { href: '/vehicles',     label: 'Patrimônio Físico',icon: Car },
     ],
   },
@@ -106,7 +103,6 @@ const NAV_GROUPS = [
     pinned: true,
     items: [
       { href: '/monthly-close',label: 'Fechamento Mensal', icon: CalendarCheck },
-      { href: '/categories',   label: 'Categorias',        icon: Sliders },
       { href: '/settings',     label: 'Configurações',     icon: Settings },
       { href: '/help',         label: 'Ajuda',             icon: HelpCircle },
     ],
@@ -122,11 +118,12 @@ const ALWAYS_VISIBLE = new Set(['/dashboard', '/settings'])
 // Tab siblings: when on any of these routes, highlight the primary sidebar item
 const TAB_SIBLINGS: Record<string, string[]> = {
   '/recurring':   ['/subscriptions', '/commitments'],
-  '/tasks':       ['/reminders'],
+  '/tasks':       ['/reminders', '/today'],
   '/investments': ['/simulator'],
-  '/reports':     ['/insights', '/projection', '/planning', '/networth'],
+  '/reports':     ['/insights', '/projection', '/planning', '/networth', '/timeline'],
   '/vehicles':    ['/imoveis'],
-  '/wishlist':    ['/shopping'],
+  '/wishlist':    ['/shopping', '/price-history'],
+  '/settings':    ['/categories'],
 }
 
 function isActive(href: string, pathname: string) {

@@ -113,6 +113,7 @@ export default async function NetWorthPage({
         { href: '/projection', label: 'Projeção' },
         { href: '/planning', label: 'Planejamento' },
         { href: '/networth', label: 'Patrimônio' },
+        { href: '/timeline', label: 'Linha do Tempo' },
       ]} />
 
       <div className="p-4 md:p-6 space-y-4">

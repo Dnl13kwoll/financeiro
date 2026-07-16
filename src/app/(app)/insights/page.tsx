@@ -51,6 +51,7 @@ export default async function InsightsPage() {
           { href: '/projection', label: 'Projeção' },
           { href: '/planning', label: 'Planejamento' },
           { href: '/networth', label: 'Patrimônio' },
+          { href: '/timeline', label: 'Linha do Tempo' },
         ]} />
         <div className="p-6 text-center text-gray-400 py-16">Crie um casal em Configurações para ver insights.</div>
       </div>

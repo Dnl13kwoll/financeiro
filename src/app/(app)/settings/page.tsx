@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { CreateCoupleButton, InvitePartnerButton } from '@/components/features/settings/couple-actions'
 import { LeaveCoupleButton } from '@/components/features/settings/leave-couple'
@@ -59,6 +60,10 @@ export default async function SettingsPage() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Configurações" />
+      <PageTabs tabs={[
+        { href: '/settings', label: 'Configurações' },
+        { href: '/categories', label: 'Categorias' },
+      ]} />
 
       <div className="p-4 md:p-6 max-w-2xl space-y-6">
         {/* Perfil */}

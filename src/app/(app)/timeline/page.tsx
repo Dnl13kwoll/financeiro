@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { TimelineFilters } from '@/components/features/timeline/timeline-filters'
@@ -117,7 +118,15 @@ export default async function TimelinePage({
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Linha do Tempo" />
+      <Header title="Análise" />
+      <PageTabs tabs={[
+        { href: '/reports', label: 'Relatórios' },
+        { href: '/insights', label: 'Insights' },
+        { href: '/projection', label: 'Projeção' },
+        { href: '/planning', label: 'Planejamento' },
+        { href: '/networth', label: 'Patrimônio' },
+        { href: '/timeline', label: 'Linha do Tempo' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -4,7 +4,8 @@
 -- Remove a policy restritiva antiga
 DROP POLICY IF EXISTS "Usuário vê próprio perfil" ON public.profiles;
 
--- Nova policy: usuário vê o próprio perfil + perfis do parceiro
+-- Nova policy: usuário vê o próprio perfil + p
+erfis do parceiro
 CREATE POLICY "Usuário vê perfis do casal"
   ON public.profiles FOR SELECT
   USING (

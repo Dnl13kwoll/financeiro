@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Categorias' }
 import { Header } from '@/components/layout/header'
+import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'
 import { CategoryManager } from '@/components/features/categories/category-manager'
 import { Tag } from 'lucide-react'
@@ -39,7 +40,11 @@ export default async function CategoriesPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Categorias" />
+      <Header title="Configurações" />
+      <PageTabs tabs={[
+        { href: '/settings', label: 'Configurações' },
+        { href: '/categories', label: 'Categorias' },
+      ]} />
 
       <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto w-full">
 

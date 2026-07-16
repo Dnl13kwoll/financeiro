@@ -7,7 +7,7 @@ async function getValidToken(userId: string, supabase: any): Promise<string | nu
     .from('google_tokens')
     .select('access_token, refresh_token, token_expiry')
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (!data) return null
 
@@ -30,8 +30,11 @@ async function getValidToken(userId: string, supabase: any): Promise<string | nu
 
   if (!res.ok) return null
 
-  const refreshed = await res.json()
-  const newExpiry = new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+  const refreshed = await res.json().catch(() => null)
+  if (!refreshed?.access_token) return null
+  const newExpiry = refreshed.expires_in
+    ? new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+    : null
 
   await supabase.from('google_tokens').update({
     access_token: refreshed.access_token,

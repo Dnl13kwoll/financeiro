@@ -31,7 +31,7 @@ export default async function InstallmentsPage({
 
   const [installmentsRes, accountsRes, categoriesRes] = await Promise.all([
     coupleId
-      ? supabase.from('installments').select('*, installment_items(*)').eq('couple_id', coupleId).order('start_date', { ascending: false })
+      ? supabase.from('installments').select('*, installment_items(*)').eq('couple_id', coupleId).order('start_date', { ascending: false }).limit(200)
       : Promise.resolve(null),
     coupleId
       ? supabase.from('accounts').select('id, name').eq('couple_id', coupleId).is('deleted_at', null)

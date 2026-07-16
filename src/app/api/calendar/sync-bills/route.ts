@@ -7,7 +7,7 @@ async function getValidToken(userId: string, supabase: any): Promise<string | nu
     .from('google_tokens')
     .select('access_token, refresh_token, token_expiry')
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (!data) return null
 

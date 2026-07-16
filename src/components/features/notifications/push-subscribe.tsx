@@ -13,6 +13,7 @@ function urlBase64ToUint8Array(base64String: string) {
 export function PushSubscribeButton() {
   const [status, setStatus] = useState<'loading' | 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed'>('loading')
   const [busy, setBusy] = useState(false)
+  const [subError, setSubError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -51,8 +52,8 @@ export function PushSubscribeButton() {
       })
 
       setStatus('subscribed')
-    } catch (e) {
-      console.error(e)
+    } catch {
+      setSubError('Falha ao ativar notificações. Verifique as permissões do navegador e tente novamente.')
     } finally {
       setBusy(false)
     }
@@ -102,13 +103,18 @@ export function PushSubscribeButton() {
   }
 
   return (
-    <button
-      onClick={subscribe}
-      disabled={busy}
-      className="flex items-center gap-2 text-sm text-[var(--color-primary-600)] hover:opacity-80 transition-opacity"
-    >
-      <Bell className="w-4 h-4" />
-      {busy ? 'Aguarde...' : 'Ativar notificações push'}
-    </button>
+    <div className="space-y-2">
+      {subError && (
+        <p className="text-xs text-red-500">{subError}</p>
+      )}
+      <button
+        onClick={() => { setSubError(null); subscribe() }}
+        disabled={busy}
+        className="flex items-center gap-2 text-sm text-[var(--color-primary-600)] hover:opacity-80 transition-opacity"
+      >
+        <Bell className="w-4 h-4" />
+        {busy ? 'Aguarde...' : 'Ativar notificações push'}
+      </button>
+    </div>
   )
 }

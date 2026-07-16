@@ -99,6 +99,11 @@ export function NewTransactionButton({
 
     const n = installments
     const totalAmount = parseFloat(formAmount)
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+      showToast('Informe um valor válido maior que zero.', 'error')
+      setLoading(false)
+      return
+    }
     const baseDate = new Date((data.get('date') as string) + 'T12:00:00')
     const description = formDescription || null
 

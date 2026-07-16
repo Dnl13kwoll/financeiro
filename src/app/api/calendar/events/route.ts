@@ -7,7 +7,7 @@ async function getValidToken(userId: string, supabase: any): Promise<string | nu
     .from('google_tokens')
     .select('access_token, refresh_token, token_expiry')
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (!data) return null
 
@@ -147,20 +147,14 @@ export async function POST(req: NextRequest) {
                 partnerSynced = true
                 partnerStatus = 'synced'
               } else {
-                const err = await partnerRes.json().catch(() => ({}))
-                console.error('[calendar/events] GCal erro parceiro:', partnerRes.status, err)
+                partnerStatus = 'gcal_error'
               }
-            } else {
-              console.error('[calendar/events] Token do parceiro não encontrado')
             }
-          } else {
-            console.error('[calendar/events] Parceiro não encontrado, pgRes.status:', pgRes.status, 'rows:', pgRows)
           }
         }
       }
-    } catch (err) {
+    } catch {
       partnerStatus = 'exception'
-      console.error('[calendar/events] Exceção ao sincronizar parceiro:', err)
     }
   }
 

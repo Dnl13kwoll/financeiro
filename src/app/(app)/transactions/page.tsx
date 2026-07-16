@@ -76,9 +76,6 @@ export default async function TransactionsPage({
 
   const transactionsRes = query ? await query : null
   const queryError = transactionsRes?.error ?? null
-  if (queryError) {
-    console.error('[Transações] Erro na query principal:', queryError)
-  }
 
   const accountsRes = coupleId
     ? await supabase.from('accounts').select('id, name, color').eq('couple_id', coupleId).is('deleted_at', null)

@@ -51,6 +51,7 @@ export default async function ReportsPage({
           .gte('competence_date', yearStart)
           .lte('competence_date', yearEnd)
           .is('deleted_at', null)
+          .limit(3000)
       : null
     const pageErrors = [annualRes?.error].filter(Boolean)
     const annualTx: any[] = annualRes?.data ?? []
@@ -617,16 +618,16 @@ export default async function ReportsPage({
 
   const [transactionsRes, prevTransactionsRes, membersRes, trendRes, monthRecurringRes] = await Promise.all([
     coupleId
-      ? supabase.from('transactions').select('*, categories(name), accounts(name)').eq('couple_id', coupleId).gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null).order('date', { ascending: false })
+      ? supabase.from('transactions').select('*, categories(name), accounts(name)').eq('couple_id', coupleId).gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null).order('date', { ascending: false }).limit(1000)
       : Promise.resolve(null),
     coupleId
-      ? supabase.from('transactions').select('type, amount').eq('couple_id', coupleId).gte('competence_date', prevMonthStart).lte('competence_date', prevMonthEnd).is('deleted_at', null)
+      ? supabase.from('transactions').select('type, amount').eq('couple_id', coupleId).gte('competence_date', prevMonthStart).lte('competence_date', prevMonthEnd).is('deleted_at', null).limit(1000)
       : Promise.resolve(null),
     coupleId
       ? supabase.from('couple_members').select('user_id, profiles(name, email)').eq('couple_id', coupleId)
       : Promise.resolve(null),
     coupleId
-      ? supabase.from('transactions').select('type, amount, competence_date, categories(name), description, tags').eq('couple_id', coupleId).gte('competence_date', trendStart).lte('competence_date', monthEnd).is('deleted_at', null)
+      ? supabase.from('transactions').select('type, amount, competence_date, categories(name), description, tags').eq('couple_id', coupleId).gte('competence_date', trendStart).lte('competence_date', monthEnd).is('deleted_at', null).limit(2000)
       : Promise.resolve(null),
     coupleId
       ? supabase.from('recurring_accounts').select('name, amount').eq('couple_id', coupleId).eq('active', true)

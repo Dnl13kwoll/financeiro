@@ -53,11 +53,13 @@ export default async function ActivityPage({
       .order('created_at', { ascending: false })
       .limit(30),
     supabase.from('goal_history')
-      .select('id, amount, note, created_at, goals(name)')
+      .select('id, amount, note, created_at, goals!inner(name, couple_id)')
+      .eq('goals.couple_id', coupleId)
       .limit(10)
       .order('created_at', { ascending: false }),
     supabase.from('installment_items')
-      .select('id, amount, due_date, paid, installments(description, couple_id)')
+      .select('id, amount, due_date, paid, installments!inner(description, couple_id)')
+      .eq('installments.couple_id', coupleId)
       .eq('paid', true)
       .order('updated_at', { ascending: false })
       .limit(10),

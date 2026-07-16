@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic'
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Atividades' }
 import { Header } from '@/components/layout/header'
 import { PageTabs } from '@/components/ui/page-tabs'
 import { createClient } from '@/lib/supabase/server'

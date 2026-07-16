@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Parcelamentos' }
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'

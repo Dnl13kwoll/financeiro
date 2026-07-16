@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic'
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Orçamentos' }
 
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'

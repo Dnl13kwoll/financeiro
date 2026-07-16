@@ -112,18 +112,21 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .maybeSingle()
 
+      console.log('[DEBUG] myMember:', myMember, '| user.id:', user.id)
       if (myMember?.couple_id) {
         partnerStatus = 'no_service_key'
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        console.log('[DEBUG] serviceKey set:', !!serviceKey)
         if (serviceKey) {
           partnerStatus = 'no_partner'
           const admin = createAdminClient()
-          const { data: partnerMember } = await admin
+          const { data: partnerMember, error: partnerErr } = await admin
             .from('couple_members')
             .select('user_id')
             .eq('couple_id', myMember.couple_id)
             .neq('user_id', user.id)
             .maybeSingle()
+          console.log('[DEBUG] partnerMember:', partnerMember, '| error:', partnerErr)
 
           if (partnerMember?.user_id) {
             partnerStatus = 'no_token'

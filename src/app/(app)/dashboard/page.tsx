@@ -197,7 +197,7 @@ export default async function DashboardPage() {
     : null
   const recentTx: any[] = recentTxRes?.data ?? []
 
-  const pageErrors = [balancesRes?.error, recentTxRes?.error].filter(Boolean)
+  // pageErrors consolidado — definido depois de todos os queries
 
   // Metas ativas
   const goalsRes = coupleId
@@ -258,6 +258,19 @@ export default async function DashboardPage() {
     userExpMap.set(t.user_id, { name, total: existing.total + t.amount })
   })
   const userExpenses = Array.from(userExpMap.values()).sort((a, b) => b.total - a.total)
+
+  const pageErrors = [
+    balancesRes?.error,
+    alertAccountsRes?.error,
+    creditCardsRes?.error,
+    todayExpensesRes?.error,
+    budgetSummaryRes?.error,
+    expByCatRes?.error,
+    recentTxRes?.error,
+    goalsRes?.error,
+    remindersRes?.error,
+    userExpensesRes?.error,
+  ].filter(Boolean)
 
   return (
     <div className="flex flex-col flex-1">

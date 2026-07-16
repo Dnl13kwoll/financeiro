@@ -63,7 +63,7 @@ export default async function MonthlyClosePage() {
   const categories = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   // Budgets for prev month
-  const { data: budgets } = await supabase.from('budgets')
+  const { data: budgets, error: budgetsError } = await supabase.from('budgets')
     .select('id, category_id, amount, categories(name)')
     .eq('couple_id', coupleId)
     .eq('month', monthStart)
@@ -84,7 +84,7 @@ export default async function MonthlyClosePage() {
   const budgetsOk = budgetsWithSpent.filter((b: any) => b.spent <= b.amount)
 
   // Goals
-  const { data: goalsData } = await supabase.from('goals')
+  const { data: goalsData, error: goalsError } = await supabase.from('goals')
     .select('id, name, current_amount, target_amount, deadline')
     .eq('couple_id', coupleId)
 
@@ -107,6 +107,12 @@ export default async function MonthlyClosePage() {
       <Header title="Fechamento Mensal" />
 
       <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto w-full">
+
+        {(budgetsError || goalsError) && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            Alguns dados não puderam ser carregados. Tente recarregar a página.
+          </div>
+        )}
 
         {/* Month label */}
         <div className="flex items-center justify-between">

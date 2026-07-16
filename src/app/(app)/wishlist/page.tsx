@@ -84,7 +84,7 @@ export default async function WishlistPage() {
         {pending.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {pending.map((item) => {
-              const p = priorityLabel[item.priority] ?? priorityLabel[2]
+              const p = priorityLabel[Number(item.priority)] ?? priorityLabel[2]
               return (
                 <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">

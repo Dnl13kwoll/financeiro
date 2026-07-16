@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { ArrowLeft, CreditCard } from 'lucide-react'
+import { ArrowLeft, CreditCard, CheckCircle2, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { CardInvoicePayment } from '@/components/features/accounts/card-invoice-payment'
 
@@ -60,15 +60,44 @@ export default async function CardPage({
   const prevCycle = `${prevCycleDate.getFullYear()}-${String(prevCycleDate.getMonth() + 1).padStart(2, '0')}`
   const nextCycle = `${nextCycleDate.getFullYear()}-${String(nextCycleDate.getMonth() + 1).padStart(2, '0')}`
 
-  const [txRes, paymentsRes, balanceRes] = await Promise.all([
+  // Build last 6 cycles for history
+  const historyCycles: Array<{ label: string; start: string; end: string; cycle: string }> = []
+  for (let i = 1; i <= 6; i++) {
+    const hStart = new Date(cycleStart.getFullYear(), cycleStart.getMonth() - i, closingDay + 1)
+    const hEnd = new Date(hStart.getFullYear(), hStart.getMonth() + 1, closingDay)
+    historyCycles.push({
+      label: hStart.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+      start: hStart.toISOString().slice(0, 10),
+      end: hEnd.toISOString().slice(0, 10),
+      cycle: `${hStart.getFullYear()}-${String(hStart.getMonth() + 1).padStart(2, '0')}`,
+    })
+  }
+
+  const historyRangeStart = historyCycles[historyCycles.length - 1].start
+  const historyRangeEnd = historyCycles[0].end
+
+  const [txRes, paymentsRes, balanceRes, historyTxRes, historyPayRes] = await Promise.all([
     supabase.from('transactions').select('*, categories(name)').eq('account_id', id).eq('type', 'expense').gte('date', cycleStartStr).lte('date', cycleEndStr).is('deleted_at', null).order('date', { ascending: false }),
     supabase.from('card_invoice_payments').select('*').eq('account_id', id).gte('paid_at', cycleStartStr).lte('paid_at', cycleEndStr).order('paid_at', { ascending: false }),
     supabase.from('account_balances').select('*').eq('id', id).maybeSingle(),
+    supabase.from('transactions').select('amount, date').eq('account_id', id).eq('type', 'expense').gte('date', historyRangeStart).lte('date', historyRangeEnd).is('deleted_at', null),
+    supabase.from('card_invoice_payments').select('amount, paid_at').eq('account_id', id).gte('paid_at', historyRangeStart).lte('paid_at', historyRangeEnd),
   ])
 
   const transactions: any[] = txRes.data ?? []
   const payments: any[] = paymentsRes.data ?? []
   const currentBalance: number = (balanceRes.data as any)?.balance ?? 0
+
+  // Compute per-cycle history totals
+  const historyRows = historyCycles.map((cyc) => {
+    const total = (historyTxRes.data ?? [])
+      .filter((t: any) => t.date >= cyc.start && t.date <= cyc.end)
+      .reduce((s: number, t: any) => s + t.amount, 0)
+    const paid = (historyPayRes.data ?? [])
+      .filter((p: any) => p.paid_at >= cyc.start && p.paid_at <= cyc.end)
+      .reduce((s: number, p: any) => s + p.amount, 0)
+    return { ...cyc, total, paid, isPaid: total > 0 && paid >= total * 0.99 }
+  })
   const invoiceTotal = transactions.reduce((s, t) => s + t.amount, 0)
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0)
   const remaining = invoiceTotal - totalPaid
@@ -183,6 +212,36 @@ export default async function CardPage({
             totalPaid={totalPaid}
             payments={payments}
           />
+        )}
+
+        {/* History */}
+        {historyRows.some(h => h.total > 0) && (
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 text-sm mb-3">Histórico de faturas</h3>
+            <div className="space-y-2">
+              {historyRows.filter(h => h.total > 0).map((h) => (
+                <Link
+                  key={h.cycle}
+                  href={`/cards/${id}?cycle=${h.cycle}`}
+                  className="flex items-center justify-between py-1.5 hover:bg-gray-50 rounded-lg px-1 -mx-1 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {h.isPaid
+                      ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                      : <Clock className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                    }
+                    <span className="text-sm text-gray-700 capitalize">{h.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${h.isPaid ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
+                      {h.isPaid ? 'Pago' : 'Pendente'}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">{formatCurrency(h.total)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Transactions */}

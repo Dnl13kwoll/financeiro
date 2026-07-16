@@ -124,6 +124,7 @@ const TAB_SIBLINGS: Record<string, string[]> = {
   '/vehicles':    ['/imoveis'],
   '/wishlist':    ['/shopping', '/price-history'],
   '/settings':    ['/categories'],
+  '/accounts':    ['/cards'],
 }
 
 function isActive(href: string, pathname: string) {

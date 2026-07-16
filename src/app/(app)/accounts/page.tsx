@@ -7,6 +7,7 @@ import type { Account } from '@/types/database'
 import { NewAccountButton } from '@/components/features/accounts/new-account-button'
 import { TransferButton } from '@/components/features/accounts/transfer-button'
 import { AccountsDragGrid } from '@/components/features/accounts/accounts-drag-grid'
+import { PageTabs } from '@/components/ui/page-tabs'
 
 
 export default async function AccountsPage() {
@@ -66,6 +67,10 @@ export default async function AccountsPage() {
     <div className="flex flex-col flex-1">
       <Header title="Contas" />
 
+      <PageTabs tabs={[
+        { href: '/accounts', label: 'Contas' },
+        { href: '/cards', label: 'Faturas' },
+      ]} />
       <div className="p-6">
         {pageErrors.length > 0 && (
           <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

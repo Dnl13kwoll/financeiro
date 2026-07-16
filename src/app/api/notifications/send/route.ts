@@ -263,7 +263,50 @@ export async function GET(req: Request) {
       if (await sendPush(sub, '📦 Renovação de assinatura', body, '/subscriptions', supabase)) sent++
     }
 
-    // 10. Credit card limit alerts (>= 80% usage)
+    // 10. Credit card invoice closing in next 3 days
+    const { data: closingSoonCards } = await supabase
+      .from('accounts')
+      .select('id, name, closing_day, due_day')
+      .eq('couple_id', sub.couple_id)
+      .eq('type', 'credit_card')
+      .is('deleted_at', null)
+      .not('closing_day', 'is', null)
+
+    for (const card of (closingSoonCards ?? [])) {
+      const closingDay = card.closing_day as number
+      const dayOfMonth = now.getDate()
+      const daysUntilClose = closingDay >= dayOfMonth
+        ? closingDay - dayOfMonth
+        : new Date(now.getFullYear(), now.getMonth() + 1, closingDay).getDate() + (new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - dayOfMonth)
+
+      if (daysUntilClose > 3) continue
+
+      // Compute current cycle start
+      const closingThisMonth = new Date(now.getFullYear(), now.getMonth(), closingDay)
+      const cycleStart = now > closingThisMonth
+        ? new Date(now.getFullYear(), now.getMonth(), closingDay + 1)
+        : new Date(now.getFullYear(), now.getMonth() - 1, closingDay + 1)
+      const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, closingDay)
+
+      const { data: cycleTx } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('account_id', card.id)
+        .eq('type', 'expense')
+        .gte('date', cycleStart.toISOString().slice(0, 10))
+        .lte('date', cycleEnd.toISOString().slice(0, 10))
+        .is('deleted_at', null)
+
+      const invoiceTotal = (cycleTx ?? []).reduce((s: number, t: any) => s + t.amount, 0)
+      const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+      const body = daysUntilClose === 0
+        ? `Fatura do ${card.name} fecha hoje! Total atual: ${fmt(invoiceTotal)}`
+        : `Fatura do ${card.name} fecha em ${daysUntilClose} dia(s). Total atual: ${fmt(invoiceTotal)}`
+
+      if (await sendPush(sub, '💳 Fatura fechando', body, `/cards/${card.id}`, supabase)) sent++
+    }
+
+    // 11. Credit card limit alerts (>= 80% usage)
     const { data: creditCards } = await supabase
       .from('accounts')
       .select('id, name, limit_amount')

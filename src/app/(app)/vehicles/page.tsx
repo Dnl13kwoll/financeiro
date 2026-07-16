@@ -19,6 +19,21 @@ export default async function VehiclesPage() {
 
   const coupleId = (member as any)?.couple_id ?? null
 
+  if (!coupleId) {
+    return (
+      <div className="flex flex-col flex-1">
+        <Header title="Patrimônio Físico" />
+        <PageTabs tabs={[
+          { href: '/vehicles', label: 'Veículos' },
+          { href: '/imoveis', label: 'Imóveis' },
+        ]} />
+        <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+          Crie um casal em Configurações para começar.
+        </div>
+      </div>
+    )
+  }
+
   const [vehiclesRes, maintenancesRes] = await Promise.all([
     supabase
       .from('vehicles')

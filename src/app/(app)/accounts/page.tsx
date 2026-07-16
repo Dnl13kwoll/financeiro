@@ -69,7 +69,7 @@ export default async function AccountsPage() {
       <div className="p-6">
         {pageErrors.length > 0 && (
           <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e.message).join(' | ')}
+            <strong>Erro ao carregar dados:</strong> {pageErrors.map((e: any) => e?.message ?? 'Erro desconhecido').join(' | ')}
           </div>
         )}
         <div className="flex justify-end gap-2 mb-5">

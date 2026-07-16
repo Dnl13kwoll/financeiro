@@ -87,7 +87,7 @@ export function TransactionActions({
     const { data: original } = await supabase.from('transactions')
       .select('*')
       .eq('id', transaction.id)
-      .single()
+      .maybeSingle()
     if (original) {
       const { id: _id, created_at: _c, updated_at: _u, deleted_at: _d, ...rest } = original
       await supabase.from('transactions').insert({
@@ -106,7 +106,7 @@ export function TransactionActions({
     setReversing(true)
     const supabase = createClient()
     const { data: original } = await supabase
-      .from('transactions').select('*').eq('id', transaction.id).single()
+      .from('transactions').select('*').eq('id', transaction.id).maybeSingle()
     if (original) {
       const { id: _id, created_at: _c, updated_at: _u, deleted_at: _d, ...rest } = original
       await supabase.from('transactions').insert({

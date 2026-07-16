@@ -37,7 +37,7 @@ export function QuickAddFab() {
       .from('couple_members')
       .select('couple_id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
     const cid = (memberRes.data as any)?.couple_id ?? null
     setCoupleId(cid)
 

@@ -31,7 +31,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   if (!tokenRow) notFound()
 
   const [tripRes, placesRes, itineraryRes] = await Promise.all([
-    (supabase as any).from('trips').select('*').eq('id', tokenRow.trip_id).single(),
+    (supabase as any).from('trips').select('*').eq('id', tokenRow.trip_id).maybeSingle(),
     (supabase as any).from('trip_places').select('*').eq('trip_id', tokenRow.trip_id).order('sort_order'),
     (supabase as any).from('trip_itinerary').select('*').eq('trip_id', tokenRow.trip_id).order('day_date').order('sort_order'),
   ])

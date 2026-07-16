@@ -17,6 +17,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
+    const { data: membership } = await supabase
+      .from('couple_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('couple_id', coupleId)
+      .maybeSingle()
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+    }
+
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 

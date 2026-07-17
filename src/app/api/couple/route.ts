@@ -27,7 +27,7 @@ export async function POST() {
     .insert({ id: coupleId, currency: 'BRL' })
 
   if (coupleErr) {
-    return NextResponse.json({ error: coupleErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao criar casal' }, { status: 500 })
   }
 
   const { error: memberErr } = await (supabase as any)
@@ -36,7 +36,7 @@ export async function POST() {
 
   if (memberErr) {
     await (supabase as any).from('couples').delete().eq('id', coupleId)
-    return NextResponse.json({ error: memberErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao configurar membro' }, { status: 500 })
   }
 
   return NextResponse.json({ coupleId })

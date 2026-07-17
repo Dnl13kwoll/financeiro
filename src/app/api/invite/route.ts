@@ -2,12 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email, coupleId } = await req.json()
 
     if (!coupleId) {
       return NextResponse.json({ error: 'coupleId é obrigatório' }, { status: 400 })
+    }
+
+    // Validate email format if provided
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -28,6 +42,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 
+    // Rate limit: max 5 invites per couple per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count: recentCount } = await supabase
+      .from('invitations')
+      .select('id', { count: 'exact', head: true })
+      .eq('couple_id', coupleId)
+      .gte('created_at', oneHourAgo)
+
+    if ((recentCount ?? 0) >= 5) {
+      return NextResponse.json({ error: 'Limite de convites atingido. Tente novamente em 1 hora.' }, { status: 429 })
+    }
+
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -42,12 +68,13 @@ export async function POST(req: NextRequest) {
     }, { onConflict: 'couple_id,email' })
 
     if (dbError) {
-      return NextResponse.json({ error: dbError.message }, { status: 500 })
+      return NextResponse.json({ error: 'Erro ao criar convite' }, { status: 500 })
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://financeiro.salusmetrics.com.br'
     const inviteUrl = `${appUrl}/invite/${token}`
-    const senderName = user.user_metadata?.full_name ?? 'Alguém'
+    // Escape HTML to prevent XSS in email body
+    const senderName = escapeHtml(user.user_metadata?.full_name ?? 'Alguém')
 
     if (email && process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
@@ -76,7 +103,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, inviteUrl })
-  } catch (err: any) {
-    return NextResponse.json({ error: String(err?.message ?? 'Erro interno') }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

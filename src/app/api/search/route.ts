@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const q = searchParams.get('q')?.trim() ?? ''
+  const q = searchParams.get('q')?.trim().slice(0, 100) ?? ''
 
   if (q.length < 2) return NextResponse.json({ results: [] })
 

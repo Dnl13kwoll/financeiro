@@ -901,7 +901,7 @@ export function PageHelp() {
                       {section.items.map((item, j) => (
                         <li key={j} className="text-xs text-gray-600 flex gap-2">
                           <span className="text-gray-300 shrink-0 mt-0.5">·</span>
-                          <span dangerouslySetInnerHTML={{ __html: item }} />
+                          <span>{item}</span>
                         </li>
                       ))}
                     </ul>

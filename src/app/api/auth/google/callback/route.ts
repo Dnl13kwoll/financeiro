@@ -5,9 +5,17 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
+  const state = searchParams.get('state')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   if (error || !code) {
+    return NextResponse.redirect(`${appUrl}/agenda?google=error`)
+  }
+
+  // Verify state matches the authenticated user (CSRF protection)
+  const supabaseCheck = await createClient()
+  const { data: { user: stateUser } } = await supabaseCheck.auth.getUser()
+  if (!stateUser || state !== stateUser.id) {
     return NextResponse.redirect(`${appUrl}/agenda?google=error`)
   }
 
@@ -42,9 +50,8 @@ export async function GET(req: NextRequest) {
     }
   } catch {}
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(`${appUrl}/login`)
+  const supabase = supabaseCheck
+  const user = stateUser
 
   const tokenExpiry = tokens.expires_in
     ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()

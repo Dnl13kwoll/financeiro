@@ -264,6 +264,7 @@ export default async function DashboardPage() {
     budgetSummaryRes?.error,
     expByCatRes?.error,
     recentTxRes?.error,
+    histAllRes?.error,
     goalsRes?.error,
     remindersRes?.error,
     userExpensesRes?.error,

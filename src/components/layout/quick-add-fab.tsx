@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition} from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Modal } from '@/components/ui/modal'
@@ -23,6 +23,12 @@ export function QuickAddFab() {
   const [userId, setUserId] = useState<string | null>(null)
   const router = useRouter()
   const [, startTransition] = useTransition()
+
+  useEffect(() => {
+    const handler = () => handleOpen()
+    window.addEventListener('open-quick-add', handler)
+    return () => window.removeEventListener('open-quick-add', handler)
+  }, [])
 
   async function handleOpen() {
     setOpen(true)

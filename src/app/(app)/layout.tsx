@@ -11,6 +11,7 @@ import { OnboardingTour } from '@/components/features/onboarding/onboarding-tour
 import { RealtimeSync } from '@/components/layout/realtime-sync'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
 import { MonthlyCloseReminder } from '@/components/layout/monthly-close-reminder'
+import { ScrollToTop } from '@/components/ui/scroll-to-top'
 import { BudgetAlertChecker } from '@/components/features/budget/budget-alert-checker'
 import { createClient } from '@/lib/supabase/server'
 
@@ -38,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <OnboardingTour />
       <ConfirmDialogProvider />
       <MonthlyCloseReminder />
+      <ScrollToTop />
       {coupleId && <BudgetAlertChecker coupleId={coupleId} />}
     </div>
   )

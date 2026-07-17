@@ -66,27 +66,24 @@ export default async function DashboardPage() {
   const todayExpenses = (todayExpensesRes?.data ?? []).reduce((s: number, t: any) => s + t.amount, 0)
   const dailyLimitExceeded = dailyLimit !== null && todayExpenses > dailyLimit
 
-  // Histórico 6 meses
+  // Histórico 6 meses — 1 query em vez de 12
+  const hist6Start = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10)
+  const histAllRes = coupleId
+    ? await supabase.from('transactions').select('amount, type, competence_date').eq('couple_id', coupleId).neq('type', 'transfer').gte('competence_date', hist6Start).lte('competence_date', monthEnd).is('deleted_at', null).limit(5000)
+    : null
+
   const history: { label: string; income: number; expense: number }[] = []
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const start = d.toISOString().slice(0, 10)
     const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
     const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
-
-    if (coupleId) {
-      const [expRes, incRes] = await Promise.all([
-        supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', start).lte('competence_date', end).is('deleted_at', null),
-        supabase.from('transactions').select('amount').eq('couple_id', coupleId).eq('type', 'income').gte('competence_date', start).lte('competence_date', end).is('deleted_at', null),
-      ])
-      history.push({
-        label,
-        expense: (expRes.data ?? []).reduce((s: number, t: any) => s + t.amount, 0),
-        income: (incRes.data ?? []).reduce((s: number, t: any) => s + t.amount, 0),
-      })
-    } else {
-      history.push({ label, income: 0, expense: 0 })
-    }
+    const monthTx = (histAllRes?.data ?? []).filter((t: any) => t.competence_date >= start && t.competence_date <= end)
+    history.push({
+      label,
+      expense: monthTx.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + t.amount, 0),
+      income: monthTx.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + t.amount, 0),
+    })
   }
 
   const currentMonth = history[history.length - 1]

@@ -11,6 +11,8 @@ import { RecurringToggle } from '@/components/features/recurring/recurring-toggl
 import { RecurringPauseToggle } from '@/components/features/recurring/recurring-pause-toggle'
 import { GenerateRecurringButton } from '@/components/features/recurring/generate-recurring-button'
 import { AutoGenerateRecurring } from '@/components/features/recurring/auto-generate-recurring'
+import { RefreshCw, Settings } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export default async function RecurringPage() {
   const supabase = await createClient()
@@ -238,9 +240,9 @@ export default async function RecurringPage() {
         )}
 
         {recurring.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            {coupleId ? 'Nenhuma conta recorrente cadastrada.' : 'Crie um casal em Configurações para começar.'}
-          </div>
+          coupleId
+            ? <EmptyState icon={RefreshCw} title="Sem pagamentos fixos" description="Cadastre contas que se repetem todo mês, como aluguel, streaming e assinaturas." />
+            : <EmptyState icon={Settings} title="Configure o app" description="Crie um casal em Configurações para começar." />
         )}
       </div>
     </div>

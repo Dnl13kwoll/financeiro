@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { NewGoalButton, GoalActions } from '@/components/features/goals/goal-actions'
 import { GoalContributions } from '@/components/features/goals/goal-contributions'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Target, Settings } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export default async function GoalsPage({
   searchParams,
@@ -254,9 +255,9 @@ export default async function GoalsPage({
         })}
 
         {goals.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            {coupleId ? 'Nenhuma meta cadastrada ainda.' : 'Crie um casal em Configurações para começar.'}
-          </div>
+          coupleId
+            ? <EmptyState icon={Target} title="Nenhuma meta ainda" description="Defina objetivos financeiros e acompanhe o progresso juntos." />
+            : <EmptyState icon={Settings} title="Configure o app" description="Crie um casal em Configurações para começar a usar as metas." />
         )}
       </div>
     </div>

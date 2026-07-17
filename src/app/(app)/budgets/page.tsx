@@ -12,7 +12,8 @@ import { RolloverBudgetButton } from '@/components/features/budgets/rollover-bud
 import { SuggestBudgetsButton } from '@/components/features/budgets/suggest-budgets-button'
 import { BudgetAlertNotifier } from '@/components/features/budgets/budget-alert-notifier'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, PieChart as PieChartIcon, Settings } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 const MONTH_LABELS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
@@ -214,9 +215,9 @@ export default async function BudgetsPage({
         })}
 
         {budgets.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            {coupleId ? 'Nenhum orçamento para este mês.' : 'Crie um casal em Configurações para começar.'}
-          </div>
+          coupleId
+            ? <EmptyState icon={PieChartIcon} title="Sem orçamentos neste mês" description="Defina limites por categoria para controlar melhor os gastos." />
+            : <EmptyState icon={Settings} title="Configure o app" description="Crie um casal em Configurações para começar a usar orçamentos." />
         )}
       </div>
     </div>

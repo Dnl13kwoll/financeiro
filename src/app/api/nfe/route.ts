@@ -24,12 +24,18 @@ function stripHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
+    // Preserve newlines for block/row elements so product lines stay separated
+    .replace(/<\/?(tr|br|li|p|div|h[1-6])[^>]*>/gi, '\n')
+    .replace(/<\/?(td|th)[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
-    .replace(/\s+/g, ' ')
+    .replace(/\t/g, ' ')
+    .replace(/ {2,}/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
 
@@ -48,8 +54,12 @@ export interface NFeData {
   products: NFeProduct[]
 }
 
+const SKIP_WORDS = /^(TOTAL|SUBTOTAL|DESCONTO|ACRESCIMO|ACRÉSCIMO|TROCO|PAGO|FORMA|DATA|HORA|CNPJ|NOTA|NÚMERO|SÉRIE|CHAVE|PROTOCOLO|VALOR|ENDEREÇO|BAIRRO|MUNICÍPIO|CEP|FONE|IE|CPF|CAIXA|OPERADOR|EMISSÃO|PAGAMENTO)/i
+const UNITS = /^(UN|KG|GR|G|LT|L|ML|MT|M|PC|CX|PT|SC|DZ|CT|FR|FD|BJ|RL|AM|VD|TB|BD|GA|KT|ST|SV|CM|MG|AMP|CAP|CMP|ENV|BIS|UN|PC)$/
+
 function parseNFe(html: string): NFeData {
   const text = stripHtml(html)
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
 
   // CNPJ
   const cnpjMatch = text.match(/\d{2}\.?\d{3}\.?\d{3}\/\d{4}-\d{2}/)
@@ -61,7 +71,6 @@ function parseNFe(html: string): NFeData {
     const idx = text.indexOf(cnpjMatch[0])
     const before = text.substring(Math.max(0, idx - 300), idx).trim()
     const words = before.split(/\s+/)
-    // Take last 6–10 words (typical business name length)
     establishment = words.slice(-8).join(' ').replace(/[^A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ0-9\s\-&.,]/g, '').trim()
   }
 
@@ -81,18 +90,18 @@ function parseNFe(html: string): NFeData {
     if (m) { total = parseBRL(m[1]); break }
   }
 
-  // Products — common NFC-e patterns across states
   const products: NFeProduct[] = []
-
-  // Pattern A: "NAME ... Qtde.: X UN Vl. Unit.: R$ Y Vl. Total R$ Z"
-  const patternA = /([A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][^\d]{3,60}?)\s+(?:Qtde?\.?|Qt(?:d)?\.?|Quantidade)\s*:?\s*([\d,]+)\s*(?:[A-Z]{2,3}\s+)?(?:Vl\.?\s*Unit(?:ário)?\.?\s*:?\s*R?\$?\s*([\d.,]+)\s+)?Vl\.?\s*Total\s*:?\s*R?\$?\s*([\d.,]+)/gi
   let m: RegExpExecArray | null
+
+  // ── Pattern A: keyword-based (multi-states)
+  // "NAME ... Qtde.: X UN Vl. Unit.: R$ Y Vl. Total R$ Z"
+  const patternA = /([\w][\w\s\-\/\(\)\.]{2,70}?)\s+(?:Qtde?\.?|Qt(?:d)?\.?|Quantidade)\s*:?\s*([\d,.]+)\s*(?:[A-Z]{2,5}\s+)?(?:Vl\.?\s*Unit(?:ário)?\.?\s*:?\s*R?\$?\s*([\d.,]+)\s+)?Vl\.?\s*Total\s*:?\s*R?\$?\s*([\d.,]+)/gi
   while ((m = patternA.exec(text)) !== null) {
     const name = m[1].trim().replace(/\s+/g, ' ')
     const qty = parseBRL(m[2])
     const unitPrice = m[3] ? parseBRL(m[3]) : 0
     const itemTotal = parseBRL(m[4])
-    if (name.length >= 3 && qty > 0 && itemTotal > 0 && itemTotal <= total * 1.1) {
+    if (name.length >= 3 && qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2 && !SKIP_WORDS.test(name)) {
       products.push({
         name: name.toUpperCase(),
         qty,
@@ -102,14 +111,57 @@ function parseNFe(html: string): NFeData {
     }
   }
 
-  // Pattern B (table-like): repeated "NAME R$ PRICE" outside known sections
+  // ── Pattern B: line-based table (SP, MG, RS and others)
+  // Format per line: [code] NAME qty UNIT unitprice total
+  // qty has exactly 3 decimal places: "1,000" "2,500"
   if (products.length === 0) {
-    const skipWords = /^(TOTAL|SUBTOTAL|DESCONTO|ACRESCIMO|TROCO|PAGO|FORMA|DATA|HORA|CNPJ|NOTA|NÚMERO|SÉRIE|CHAVE|PROTOCOLO|VALOR|ENDEREÇO|BAIRRO|MUNICÍPIO|CEP|FONE|IE|CPF|CAIXA|OPERADOR)/i
-    const patternB = /([A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][^\n]{4,50}?)\s+R\$\s*([\d.,]+)/g
-    while ((m = patternB.exec(text)) !== null) {
-      const name = m[1].trim().replace(/\s+/g, ' ')
-      const price = parseBRL(m[2])
-      if (price > 0 && price < total && !skipWords.test(name)) {
+    for (const line of lines) {
+      if (SKIP_WORDS.test(line)) continue
+      // Optional leading item number, then product name, then qty (d,ddd), unit, price, total
+      const mLine = line.match(
+        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.]{2,60}?)\s+([\d]+[,.][\d]{3})\s+([A-Z]{2,5})\s+([\d.,]+)\s+([\d.,]+)\s*$/
+      )
+      if (!mLine) continue
+      const name = mLine[1].trim().replace(/\s+/g, ' ')
+      const unit = mLine[3]
+      if (!UNITS.test(unit)) continue
+      const qty = parseBRL(mLine[2])
+      const unitPrice = parseBRL(mLine[4])
+      const itemTotal = parseBRL(mLine[5])
+      if (qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2) {
+        products.push({ name: name.toUpperCase(), qty, unit_price: unitPrice, total: itemTotal })
+      }
+    }
+  }
+
+  // ── Pattern C: line-based without unit (simplified receipts)
+  // Format per line: [code] NAME qty price total  OR  NAME price total
+  if (products.length === 0) {
+    for (const line of lines) {
+      if (SKIP_WORDS.test(line)) continue
+      const mLine = line.match(
+        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.]{2,60}?)\s+([\d]+[,.][\d]{3})\s+([\d.,]+)\s+([\d.,]+)\s*$/
+      )
+      if (!mLine) continue
+      const name = mLine[1].trim().replace(/\s+/g, ' ')
+      const qty = parseBRL(mLine[2])
+      const unitPrice = parseBRL(mLine[3])
+      const itemTotal = parseBRL(mLine[4])
+      if (qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2) {
+        products.push({ name: name.toUpperCase(), qty, unit_price: unitPrice, total: itemTotal })
+      }
+    }
+  }
+
+  // ── Pattern D: fallback "R$ price" per line
+  if (products.length === 0) {
+    for (const line of lines) {
+      if (SKIP_WORDS.test(line)) continue
+      const mLine = line.match(/^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.]{2,60}?)\s+R\$\s*([\d.,]+)\s*$/)
+      if (!mLine) continue
+      const name = mLine[1].trim().replace(/\s+/g, ' ')
+      const price = parseBRL(mLine[2])
+      if (price > 0 && price < total) {
         products.push({ name: name.toUpperCase(), qty: 1, unit_price: price, total: price })
       }
     }

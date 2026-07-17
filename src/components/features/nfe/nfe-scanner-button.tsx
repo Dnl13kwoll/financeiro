@@ -139,8 +139,8 @@ export function NfeScannerButton({
       if (savePrices && nfe.products.length > 0) {
         const priceRows = nfe.products.map(p => ({
           couple_id: coupleId,
-          user_id: userId,
-          product_name: p.name,
+          created_by: userId,
+          item_name: p.name,
           price: p.unit_price,
           store: nfe.establishment || null,
           recorded_at: nfe.date,

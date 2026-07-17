@@ -87,16 +87,22 @@ function parseNFe(html: string): NFeData {
   const dateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/)
   const date = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : new Date().toISOString().slice(0, 10)
 
-  // Total — try several keywords
+  // Total — pega o MAIOR valor encontrado entre todos os padrões de total
+  // (evita pegar "Vl. Total" de uma linha de produto em vez do total da nota)
   let total = 0
-  for (const pattern of [
-    /VALOR\s+TOTAL\s+R?\$?\s*([\d.,]+)/i,
-    /TOTAL\s+A\s+PAGAR\s+R?\$?\s*([\d.,]+)/i,
-    /TOTAL\s+R?\$?\s*([\d.,]+)/i,
-    /VALOR\s+A\s+PAGAR\s+R?\$?\s*([\d.,]+)/i,
-  ]) {
-    const m = text.match(pattern)
-    if (m) { total = parseBRL(m[1]); break }
+  const totalPatterns = [
+    /VALOR\s+TOTAL\s+(?:DA\s+NOTA\s+)?R?\$?\s*([\d.,]+)/gi,
+    /TOTAL\s+A\s+PAGAR\s+R?\$?\s*([\d.,]+)/gi,
+    /VALOR\s+A\s+PAGAR\s+R?\$?\s*([\d.,]+)/gi,
+    /TOTAL\s+NOTA\s+R?\$?\s*([\d.,]+)/gi,
+    /^TOTAL\s+R?\$?\s*([\d.,]+)/gim,          // apenas linha que começa com TOTAL
+  ]
+  for (const re of totalPatterns) {
+    let mt
+    while ((mt = re.exec(text)) !== null) {
+      const v = parseBRL(mt[1])
+      if (v > total) total = v
+    }
   }
 
   const products: NFeProduct[] = []
@@ -134,7 +140,7 @@ function parseNFe(html: string): NFeData {
 
     // Pattern B: [cod] NOME qty UNIT [R$]preço [R$]total  — SVRS/RS, SP, MG, RJ...
     const mB = l.match(new RegExp(
-      `^(?:\\d{1,8}\\s+)?${NAME}\\s+${QTY}\\s+([A-Z]{2,5})\\s+${PRC}\\s+${PRC}\\s*$`
+      `^(?:\\d{1,14}\\s+)?${NAME}\\s+${QTY}\\s+([A-Z]{2,5})\\s+${PRC}\\s+${PRC}\\s*$`
     ))
     if (mB && UNITS.test(mB[3])) {
       addProduct({ name: mB[1].trim().replace(/\s+/g, ' ').toUpperCase(), qty: parseBRL(mB[2]), unit_price: parseBRL(mB[4]), total: parseBRL(mB[5]) })
@@ -143,7 +149,7 @@ function parseNFe(html: string): NFeData {
 
     // Pattern C: [cod] NOME qty [R$]preço [R$]total  — sem unidade
     const mC = l.match(new RegExp(
-      `^(?:\\d{1,8}\\s+)?${NAME}\\s+${QTY}\\s+${PRC}\\s+${PRC}\\s*$`
+      `^(?:\\d{1,14}\\s+)?${NAME}\\s+${QTY}\\s+${PRC}\\s+${PRC}\\s*$`
     ))
     if (mC) {
       addProduct({ name: mC[1].trim().replace(/\s+/g, ' ').toUpperCase(), qty: parseBRL(mC[2]), unit_price: parseBRL(mC[3]), total: parseBRL(mC[4]) })
@@ -152,7 +158,7 @@ function parseNFe(html: string): NFeData {
 
     // Pattern D: [cod] NOME [R$]total  — apenas valor final (qty=1)
     const mD = l.match(new RegExp(
-      `^(?:\\d{1,8}\\s+)?${NAME}\\s+${PRC}\\s*$`
+      `^(?:\\d{1,14}\\s+)?${NAME}\\s+${PRC}\\s*$`
     ))
     if (mD) {
       const price = parseBRL(mD[2])

@@ -32,7 +32,7 @@ export function QuickAddFab() {
 
   async function handleOpen() {
     setOpen(true)
-    if (accounts.length > 0) return
+    if (coupleId && accounts.length > 0) return
     setFetching(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -43,8 +43,9 @@ export function QuickAddFab() {
       .from('couple_members')
       .select('couple_id')
       .eq('user_id', user.id)
+      .limit(1)
       .maybeSingle()
-    const cid = (memberRes.data as any)?.couple_id ?? null
+    const cid = memberRes.data?.couple_id ?? null
     setCoupleId(cid)
 
     if (cid) {

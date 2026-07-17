@@ -32,6 +32,7 @@ export function NewTransactionButton({
   const [toAccountId, setToAccountId] = useState('')
   const [installments, setInstallments] = useState(1)
   const [formAmount, setFormAmount] = useState('')
+  const [formDate, setFormDate] = useState(new Date().toISOString().slice(0, 10))
   const [formDescription, setFormDescription] = useState('')
   const [formTags, setFormTags] = useState<string[]>([])
   const [dupWarning, setDupWarning] = useState<{ description: string; amount: number; date: string } | null>(null)
@@ -201,13 +202,12 @@ export function NewTransactionButton({
     setToAccountId('')
     setInstallments(1)
     setFormAmount('')
+    setFormDate(new Date().toISOString().slice(0, 10))
     setFormDescription('')
     setFormTags([])
     setDupWarning(null)
     skipDupCheck.current = false
   }
-
-  const today = new Date().toISOString().slice(0, 10)
 
   return (
     <>
@@ -330,7 +330,8 @@ export function NewTransactionButton({
               name="date"
               type="date"
               required
-              defaultValue={today}
+              value={formDate}
+              onChange={e => setFormDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -372,6 +373,28 @@ export function NewTransactionButton({
                   <option key={n} value={n}>{n === 1 ? 'À vista' : `${n}x`}</option>
                 ))}
               </select>
+              {(() => {
+                const total = parseFloat(formAmount)
+                if (installments <= 1 || isNaN(total) || total <= 0) return null
+                const per = total / installments
+                const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+                const firstDate = formDate ? new Date(formDate + 'T12:00:00') : null
+                const lastDate = firstDate ? new Date(firstDate.getFullYear(), firstDate.getMonth() + installments - 1, firstDate.getDate()) : null
+                const fmtDate = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                return (
+                  <div className="mt-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">
+                    <p className="text-sm font-semibold text-blue-800">
+                      {installments}× de {fmt(per)}
+                      <span className="font-normal text-blue-600"> = {fmt(total)} total</span>
+                    </p>
+                    {firstDate && lastDate && (
+                      <p className="text-xs text-blue-500 mt-0.5">
+                        {fmtDate(firstDate)} → {fmtDate(lastDate)}
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           )}
 

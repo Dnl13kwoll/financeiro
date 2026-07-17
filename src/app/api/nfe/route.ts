@@ -173,6 +173,42 @@ function parseNFe(html: string): NFeData {
   return { establishment, cnpj, date, total, products: unique }
 }
 
+// Extrai total, data e chave NF-e direto dos parâmetros do QR code
+// Formato SVRS/padrão: p=chNFe|nVersao|tpAmb|cDest|dhEmi|vNF|vICMS|...
+function parseQrParams(url: string): { total: number; date: string; chNFe: string } {
+  try {
+    const u = new URL(url)
+    const p = u.searchParams.get('p') ?? ''
+    const parts = p.split('|')
+    if (parts.length < 6) return { total: 0, date: '', chNFe: '' }
+    const chNFe = /^\d{44}$/.test(parts[0]) ? parts[0] : ''
+    // vNF pode estar na posição 5 (com cDest) ou 4 (sem cDest)
+    let total = 0
+    for (const pos of [5, 4, 6]) {
+      const v = parseFloat((parts[pos] ?? '').replace(',', '.'))
+      if (v > 0) { total = v; break }
+    }
+    // dhEmi pode estar na posição 4 ou 3: AAAA-MM-DDTHH... ou sem cDest
+    let date = ''
+    for (const pos of [4, 3]) {
+      const raw = parts[pos] ?? ''
+      const m = raw.match(/(\d{4})-(\d{2})-(\d{2})/)
+      if (m) { date = `${m[1]}-${m[2]}-${m[3]}`; break }
+    }
+    return { total, date, chNFe }
+  } catch { return { total: 0, date: '', chNFe: '' } }
+}
+
+const FETCH_OPTS = {
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'pt-BR,pt;q=0.9',
+    'Cache-Control': 'no-cache',
+  },
+  signal: AbortSignal.timeout(15_000),
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -189,22 +225,54 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'URL não reconhecida como SEFAZ/NFC-e oficial (.gov.br)' }, { status: 400 })
   }
 
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'pt-BR,pt;q=0.9',
-      },
-      signal: AbortSignal.timeout(15_000),
-    })
+  // Extrai dados do parâmetro QR como base (garante total mesmo sem HTML)
+  const qrFallback = parseQrParams(url)
 
-    if (!res.ok) {
-      return NextResponse.json({ error: `SEFAZ retornou ${res.status}. Tente novamente.` }, { status: 502 })
+  try {
+    // Para portais SVRS (RS/SC/PR), tenta endpoint Danfe que retorna HTML estático
+    const urlsToTry: string[] = [url]
+    if (url.includes('svrs')) {
+      try {
+        const u = new URL(url)
+        const p = u.searchParams.get('p') ?? ''
+        const parts = p.split('|')
+        if (parts[0]?.length === 44) {
+          // Endpoint alternativo com chave individual
+          const danfeUrl = `${u.origin}/NFCE/Danfe?chNFe=${parts[0]}`
+          urlsToTry.unshift(danfeUrl)
+        }
+      } catch {}
     }
 
-    const html = await res.text()
-    const nfe = parseNFe(html)
+    let html = ''
+    for (const tryUrl of urlsToTry) {
+      try {
+        const res = await fetch(tryUrl, FETCH_OPTS as any)
+        if (res.ok) {
+          const text = await res.text()
+          // Considera válido se tem texto suficiente com dados fiscais
+          if (text.length > 500 && (
+            /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/.test(text) || // CNPJ
+            /R\$/.test(text) ||
+            /total/i.test(text)
+          )) {
+            html = text
+            break
+          }
+        }
+      } catch {}
+    }
+
+    const nfe = html ? parseNFe(html) : { establishment: '', cnpj: '', date: '', total: 0, products: [] }
+
+    // Aplica fallback do QR para campos que ficaram vazios
+    if (!nfe.total && qrFallback.total) nfe.total = qrFallback.total
+    if (!nfe.date && qrFallback.date) nfe.date = qrFallback.date
+
+    // Se ainda zerado, retorna erro claro
+    if (!nfe.total) {
+      return NextResponse.json({ error: 'Não foi possível ler os dados da nota. O portal da SEFAZ pode estar temporariamente indisponível.' }, { status: 422 })
+    }
 
     return NextResponse.json(nfe)
   } catch (err: any) {

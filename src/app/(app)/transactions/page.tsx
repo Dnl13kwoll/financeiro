@@ -13,6 +13,7 @@ import { CategoryRules } from '@/components/features/categories/category-rules'
 import { ImportCSVButton } from '@/components/features/transactions/import-csv-button'
 import { ImportOFXButton } from '@/components/features/transactions/import-ofx-button'
 import { ExportButton } from '@/components/features/transactions/export-button'
+import { NfeScannerButton } from '@/components/features/nfe/nfe-scanner-button'
 import { TransactionSummary } from '@/components/features/transactions/transaction-summary'
 import { CategoryTotals } from '@/components/features/transactions/category-totals'
 import { Suspense } from 'react'
@@ -179,6 +180,7 @@ export default async function TransactionsPage({
             {coupleId && <ImportOFXButton coupleId={coupleId} userId={user!.id} accounts={accounts} />}
             {coupleId && <CategoryManager categories={categories} coupleId={coupleId} />}
             {coupleId && <CategoryRules coupleId={coupleId} categories={categories} rules={rules} />}
+            {coupleId && <NfeScannerButton coupleId={coupleId} userId={user!.id} accounts={accounts} categories={categories} />}
             {coupleId && (
               <NewTransactionButton
                 coupleId={coupleId}

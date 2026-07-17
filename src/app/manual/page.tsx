@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.7 · Julho 2026</div>
+        <div className="version">Versão 3.8 · Julho 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -69,7 +69,7 @@ export default function ManualPage() {
             <li><a href="#acesso">2. Acesso e Onboarding</a></li>
             <li><a href="#dashboard">3. Dashboard</a></li>
             <li><a href="#contas">4. Contas + Fatura do Cartão <span className="badge-new">NOVO</span></a></li>
-            <li><a href="#transacoes">5. Transações</a></li>
+            <li><a href="#transacoes">5. Transações + Cupom Fiscal NFe <span className="badge-new">NOVO</span></a></li>
             <li><a href="#parcelamentos">6. Parcelamentos</a></li>
             <li><a href="#pagamentos-fixos">7. Pagamentos Fixos <span className="badge-new">NOVO</span></a></li>
             <li><a href="#atividades">8. Atividades (Tarefas + Lembretes) <span className="badge-new">NOVO</span></a></li>
@@ -121,6 +121,7 @@ export default function ManualPage() {
             <li>Planejamento completo de viagens</li>
             <li>Lista de compras colaborativa com controle de gastos</li>
             <li>Histórico de preços de produtos com análise de variação</li>
+            <li>Leitura de cupom fiscal (NFe/NFC-e) via QR code com extração automática de produtos e valor total</li>
             <li>Insights automáticos com análise mensal do comportamento financeiro</li>
             <li>Carteira de investimentos com rentabilidade estimada automática</li>
             <li>Simulador de investimentos com projeção de crescimento e cálculo de aportes</li>
@@ -320,6 +321,31 @@ export default function ManualPage() {
       <h3>5.7 Auto-categorização por regras</h3>
       <p>Acesse <strong>Regras</strong> na barra de ações da página de Transações para definir padrões de texto → categoria.</p>
       <div className="tip"><p><strong>Exemplo:</strong> qualquer descrição que <em>contém</em> &ldquo;iFood&rdquo; → categoria &ldquo;Alimentação&rdquo;.</p></div>
+
+      <h3>5.8 Escanear Cupom Fiscal (NFe) <span className="badge-new">NOVO</span></h3>
+      <p>Importe automaticamente uma compra de mercado ou estabelecimento lendo o QR code do cupom fiscal eletrônico (NFC-e). O sistema acessa o portal da SEFAZ e extrai o nome do estabelecimento, CNPJ, data, valor total e lista de produtos.</p>
+      <div className="two-col">
+        <div className="section-card">
+          <h4>Via URL (recomendado)</h4>
+          <div className="flow-step"><div className="flow-num">1</div><p>Abra a câmera do celular e aponte para o QR code do cupom impresso ou na tela do caixa.</p></div>
+          <div className="flow-step"><div className="flow-num">2</div><p>O celular abrirá automaticamente a página da SEFAZ. Copie a URL completa da barra de endereços.</p></div>
+          <div className="flow-step"><div className="flow-num">3</div><p>No app, clique em <strong>NFe</strong> na barra de Transações → aba <strong>Colar URL</strong> → cole a URL → <strong>Buscar nota fiscal</strong>.</p></div>
+          <div className="flow-step"><div className="flow-num">4</div><p>Revise os dados extraídos, escolha a conta e categoria e clique em <strong>Salvar transação</strong>.</p></div>
+        </div>
+        <div className="section-card">
+          <h4>Via câmera (Chrome/Android)</h4>
+          <p>Clique em <strong>NFe → Câmera</strong> e fotografe o QR code diretamente pelo app. O sistema usa a API BarcodeDetector nativa do Chrome para Android para decodificar o QR code sem precisar copiar a URL.</p>
+          <div className="info"><p>A leitura via câmera funciona melhor no <strong>Chrome para Android</strong>. Em outros navegadores, use a aba &ldquo;Colar URL&rdquo;.</p></div>
+        </div>
+      </div>
+      <h4>Resultado da leitura</h4>
+      <ul>
+        <li><strong>Estabelecimento e CNPJ:</strong> extraídos automaticamente da nota</li>
+        <li><strong>Valor total:</strong> lançado como despesa na conta escolhida com a data da compra</li>
+        <li><strong>Lista de produtos:</strong> exibida para conferência (nome, quantidade, preço unitário, total)</li>
+        <li><strong>Salvar preços:</strong> opção para registrar automaticamente todos os produtos no Histórico de Preços</li>
+      </ul>
+      <div className="tip"><p><strong>Dica:</strong> Ative &ldquo;Salvar preços dos produtos no Histórico de Preços&rdquo; para acumular um banco de dados de preços que permite comparar variações de um produto ao longo do tempo e entre estabelecimentos.</p></div>
 
       {/* 6. Parcelamentos */}
       <div className="page-break" />

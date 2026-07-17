@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
   try {
     const { email, coupleId } = await req.json()
 
+    // Return 403 (not 400) to avoid revealing whether a coupleId exists
     if (!coupleId) {
-      return NextResponse.json({ error: 'coupleId é obrigatório' }, { status: 400 })
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 
     // Validate email format if provided

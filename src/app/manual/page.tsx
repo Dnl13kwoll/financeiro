@@ -57,7 +57,7 @@ export default function ManualPage() {
       <div className="cover">
         <h1>Financeiro para Casais</h1>
         <p>Manual completo do sistema de gestão financeira</p>
-        <div className="version">Versão 3.6 · Abril 2026</div>
+        <div className="version">Versão 3.7 · Julho 2026</div>
       </div>
 
       {/* Table of contents */}
@@ -68,7 +68,7 @@ export default function ManualPage() {
             <li><a href="#intro">1. Introdução</a></li>
             <li><a href="#acesso">2. Acesso e Onboarding</a></li>
             <li><a href="#dashboard">3. Dashboard</a></li>
-            <li><a href="#contas">4. Contas</a></li>
+            <li><a href="#contas">4. Contas + Fatura do Cartão <span className="badge-new">NOVO</span></a></li>
             <li><a href="#transacoes">5. Transações</a></li>
             <li><a href="#parcelamentos">6. Parcelamentos</a></li>
             <li><a href="#pagamentos-fixos">7. Pagamentos Fixos <span className="badge-new">NOVO</span></a></li>
@@ -228,6 +228,28 @@ export default function ManualPage() {
         <li><strong>Ordenação:</strong> arraste ou use as setas para reordenar os cards</li>
         <li><strong>Cor personalizada:</strong> cada conta pode ter uma cor de identificação</li>
       </ul>
+
+      <h3>4.3 Fatura do Cartão de Crédito <span className="badge-new">NOVO</span></h3>
+      <p>Contas do tipo <strong>Cartão de Crédito</strong> têm duas páginas dedicadas acessíveis pela aba <em>Faturas</em> em Contas:</p>
+      <h4>Dashboard de faturas (/cards)</h4>
+      <ul>
+        <li>Exibe todos os cartões do casal em cards com: total da fatura do ciclo atual, limite utilizado (barra de progresso), valor pago e pendente.</li>
+        <li>Badge laranja <strong>Fecha em X dias</strong> destaca cartões com fechamento em até 3 dias.</li>
+        <li>Totais consolidados no topo: soma de todas as faturas, pagas e pendentes.</li>
+      </ul>
+      <h4>Fatura detalhada (/cards/[id])</h4>
+      <ul>
+        <li>Todas as transações do ciclo atual agrupadas por categoria, com total e status de pagamento.</li>
+        <li>Botão <strong>Pagar fatura</strong> para registrar o pagamento do ciclo.</li>
+        <li>Setas para navegar entre ciclos (mês anterior / próximo).</li>
+        <li><strong>Histórico de 6 ciclos:</strong> tabela com total de cada ciclo passado, status (pago / pendente) e link para ver as transações do período.</li>
+      </ul>
+      <h4>Alertas automáticos</h4>
+      <ul>
+        <li>Notificação push enviada automaticamente quando um cartão tem fechamento em até 3 dias, com o total atual da fatura no corpo da mensagem.</li>
+        <li>Configure o <strong>Dia de fechamento</strong> e <strong>Dia de vencimento</strong> em Contas → Editar conta para ativar os alertas.</li>
+      </ul>
+      <div className="tip"><p><strong>Dica:</strong> mantenha o dia de fechamento e vencimento atualizados em cada cartão — os ciclos e alertas são calculados com base nessas datas.</p></div>
 
       {/* 5. Transações */}
       <h2 id="transacoes">5. Transações</h2>

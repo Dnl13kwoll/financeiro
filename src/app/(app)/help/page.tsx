@@ -75,6 +75,27 @@ const sections: Section[] = [
     ],
   },
   {
+    id: 'cards',
+    icon: <CreditCard className="w-5 h-5" />,
+    title: 'Faturas',
+    href: '/cards',
+    color: 'bg-violet-50 text-violet-600 border-violet-100',
+    description: 'Painel unificado de todos os cartões de crédito: saldo de fatura, limite utilizado, status do ciclo atual e alertas de fechamento.',
+    features: [
+      { label: 'Dashboard de cartões', detail: 'Página /cards exibe todos os cartões com total da fatura, limite utilizado (barra), valor pago e pendente do ciclo atual.' },
+      { label: 'Alerta de fechamento', detail: 'Cartões com fechamento em até 3 dias aparecem em destaque com badge laranja. Notificação push é enviada automaticamente.' },
+      { label: 'Fatura detalhada', detail: 'Clique em "Ver fatura" para ver todas as transações do ciclo, breakdown por categoria e botão para registrar pagamento.' },
+      { label: 'Histórico de ciclos', detail: 'Na fatura do cartão, os últimos 6 ciclos ficam visíveis com total, se foi pago e link para ver as transações de cada período.' },
+      { label: 'Registrar pagamento', detail: 'Na fatura do cartão, botão "Pagar fatura" registra um pagamento para o ciclo atual, reduzindo o saldo devedor.' },
+      { label: 'Navegação por ciclo', detail: 'Setas para navegar entre ciclos (mês anterior / próximo) dentro da fatura do cartão.' },
+    ],
+    tips: [
+      'O fechamento da fatura é calculado com base no dia de fechamento configurado na conta do cartão.',
+      'Configure o dia de fechamento e dia de vencimento em Contas → Editar conta para receber os alertas corretos.',
+      'A aba "Faturas" na página Contas abre o mesmo painel /cards.',
+    ],
+  },
+  {
     id: 'transactions',
     icon: <ArrowLeftRight className="w-5 h-5" />,
     title: 'Transações',
@@ -519,7 +540,8 @@ const globalFeatures = [
   { icon: <Palette className="w-4 h-4" />, label: 'Temas', detail: 'Ícone de paleta no rodapé da sidebar. Temas: Verde, Rosa, Azul e Escuro (dark mode).' },
   { icon: <EyeOff className="w-4 h-4" />, label: 'Modo privado', detail: 'Ícone de olho na sidebar. Oculta todos os valores financeiros com blur (útil em locais públicos).' },
   { icon: <SlidersHorizontal className="w-4 h-4" />, label: 'Personalizar menu', detail: 'Botão "Personalizar menu" no rodapé da sidebar. Escolha quais seções aparecem no menu. Itens ocultos não são excluídos — só ficam escondidos. Preferências salvas no navegador.' },
-  { icon: <Settings className="w-4 h-4" />, label: 'Atalhos de teclado', detail: 'Ctrl+K (ou Cmd+K) abre a busca global. Navegação rápida entre páginas via teclado.' },
+  { icon: <Settings className="w-4 h-4" />, label: 'Atalhos de teclado', detail: 'Ctrl+K (ou Cmd+K) abre a busca global. O botão flutuante (+) no canto inferior direito também responde ao atalho de adição rápida.' },
+  { icon: <ChevronRight className="w-4 h-4" />, label: 'Voltar ao topo', detail: 'Botão circular fixo no canto inferior direito. Aparece ao rolar a página para baixo e volta ao início com animação suave.' },
 ]
 
 export default function HelpPage() {

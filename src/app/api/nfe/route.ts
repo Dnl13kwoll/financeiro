@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// Only allow official Brazilian government fiscal domains
+// Portais NFC-e oficiais por estado — todos terminam em .gov.br
+// RS/SC/PR: dfe-portal.svrs.rs.gov.br (SVRS - portal sul)
+// PA: appnfc.sefa.pa.gov.br
+// RO: www.nfce.sefin.ro.gov.br
+// PB/RN: nfce.set.pb.gov.br / nfce.set.rn.gov.br
+// SP/MG/RJ/PR: nfce.fazenda.*.gov.br
+// BA/CE/AM/GO/...: nfe.sefaz.*.gov.br
 function isAllowedNFeUrl(url: string): boolean {
   try {
     const { hostname } = new URL(url)
     const h = hostname.toLowerCase()
-    return h.endsWith('.gov.br') && (
+    if (!h.endsWith('.gov.br')) return false
+    return (
       h.includes('nfce') || h.includes('nfe') ||
       h.includes('sefaz') || h.includes('fazenda') ||
-      h.includes('sat.sef')
+      h.includes('sat.sef') || h.includes('svrs') ||
+      h.includes('sefa') || h.includes('sefin') ||
+      h.includes('dfe-portal') || h.includes('.set.')
     )
   } catch {
     return false
@@ -111,15 +120,15 @@ function parseNFe(html: string): NFeData {
     }
   }
 
-  // ── Pattern B: line-based table (SP, MG, RS and others)
-  // Format per line: [code] NAME qty UNIT unitprice total
-  // qty has exactly 3 decimal places: "1,000" "2,500"
+  // ── Pattern B: line-based table (SP, MG, RS/SVRS e outros)
+  // Formato: [codigo] NOME qty UNIT [R$] preço_unit [R$] total
+  // qty com 3 casas decimais: "1,000" "2,500"
+  // Aceita "R$" opcional antes dos preços (formato SVRS/RS)
   if (products.length === 0) {
     for (const line of lines) {
       if (SKIP_WORDS.test(line)) continue
-      // Optional leading item number, then product name, then qty (d,ddd), unit, price, total
       const mLine = line.match(
-        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.]{2,60}?)\s+([\d]+[,.][\d]{3})\s+([A-Z]{2,5})\s+([\d.,]+)\s+([\d.,]+)\s*$/
+        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.%*+]{2,60}?)\s+([\d]+[,.][\d]{3})\s+([A-Z]{2,5})\s+R?\$?\s*([\d.,]+)\s+R?\$?\s*([\d.,]+)\s*$/
       )
       if (!mLine) continue
       const name = mLine[1].trim().replace(/\s+/g, ' ')
@@ -134,13 +143,12 @@ function parseNFe(html: string): NFeData {
     }
   }
 
-  // ── Pattern C: line-based without unit (simplified receipts)
-  // Format per line: [code] NAME qty price total  OR  NAME price total
+  // ── Pattern C: sem código de unidade — qty seguido de dois preços
   if (products.length === 0) {
     for (const line of lines) {
       if (SKIP_WORDS.test(line)) continue
       const mLine = line.match(
-        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.]{2,60}?)\s+([\d]+[,.][\d]{3})\s+([\d.,]+)\s+([\d.,]+)\s*$/
+        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.%*+]{2,60}?)\s+([\d]+[,.][\d]{3})\s+R?\$?\s*([\d.,]+)\s+R?\$?\s*([\d.,]+)\s*$/
       )
       if (!mLine) continue
       const name = mLine[1].trim().replace(/\s+/g, ' ')
@@ -149,6 +157,22 @@ function parseNFe(html: string): NFeData {
       const itemTotal = parseBRL(mLine[4])
       if (qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2) {
         products.push({ name: name.toUpperCase(), qty, unit_price: unitPrice, total: itemTotal })
+      }
+    }
+  }
+
+  // ── Pattern C2: apenas nome + total (qty=1, sem unidade)
+  if (products.length === 0) {
+    for (const line of lines) {
+      if (SKIP_WORDS.test(line)) continue
+      const mLine = line.match(
+        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.%*+]{4,60}?)\s+R?\$?\s*([\d]+[,.]\d{2})\s*$/
+      )
+      if (!mLine) continue
+      const name = mLine[1].trim().replace(/\s+/g, ' ')
+      const price = parseBRL(mLine[2])
+      if (price > 0 && price < total) {
+        products.push({ name: name.toUpperCase(), qty: 1, unit_price: price, total: price })
       }
     }
   }

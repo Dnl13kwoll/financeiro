@@ -317,7 +317,7 @@ export function NfeScannerButton({
                   <textarea
                     value={url}
                     onChange={e => setUrl(e.target.value)}
-                    placeholder="https://www.nfce.fazenda.sp.gov.br/..."
+                    placeholder="https://dfe-portal.svrs.rs.gov.br/... ou https://nfce.fazenda.sp.gov.br/..."
                     rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono resize-none"
                   />

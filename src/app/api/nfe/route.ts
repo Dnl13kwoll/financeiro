@@ -100,105 +100,69 @@ function parseNFe(html: string): NFeData {
   }
 
   const products: NFeProduct[] = []
+  const foundKeys = new Set<string>()
   let m: RegExpExecArray | null
 
-  // ── Pattern A: keyword-based (multi-states)
-  // "NAME ... Qtde.: X UN Vl. Unit.: R$ Y Vl. Total R$ Z"
-  const patternA = /([\w][\w\s\-\/\(\)\.]{2,70}?)\s+(?:Qtde?\.?|Qt(?:d)?\.?|Quantidade)\s*:?\s*([\d,.]+)\s*(?:[A-Z]{2,5}\s+)?(?:Vl\.?\s*Unit(?:ário)?\.?\s*:?\s*R?\$?\s*([\d.,]+)\s+)?Vl\.?\s*Total\s*:?\s*R?\$?\s*([\d.,]+)/gi
-  while ((m = patternA.exec(text)) !== null) {
-    const name = m[1].trim().replace(/\s+/g, ' ')
+  function addProduct(p: NFeProduct) {
+    if (p.name.length < 3 || p.qty <= 0 || p.total <= 0) return
+    if (total > 0 && p.total > total * 1.3) return
+    if (SKIP_WORDS.test(p.name)) return
+    const key = `${p.name}|${p.total}|${p.qty}`
+    if (foundKeys.has(key)) return
+    foundKeys.add(key)
+    products.push(p)
+  }
+
+  // Nome: início com letra (com acentos), continuação flexível — inclui acentos, dígitos, especiais
+  const NAME = String.raw`([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ0-9\s\-\/\(\)\.%*+&']{2,80}?)`
+  const QTY  = String.raw`([\d]+[,.][\d]{1,4})`  // 1–4 casas decimais
+  const PRC  = String.raw`R?\$?\s*([\d]{1,3}(?:\.[\d]{3})*[,.][\d]{2})`  // R$ 1.234,56 ou 1234,56
+
+  // ── Pattern A: keywords "Qtde." / "Vl.Total" (BA, CE, AM, algumas SP)
+  const reA = new RegExp(`${NAME}\\s+(?:Qtde?\\.?|Qt(?:d)?\\.|Quantidade)\\s*:?\\s*${QTY}\\s*(?:[A-Z]{2,5}\\s+)?(?:Vl\\.?\\s*Unit(?:ário)?\\.?\\s*:?\\s*R?\\$?\\s*[\\d.,]+\\s+)?Vl\\.?\\s*Total\\s*:?\\s*R?\\$?\\s*(${PRC.slice(6)})`, 'gi')
+  while ((m = reA.exec(text)) !== null) {
     const qty = parseBRL(m[2])
     const unitPrice = m[3] ? parseBRL(m[3]) : 0
     const itemTotal = parseBRL(m[4])
-    if (name.length >= 3 && qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2 && !SKIP_WORDS.test(name)) {
-      products.push({
-        name: name.toUpperCase(),
-        qty,
-        unit_price: unitPrice > 0 ? unitPrice : +(itemTotal / qty).toFixed(2),
-        total: itemTotal,
-      })
-    }
+    addProduct({ name: m[1].trim().replace(/\s+/g, ' ').toUpperCase(), qty, unit_price: unitPrice || +(itemTotal / qty).toFixed(2), total: itemTotal })
   }
 
-  // ── Pattern B: line-based table (SP, MG, RS/SVRS e outros)
-  // Formato: [codigo] NOME qty UNIT [R$] preço_unit [R$] total
-  // qty com 3 casas decimais: "1,000" "2,500"
-  // Aceita "R$" opcional antes dos preços (formato SVRS/RS)
-  if (products.length === 0) {
-    for (const line of lines) {
-      if (SKIP_WORDS.test(line)) continue
-      const mLine = line.match(
-        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.%*+]{2,60}?)\s+([\d]+[,.][\d]{3})\s+([A-Z]{2,5})\s+R?\$?\s*([\d.,]+)\s+R?\$?\s*([\d.,]+)\s*$/
-      )
-      if (!mLine) continue
-      const name = mLine[1].trim().replace(/\s+/g, ' ')
-      const unit = mLine[3]
-      if (!UNITS.test(unit)) continue
-      const qty = parseBRL(mLine[2])
-      const unitPrice = parseBRL(mLine[4])
-      const itemTotal = parseBRL(mLine[5])
-      if (qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2) {
-        products.push({ name: name.toUpperCase(), qty, unit_price: unitPrice, total: itemTotal })
+  // ── Patterns linha a linha (B, C, D) — rodam SEMPRE, complementando A
+  for (const line of lines) {
+    if (SKIP_WORDS.test(line.trim())) continue
+    const l = line.trim()
+
+    // Pattern B: [cod] NOME qty UNIT [R$]preço [R$]total  — SVRS/RS, SP, MG, RJ...
+    const mB = l.match(new RegExp(
+      `^(?:\\d{1,8}\\s+)?${NAME}\\s+${QTY}\\s+([A-Z]{2,5})\\s+${PRC}\\s+${PRC}\\s*$`
+    ))
+    if (mB && UNITS.test(mB[3])) {
+      addProduct({ name: mB[1].trim().replace(/\s+/g, ' ').toUpperCase(), qty: parseBRL(mB[2]), unit_price: parseBRL(mB[4]), total: parseBRL(mB[5]) })
+      continue
+    }
+
+    // Pattern C: [cod] NOME qty [R$]preço [R$]total  — sem unidade
+    const mC = l.match(new RegExp(
+      `^(?:\\d{1,8}\\s+)?${NAME}\\s+${QTY}\\s+${PRC}\\s+${PRC}\\s*$`
+    ))
+    if (mC) {
+      addProduct({ name: mC[1].trim().replace(/\s+/g, ' ').toUpperCase(), qty: parseBRL(mC[2]), unit_price: parseBRL(mC[3]), total: parseBRL(mC[4]) })
+      continue
+    }
+
+    // Pattern D: [cod] NOME [R$]total  — apenas valor final (qty=1)
+    const mD = l.match(new RegExp(
+      `^(?:\\d{1,8}\\s+)?${NAME}\\s+${PRC}\\s*$`
+    ))
+    if (mD) {
+      const price = parseBRL(mD[2])
+      if (price > 0.01 && (total === 0 || price < total)) {
+        addProduct({ name: mD[1].trim().replace(/\s+/g, ' ').toUpperCase(), qty: 1, unit_price: price, total: price })
       }
     }
   }
 
-  // ── Pattern C: sem código de unidade — qty seguido de dois preços
-  if (products.length === 0) {
-    for (const line of lines) {
-      if (SKIP_WORDS.test(line)) continue
-      const mLine = line.match(
-        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.%*+]{2,60}?)\s+([\d]+[,.][\d]{3})\s+R?\$?\s*([\d.,]+)\s+R?\$?\s*([\d.,]+)\s*$/
-      )
-      if (!mLine) continue
-      const name = mLine[1].trim().replace(/\s+/g, ' ')
-      const qty = parseBRL(mLine[2])
-      const unitPrice = parseBRL(mLine[3])
-      const itemTotal = parseBRL(mLine[4])
-      if (qty > 0 && itemTotal > 0 && itemTotal <= total * 1.2) {
-        products.push({ name: name.toUpperCase(), qty, unit_price: unitPrice, total: itemTotal })
-      }
-    }
-  }
-
-  // ── Pattern C2: apenas nome + total (qty=1, sem unidade)
-  if (products.length === 0) {
-    for (const line of lines) {
-      if (SKIP_WORDS.test(line)) continue
-      const mLine = line.match(
-        /^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.%*+]{4,60}?)\s+R?\$?\s*([\d]+[,.]\d{2})\s*$/
-      )
-      if (!mLine) continue
-      const name = mLine[1].trim().replace(/\s+/g, ' ')
-      const price = parseBRL(mLine[2])
-      if (price > 0 && price < total) {
-        products.push({ name: name.toUpperCase(), qty: 1, unit_price: price, total: price })
-      }
-    }
-  }
-
-  // ── Pattern D: fallback "R$ price" per line
-  if (products.length === 0) {
-    for (const line of lines) {
-      if (SKIP_WORDS.test(line)) continue
-      const mLine = line.match(/^(?:\d{1,6}\s+)?([A-Za-záéíóúàâêôãõçÁÉÍÓÚÀÂÊÔÃÕÇ][\w\s\-\/\(\)\.]{2,60}?)\s+R\$\s*([\d.,]+)\s*$/)
-      if (!mLine) continue
-      const name = mLine[1].trim().replace(/\s+/g, ' ')
-      const price = parseBRL(mLine[2])
-      if (price > 0 && price < total) {
-        products.push({ name: name.toUpperCase(), qty: 1, unit_price: price, total: price })
-      }
-    }
-  }
-
-  // Deduplicate
-  const seen = new Set<string>()
-  const unique = products.filter(p => {
-    const key = `${p.name}|${p.total}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
+  const unique = [...products]
 
   return { establishment, cnpj, date, total, products: unique }
 }

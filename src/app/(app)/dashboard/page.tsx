@@ -248,7 +248,7 @@ export default async function DashboardPage() {
 
   // Breakdown gastos por usuário
   const userExpensesRes = coupleId
-    ? await supabase.from('transactions').select('user_id, amount, profiles(name, email)').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null)
+    ? await supabase.from('transactions').select('user_id, amount, profiles!user_id(name, email)').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null)
     : null
   const userExpMap = new Map<string, { name: string; total: number }>()
   ;(userExpensesRes?.data ?? []).forEach((t: any) => {

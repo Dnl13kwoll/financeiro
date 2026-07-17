@@ -340,7 +340,7 @@ export function NfeScannerButton({
                 <div className="space-y-3">
                   <p className="text-xs text-gray-500 leading-relaxed">
                     Tire uma foto do QR code do cupom. Funciona melhor no Chrome para Android.
-                    Se não funcionar, use a aba "Colar URL".
+                    Se não funcionar, use a aba &ldquo;Colar URL&rdquo;.
                   </p>
                   <input
                     ref={fileRef}

@@ -289,8 +289,8 @@ export default async function DashboardPage() {
         {/* Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <SummaryCard title="Saldo Total" value={formatCurrency(totalBalance, currency)} description="Todas as contas" color="green" />
-          <SummaryCard title="Gastos do Mês" value={formatCurrency(totalExpenses, currency)} description="vs. mês anterior" color="red" delta={deltaExpensePct} />
-          <SummaryCard title="Receitas" value={formatCurrency(totalIncome, currency)} description="vs. mês anterior" color="blue" delta={deltaIncomePct} />
+          <SummaryCard title="Gastos do Mês" value={formatCurrency(totalExpenses, currency)} description="vs. mês anterior" color="red" delta={deltaExpensePct} sparkline={history.map(h => h.expense)} />
+          <SummaryCard title="Receitas" value={formatCurrency(totalIncome, currency)} description="vs. mês anterior" color="blue" delta={deltaIncomePct} sparkline={history.map(h => h.income)} />
           <SummaryCard title="Disponível" value={formatCurrency(available, currency)} description="Orçamento − Gastos" color={available >= 0 ? 'green' : 'red'} />
           {todayExpenses > 0 && (
             <SummaryCard title="Gastos de Hoje" value={formatCurrency(todayExpenses, currency)} description={todayStr} color="red" />
@@ -365,6 +365,41 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Fluxo do mês */}
+        {(totalIncome > 0 || totalExpenses > 0) && (
+          <section className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Fluxo — {currentMonth?.label}</h3>
+            <div className="flex items-stretch gap-2 md:gap-4">
+              <div className="flex-1 text-center">
+                <p className="text-xs text-gray-400">Receitas</p>
+                <p className="text-sm font-bold text-green-700 financial-value mt-0.5">{formatCurrency(totalIncome, currency)}</p>
+                <div className="mt-2 h-1.5 bg-green-100 rounded-full"><div className="h-full bg-green-400 rounded-full w-full" /></div>
+              </div>
+              <div className="flex items-center text-gray-300 text-lg shrink-0">→</div>
+              <div className="flex-1 text-center">
+                <p className="text-xs text-gray-400">Gastos</p>
+                <p className="text-sm font-bold text-red-700 financial-value mt-0.5">{formatCurrency(totalExpenses, currency)}</p>
+                <div className="mt-2 h-1.5 bg-red-100 rounded-full">
+                  <div className="h-full bg-red-400 rounded-full" style={{ width: `${totalIncome > 0 ? Math.min(100, Math.round((totalExpenses / totalIncome) * 100)) : 100}%` }} />
+                </div>
+              </div>
+              <div className="flex items-center text-gray-300 text-lg shrink-0">→</div>
+              <div className="flex-1 text-center">
+                <p className="text-xs text-gray-400">Resultado</p>
+                <p className={`text-sm font-bold financial-value mt-0.5 ${totalIncome - totalExpenses >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                  {formatCurrency(totalIncome - totalExpenses, currency)}
+                </p>
+                <div className="mt-2 h-1.5 bg-gray-100 rounded-full">
+                  <div
+                    className={`h-full rounded-full ${totalIncome - totalExpenses >= 0 ? 'bg-blue-400' : 'bg-red-400'}`}
+                    style={{ width: `${totalIncome > 0 ? Math.max(0, Math.min(100, Math.round(((totalIncome - totalExpenses) / totalIncome) * 100))) : 0}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {!coupleId && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
@@ -557,24 +592,27 @@ export default async function DashboardPage() {
         {coupleId && (
           <section data-widget="history" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-5">Histórico — últimos 6 meses</h3>
-            <div className="flex items-end gap-3 h-36">
-              {history.map((m, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full flex gap-1 items-end" style={{ height: '100px' }}>
-                    <div
-                      className="flex-1 bg-green-400 rounded-t-sm transition-all"
-                      style={{ height: `${(m.income / maxBar) * 100}%`, minHeight: m.income > 0 ? '3px' : '0' }}
-                      title={`Receita: ${formatCurrency(m.income)}`}
-                    />
-                    <div
-                      className="flex-1 bg-red-400 rounded-t-sm transition-all"
-                      style={{ height: `${(m.expense / maxBar) * 100}%`, minHeight: m.expense > 0 ? '3px' : '0' }}
-                      title={`Despesa: ${formatCurrency(m.expense)}`}
-                    />
+            <div className="flex items-end gap-2 h-40">
+              {history.map((m, i) => {
+                const isLast = i === history.length - 1
+                return (
+                  <div key={i} className={`flex-1 flex flex-col items-center gap-1 rounded-lg pb-1 pt-1 ${isLast ? 'bg-gray-50 ring-1 ring-gray-200' : ''}`}>
+                    <div className="w-full flex gap-1 items-end px-1" style={{ height: '96px' }}>
+                      <div
+                        className={`flex-1 rounded-t-sm transition-all ${isLast ? 'bg-green-500' : 'bg-green-300'}`}
+                        style={{ height: `${(m.income / maxBar) * 100}%`, minHeight: m.income > 0 ? '3px' : '0' }}
+                        title={`Receita: ${formatCurrency(m.income)}`}
+                      />
+                      <div
+                        className={`flex-1 rounded-t-sm transition-all ${isLast ? 'bg-red-500' : 'bg-red-300'}`}
+                        style={{ height: `${(m.expense / maxBar) * 100}%`, minHeight: m.expense > 0 ? '3px' : '0' }}
+                        title={`Despesa: ${formatCurrency(m.expense)}`}
+                      />
+                    </div>
+                    <span className={`text-xs capitalize ${isLast ? 'text-gray-600 font-semibold' : 'text-gray-400'}`}>{m.label}</span>
                   </div>
-                  <span className="text-xs text-gray-400 capitalize">{m.label}</span>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <div className="flex gap-4 mt-3">
               <span className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-2.5 h-2.5 rounded-sm bg-green-400 inline-block" />Receitas</span>
@@ -587,23 +625,38 @@ export default async function DashboardPage() {
         {coupleId && (
           <section data-widget="balance_evolution" className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-5">Evolução do saldo</h3>
-            <div className="relative" style={{ height: '80px' }}>
-              <svg viewBox={`0 0 ${(history.length - 1) * 60} 80`} preserveAspectRatio="none" className="w-full h-full">
+            <div className="relative" style={{ height: '100px' }}>
+              <svg viewBox={`0 0 ${Math.max(60, (history.length - 1) * 60)} 100`} preserveAspectRatio="none" className="w-full h-full">
+                <defs>
+                  <linearGradient id="balAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.02" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d={(() => {
+                    const pts = balanceHistory.map((b, i) => [i * 60, 100 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 90 + 5] as [number, number])
+                    const line = pts.map(([x, y]) => `${x},${y}`).join(' L')
+                    return `M${line} L${pts[pts.length - 1][0]},100 L0,100 Z`
+                  })()}
+                  fill="url(#balAreaGrad)"
+                />
                 <polyline
                   points={balanceHistory.map((b, i) => {
                     const x = i * 60
-                    const y = 80 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 76 + 2
+                    const y = 100 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 90 + 5
                     return `${x},${y}`
                   }).join(' ')}
                   fill="none"
                   stroke="var(--color-primary-600)"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                   strokeLinejoin="round"
+                  strokeLinecap="round"
                 />
                 {balanceHistory.map((b, i) => {
                   const x = i * 60
-                  const y = 80 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 76 + 2
-                  return <circle key={i} cx={x} cy={y} r="3" fill="var(--color-primary-600)" />
+                  const y = 100 - ((b + maxBalanceAbs) / (2 * maxBalanceAbs)) * 90 + 5
+                  return <circle key={i} cx={x} cy={y} r="4" fill="white" stroke="var(--color-primary-600)" strokeWidth="2" />
                 })}
               </svg>
             </div>
@@ -687,14 +740,26 @@ export default async function DashboardPage() {
   )
 }
 
-function SummaryCard({ title, value, description, color, delta }: {
-  title: string; value: string; description: string; color: 'green' | 'red' | 'blue'; delta?: number | null
+function SummaryCard({ title, value, description, color, delta, sparkline }: {
+  title: string; value: string; description: string; color: 'green' | 'red' | 'blue'; delta?: number | null; sparkline?: number[]
 }) {
   const colors = { green: 'text-green-700', red: 'text-red-700', blue: 'text-blue-700' }
+  const sparkColors = { green: '#22c55e', red: '#ef4444', blue: '#3b82f6' }
+  const pts = sparkline && sparkline.length >= 2 ? (() => {
+    const max = Math.max(...sparkline, 1)
+    return sparkline.map((v, i) => `${(i / (sparkline.length - 1)) * 80},${22 - (v / max) * 18}`).join(' ')
+  })() : null
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-5 shadow-sm">
       <p className="text-xs text-gray-500">{title}</p>
-      <p className={`text-lg md:text-2xl font-bold mt-1 financial-value ${colors[color]}`}>{value}</p>
+      <div className="flex items-end justify-between gap-2 mt-1">
+        <p className={`text-lg md:text-2xl font-bold financial-value ${colors[color]}`}>{value}</p>
+        {pts && (
+          <svg viewBox="0 0 80 24" className="w-16 h-6 shrink-0 opacity-70" preserveAspectRatio="none">
+            <polyline points={pts} fill="none" stroke={sparkColors[color]} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
       <div className="flex items-center gap-1.5 mt-1">
         <p className="text-xs text-gray-400 hidden sm:block">{description}</p>
         {delta !== null && delta !== undefined && (

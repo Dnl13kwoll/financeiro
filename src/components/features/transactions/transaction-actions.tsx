@@ -72,6 +72,8 @@ export function TransactionActions({
       competence_date: data.get('date') as string,
       is_private: data.get('is_private') === 'on',
       tags: tags,
+      updated_at: new Date().toISOString(),
+      updated_by: userId ?? null,
     }).eq('id', transaction.id)
     setLoading(false)
     setEditOpen(false)

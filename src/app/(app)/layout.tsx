@@ -14,10 +14,12 @@ import { MonthlyCloseReminder } from '@/components/layout/monthly-close-reminder
 import { ScrollToTop } from '@/components/ui/scroll-to-top'
 import { BudgetAlertChecker } from '@/components/features/budget/budget-alert-checker'
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const memberRes = user
     ? await supabase.from('couple_members').select('couple_id').eq('user_id', user.id).limit(1).maybeSingle()
     : null

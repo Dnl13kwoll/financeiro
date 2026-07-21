@@ -5,14 +5,7 @@ import { PageTabs } from '@/components/ui/page-tabs'
 import { SimulatorClient } from '@/components/features/simulator/simulator-client'
 import { createClient } from '@/lib/supabase/server'
 
-async function fetchRates() {
-  try {
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-    const res = await fetch(`${base}/api/market-rates`, { next: { revalidate: 86400 } })
-    if (res.ok) return await res.json()
-  } catch {}
-  return { selic: 13.75, cdi: 13.65, ipca_12m: 4.83 }
-}
+import { fetchMarketRates } from '@/lib/market-rates'
 
 export default async function SimulatorPage() {
   const supabase = await createClient()
@@ -26,7 +19,7 @@ export default async function SimulatorPage() {
   const coupleId = (memberRes.data as any)?.couple_id ?? null
 
   const [rates, goalsRes] = await Promise.all([
-    fetchRates(),
+    fetchMarketRates(),
     coupleId
       ? supabase.from('goals').select('id, name, target_amount, current_amount').eq('couple_id', coupleId).order('created_at')
       : Promise.resolve(null),

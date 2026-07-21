@@ -226,7 +226,10 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
     if (!file) return
     const reader = new FileReader()
     reader.onload = (ev) => {
-      const text = ev.target?.result as string
+      const buffer = ev.target?.result as ArrayBuffer
+      // Try UTF-8 first; fall back to ISO-8859-1 if replacement chars appear (Itaú, Bradesco, BB)
+      const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(buffer)
+      const text = utf8.includes('�') ? new TextDecoder('iso-8859-1').decode(buffer) : utf8
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
       if (lines.length < 2) { setError('Arquivo muito curto ou sem dados.'); return }
 
@@ -255,7 +258,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
         setStep('preview')
       }
     }
-    reader.readAsText(file, 'UTF-8')
+    reader.readAsArrayBuffer(file)
   }
 
   function applyMap() {
@@ -271,7 +274,33 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
     if (!accountId) { setError('Selecione uma conta'); return }
     setLoading(true)
     const supabase = createClient()
-    const payload = rows.map(r => ({
+
+    // Detect duplicates: compare against existing transactions in the same date range
+    const dates = rows.map(r => r.date)
+    const minDate = dates.reduce((a, b) => a < b ? a : b)
+    const maxDate = dates.reduce((a, b) => a > b ? a : b)
+    const { data: existing } = await supabase
+      .from('transactions')
+      .select('date, description, amount, type')
+      .eq('account_id', accountId)
+      .gte('date', minDate)
+      .lte('date', maxDate)
+      .is('deleted_at', null)
+    const existingKeys = new Set(
+      (existing ?? []).map((t: any) => `${t.date}|${(t.description ?? '').toLowerCase()}|${t.amount}|${t.type}`)
+    )
+    const newRows = rows.filter(r =>
+      !existingKeys.has(`${r.date}|${r.description.toLowerCase()}|${r.amount}|${r.type}`)
+    )
+    const dupes = rows.length - newRows.length
+
+    if (newRows.length === 0) {
+      setError(`Todas as ${rows.length} transações já existem nesta conta (nenhuma importada).`)
+      setLoading(false)
+      return
+    }
+
+    const payload = newRows.map(r => ({
       type: r.type,
       amount: r.amount,
       description: r.description || null,
@@ -283,6 +312,7 @@ export function ImportCSVButton({ coupleId, userId, accounts }: { coupleId: stri
     }))
     const { error: err } = await supabase.from('transactions').insert(payload as any)
     if (err) { setError(err.message); setLoading(false); return }
+    if (dupes > 0) setRows(newRows)
     setStep('done')
     setLoading(false)
     startTransition(() => { router.refresh() })

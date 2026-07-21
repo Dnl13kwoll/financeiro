@@ -43,13 +43,12 @@ export async function GET(req: Request) {
       .ilike('name', pattern)
       .limit(5),
 
-    // Orçamentos (busca por categoria)
+    // Orçamentos — join categories, filter client-side (category_id não tem coluna category)
     supabase.from('budgets')
-      .select('id, category, amount, month')
+      .select('id, category_id, amount, month, categories!category_id(name)')
       .eq('couple_id', coupleId)
-      .ilike('category', pattern)
       .order('month', { ascending: false })
-      .limit(4),
+      .limit(30),
   ])
 
   const results: Array<{ type: string; id: string; label: string; sub?: string; href: string; amount?: number }> = []
@@ -88,12 +87,15 @@ export async function GET(req: Request) {
     })
   }
 
-  for (const b of (budgetsRes.data ?? []) as any[]) {
+  const matchingBudgets = (budgetsRes.data ?? []).filter((b: any) =>
+    (b.categories as any)?.name?.toLowerCase().includes(q.toLowerCase())
+  ).slice(0, 4)
+  for (const b of matchingBudgets as any[]) {
     const monthLabel = new Date(b.month + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
     results.push({
       type: 'budget',
       id: b.id,
-      label: b.category,
+      label: (b.categories as any)?.name ?? 'Orçamento',
       sub: `Orçamento · ${monthLabel}`,
       href: '/budgets',
       amount: b.amount,

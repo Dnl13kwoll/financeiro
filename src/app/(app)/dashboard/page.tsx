@@ -153,13 +153,13 @@ export default async function DashboardPage() {
   const pendingInstallmentsTotal: number = (pendingInstallmentsRes?.data ?? []).reduce((s: number, i: any) => s + i.amount, 0)
 
   const pendingRecurringRes = coupleId
-    ? await supabase.from('recurring_accounts').select('id, day_due').eq('couple_id', coupleId).eq('active', true)
+    ? await supabase.from('recurring_accounts').select('id, day_due, amount').eq('couple_id', coupleId).eq('active', true)
     : null
   const pendingRecurringTotal: number = (pendingRecurringRes?.data ?? []).reduce((s: number, r: any) => {
-    const dueDay = r.day_due
+    const dueDay = r.day_due as number
     const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay)
     if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1)
-    return dueDate <= new Date(next30) ? s + 0 : s // will be filled when records have amounts
+    return dueDate <= new Date(next30) ? s + (r.amount ?? 0) : s
   }, 0)
 
   const forecastBalance = totalBalance - pendingInstallmentsTotal - pendingRecurringTotal

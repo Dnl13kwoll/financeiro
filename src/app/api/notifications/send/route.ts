@@ -167,13 +167,14 @@ export async function GET(req: Request) {
       }
     }
 
-    // 5. Goal completion check
+    // 5. Goal completion check — only notify for goals completed in the last 25h to avoid cron spam
+    const yesterday = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
     const { data: goalsData } = await supabase.from('goals')
-      .select('id, name, current_amount, target_amount')
+      .select('id, name, current_amount, target_amount, updated_at')
       .eq('couple_id', sub.couple_id)
 
     for (const goal of (goalsData ?? [])) {
-      if (goal.current_amount >= goal.target_amount) {
+      if (goal.current_amount >= goal.target_amount && goal.updated_at >= yesterday) {
         if (await sendPush(
           sub,
           '🎉 Meta atingida!',
@@ -231,7 +232,7 @@ export async function GET(req: Request) {
       .from('financial_reminders')
       .select('title, due_date, priority')
       .eq('couple_id', sub.couple_id)
-      .eq('status', 'pendente')
+      .eq('done', false)
       .lte('due_date', next3)
 
     if ((reminders ?? []).length > 0) {

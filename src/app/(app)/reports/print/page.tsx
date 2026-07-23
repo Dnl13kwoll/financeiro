@@ -39,7 +39,7 @@ export default async function PrintReportPage({
   const [txRes, catRes, installRes, recurringRes, goalsRes] = await Promise.all([
     supabase.from('transactions').select('type, amount').eq('couple_id', coupleId).gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null).neq('type', 'transfer'),
     supabase.from('transactions').select('amount, categories(name)').eq('couple_id', coupleId).eq('type', 'expense').gte('competence_date', monthStart).lte('competence_date', monthEnd).is('deleted_at', null),
-    supabase.from('installment_items').select('due_date, amount, paid, installments(description, couple_id)').gte('due_date', monthStart).lte('due_date', monthEnd).eq('canceled', false),
+    supabase.from('installment_items').select('due_date, amount, paid, installments!inner(description, couple_id)').gte('due_date', monthStart).lte('due_date', monthEnd).eq('canceled', false).eq('installments.couple_id', coupleId),
     supabase.from('recurring_accounts').select('name, amount, day_due, type, recurring_records(paid, reference_month, amount)').eq('couple_id', coupleId).eq('active', true),
     supabase.from('goals').select('name, current_amount, target_amount').eq('couple_id', coupleId),
   ])
@@ -57,7 +57,7 @@ export default async function PrintReportPage({
   })
   const catData = Array.from(catMap.entries()).sort((a, b) => b[1] - a[1])
 
-  const installments = (installRes.data ?? []).filter((i: any) => (i.installments as any)?.couple_id === coupleId)
+  const installments = installRes.data ?? []
   const installPaid = installments.filter((i: any) => i.paid)
   const installPending = installments.filter((i: any) => !i.paid)
 

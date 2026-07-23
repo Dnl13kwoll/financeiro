@@ -149,7 +149,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
     const note = (data.get('note') as string) || null
     const supabase = createClient()
     const [updateRes, histRes] = await Promise.all([
-      supabase.from('goals').update({ current_amount: goal.current_amount + value }).eq('id', goal.id),
+      supabase.rpc('increment_goal_amount', { goal_id: goal.id, delta: value }),
       supabase.from('goal_history').insert({ goal_id: goal.id, amount: value, note }),
     ])
     if (updateRes.error || histRes.error) {

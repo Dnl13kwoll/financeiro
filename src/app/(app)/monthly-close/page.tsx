@@ -47,7 +47,7 @@ export default async function MonthlyClosePage() {
     .is('deleted_at', null)
     .neq('type', 'transfer')
 
-  const txList: { type: string; amount: number; category: string | null }[] =
+  const txList: { type: string; amount: number; category: string | null; category_id: string | null }[] =
     (txsRaw ?? []).map((t: any) => ({ ...t, category: (t.categories as any)?.name ?? null }))
   const income = txList.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const expense = txList.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
@@ -69,13 +69,13 @@ export default async function MonthlyClosePage() {
     .eq('month', monthStart)
 
   const budgetList = (budgets ?? []).map((b: any) => ({
-    ...b, category: (b.categories as any)?.name ?? b.category_id,
+    ...b, category: (b.categories as any)?.name ?? '—',
   }))
 
-  // Compute budget spent
+  // Compute budget spent — match by category_id to avoid name collision or UUID fallback
   const budgetsWithSpent = budgetList.map((b: any) => {
     const spent = txList
-      .filter(t => t.type === 'expense' && t.category === b.category)
+      .filter(t => t.type === 'expense' && t.category_id === b.category_id)
       .reduce((s, t) => s + Number(t.amount), 0)
     return { ...b, spent }
   })

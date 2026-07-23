@@ -92,8 +92,7 @@ export function GoalContributions({
     const amount = parseFloat(data.get('amount') as string)
     const supabase = createClient()
 
-    // Add contribution record
-    await supabase.from('goal_contributions').insert({
+    const { error: insertErr } = await supabase.from('goal_contributions').insert({
       goal_id: goalId,
       couple_id: coupleId,
       contributed_by: userId,
@@ -101,11 +100,21 @@ export function GoalContributions({
       note: (data.get('note') as string) || null,
       contributed_at: data.get('date') as string,
     })
+    if (insertErr) {
+      showToast('Erro: ' + insertErr.message, 'error')
+      setLoading(false)
+      return
+    }
 
-    // Update goal current_amount
+    // Atomic server-side increment — avoids read-modify-write race between partners
+    const { error: updateErr } = await supabase.rpc('increment_goal_amount', { goal_id: goalId, delta: amount })
+    if (updateErr) {
+      showToast('Erro ao atualizar meta: ' + updateErr.message, 'error')
+      setLoading(false)
+      return
+    }
+
     const newAmount = currentAmount + amount
-    await supabase.from('goals').update({ current_amount: newAmount }).eq('id', goalId)
-
     setLoading(false)
     setOpen(false)
     form.reset()

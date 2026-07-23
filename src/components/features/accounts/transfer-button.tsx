@@ -49,10 +49,16 @@ export function TransferButton({
       couple_id: coupleId,
     }
     // Two transactions: expense from source, income to destination
-    await Promise.all([
+    const [fromRes, toRes] = await Promise.all([
       supabase.from('transactions').insert({ ...base, account_id: fromId }),
       supabase.from('transactions').insert({ ...base, account_id: toId }),
     ])
+
+    if (fromRes.error || toRes.error) {
+      showToast('Erro na transferência: ' + (fromRes.error ?? toRes.error)!.message, 'error')
+      setLoading(false)
+      return
+    }
 
     setLoading(false)
     setOpen(false)

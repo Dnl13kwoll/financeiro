@@ -93,14 +93,21 @@ export function MonthlyCloseClient(props: Props) {
     if (!val || val <= 0) { showToast('Digite um valor válido.', 'error'); return }
     setSavingGoalId(goalId)
     const supabase = createClient()
-    const goal = props.goals.find(g => g.id === goalId)!
-    const [upd, hist] = await Promise.all([
-      supabase.from('goals').update({ current_amount: goal.current_amount + val }).eq('id', goalId),
-      supabase.from('goal_history').insert({ goal_id: goalId, amount: val, note: `Aporte fechamento ${props.monthStart.slice(0, 7)}` }),
-    ])
+    const { error: histErr } = await supabase.from('goal_history').insert({
+      goal_id: goalId,
+      amount: val,
+      note: `Aporte fechamento ${props.monthStart.slice(0, 7)}`,
+    })
+    if (histErr) {
+      setSavingGoalId(null)
+      showToast('Erro: ' + histErr.message, 'error')
+      return
+    }
+    // Atomic server-side increment — avoids read-modify-write race between partners
+    const { error: updErr } = await supabase.rpc('increment_goal_amount', { goal_id: goalId, delta: val })
     setSavingGoalId(null)
-    if (upd.error || hist.error) {
-      showToast('Erro: ' + (upd.error || hist.error)!.message, 'error')
+    if (updErr) {
+      showToast('Erro ao atualizar meta: ' + updErr.message, 'error')
       return
     }
     setAmounts(prev => ({ ...prev, [goalId]: '' }))

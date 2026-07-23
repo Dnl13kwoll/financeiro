@@ -30,14 +30,7 @@ function daysUntil(d: string) {
   return Math.ceil((new Date(d + 'T12:00:00').getTime() - Date.now()) / 86400000)
 }
 
-async function fetchMarketRates() {
-  try {
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-    const res = await fetch(`${base}/api/market-rates`, { next: { revalidate: 86400 } })
-    if (res.ok) return await res.json()
-  } catch {}
-  return REFERENCE_RATES
-}
+import { fetchMarketRates } from '@/lib/market-rates'
 
 export default async function InvestmentsPage() {
   const supabase = await createClient()

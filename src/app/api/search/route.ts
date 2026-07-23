@@ -19,6 +19,10 @@ export async function GET(req: Request) {
 
   const pattern = `%${q}%`
 
+  // Find matching category IDs first so budget query uses DB-level filter
+  const matchingCatsRes = await supabase.from('categories').select('id').ilike('name', pattern).limit(10)
+  const catIds = (matchingCatsRes.data ?? []).map((c: any) => c.id)
+
   const [txRes, goalsRes, invRes, budgetsRes] = await Promise.all([
     // Transações
     supabase.from('transactions')
@@ -43,12 +47,15 @@ export async function GET(req: Request) {
       .ilike('name', pattern)
       .limit(5),
 
-    // Orçamentos — join categories, filter client-side (category_id não tem coluna category)
-    supabase.from('budgets')
-      .select('id, category_id, amount, month, categories!category_id(name)')
-      .eq('couple_id', coupleId)
-      .order('month', { ascending: false })
-      .limit(30),
+    // Orçamentos — filtro no banco via category_id
+    catIds.length > 0
+      ? supabase.from('budgets')
+          .select('id, category_id, amount, month, categories!category_id(name)')
+          .eq('couple_id', coupleId)
+          .in('category_id', catIds)
+          .order('month', { ascending: false })
+          .limit(4)
+      : Promise.resolve({ data: [] as any[] }),
   ])
 
   const results: Array<{ type: string; id: string; label: string; sub?: string; href: string; amount?: number }> = []
@@ -87,10 +94,7 @@ export async function GET(req: Request) {
     })
   }
 
-  const matchingBudgets = (budgetsRes.data ?? []).filter((b: any) =>
-    (b.categories as any)?.name?.toLowerCase().includes(q.toLowerCase())
-  ).slice(0, 4)
-  for (const b of matchingBudgets as any[]) {
+  for (const b of (budgetsRes.data ?? []) as any[]) {
     const monthLabel = new Date(b.month + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
     results.push({
       type: 'budget',

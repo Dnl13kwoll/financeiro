@@ -203,6 +203,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
           onClick={() => setAddOpen(true)}
           className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
           title="Adicionar valor"
+          aria-label="Adicionar valor à meta"
         >
           <PlusCircle className="w-4 h-4" />
         </button>
@@ -210,6 +211,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
           onClick={() => setEditOpen(true)}
           className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
           title="Editar"
+          aria-label="Editar meta"
         >
           <Pencil className="w-3.5 h-3.5" />
         </button>
@@ -217,6 +219,7 @@ export function GoalActions({ goal }: { goal: Goal }) {
           onClick={handleDelete}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
           title="Excluir"
+          aria-label="Excluir meta"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>

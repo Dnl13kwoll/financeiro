@@ -35,6 +35,7 @@ export default async function AccountDetailPage({
     .from('accounts')
     .select('*')
     .eq('id', id)
+    .eq('couple_id', coupleId ?? '')
     .maybeSingle()
   const account: any = accountRes.data
 
@@ -68,7 +69,18 @@ export default async function AccountDetailPage({
   const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
-  // Last 6 months balance history (income - expense per month from current balance)
+  // Last 6 months balance history — single query instead of 5 sequential ones
+  const hist6Start = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10)
+  const hist6End = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10)
+  const histAllRes = await supabase
+    .from('transactions')
+    .select('type, amount, competence_date')
+    .eq('account_id', id)
+    .gte('competence_date', hist6Start)
+    .lte('competence_date', hist6End)
+    .is('deleted_at', null)
+  const histAllTxs: any[] = histAllRes.data ?? []
+
   const historyMonths: { label: string; balance: number }[] = []
   let runningBalance = balance
   for (let i = 0; i < 6; i++) {
@@ -76,15 +88,7 @@ export default async function AccountDetailPage({
     const mStart = d.toISOString().slice(0, 10)
     const mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
     if (i > 0) {
-      // Find transactions in this month range to walk backwards
-      const mTxRes = await supabase
-        .from('transactions')
-        .select('type, amount')
-        .eq('account_id', id)
-        .gte('competence_date', mStart)
-        .lte('competence_date', mEnd)
-        .is('deleted_at', null)
-      const mTxs: any[] = mTxRes.data ?? []
+      const mTxs = histAllTxs.filter(t => t.competence_date >= mStart && t.competence_date <= mEnd)
       const mIncome = mTxs.filter(t => t.type === 'income').reduce((s: number, t: any) => s + t.amount, 0)
       const mExpense = mTxs.filter(t => t.type === 'expense').reduce((s: number, t: any) => s + t.amount, 0)
       runningBalance = runningBalance - mIncome + mExpense

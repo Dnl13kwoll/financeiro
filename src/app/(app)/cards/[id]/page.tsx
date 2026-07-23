@@ -24,7 +24,7 @@ export default async function CardPage({
   const memberRes = await supabase.from('couple_members').select('couple_id').eq('user_id', user!.id).limit(1).maybeSingle()
   const coupleId: string | null = (memberRes.data as any)?.couple_id ?? null
 
-  const accountRes = await supabase.from('accounts').select('*').eq('id', id).maybeSingle()
+  const accountRes = await supabase.from('accounts').select('*').eq('id', id).eq('couple_id', coupleId ?? '').maybeSingle()
   const account: any = accountRes.data
   if (!account || account.type !== 'credit_card') {
     return <div className="p-6 text-gray-500">Cartão não encontrado.</div>
